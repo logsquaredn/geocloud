@@ -1,0 +1,21 @@
+version: 0.1
+http:
+  addr: localhost:5000
+  host: localhost:5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+log:
+  accesslog:
+    disabled: true
+  level: error
+  formatter: text
+proxy:
+  remoteurl: https://registry-1.docker.io
+  # username:
+  # password:
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+    maxthreads: 100
+  delete:
+    enabled: true
