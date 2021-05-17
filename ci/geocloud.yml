@@ -1,11 +1,17 @@
+anchors:
+- &default_job_config
+  build_log_retention:
+    builds: 12
+    minimum_succeeded_builds: 3
+  serial: true
 resources:
 - name: geocloud
   type: git
   icon: github
   source:
-    uri: https://github.com/logsquaredn/geocloud
+    uri: git@github.com:logsquaredn/geocloud.git
     branch: main
-    private_key:
+    private_key: ((geocloud_private_key))
 - name: golang-latest
   type: registry-image
   icon: docker
@@ -43,6 +49,7 @@ jobs:
   plan:
   - in_parallel:
     - get: geocloud
+      trigger: true
     - get: golang-latest
       params:
         format: oci
@@ -72,6 +79,7 @@ jobs:
   plan:
   - in_parallel:
     - get: geocloud
+      trigger: true
     - get: gdal-latest
       params:
         format: oci
@@ -99,10 +107,3 @@ jobs:
         IMAGE_ARG_build_image: gdal-latest/image.tar
       run:
         path: build
----
-anchors:
-- &default_job_config
-  build_log_retention:
-    builds: 12
-    minimum_succeeded_builds: 3
-  serial: true
