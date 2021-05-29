@@ -2,6 +2,7 @@
 #define SHARED_H
 
 #include "gdal.h"
+#include <ogr_srs_api.h>
 
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath);
 const char *getDriverName(const char *filePath);
