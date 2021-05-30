@@ -21,7 +21,9 @@ const char *getDriverName(const char *filePath) {
     return driverName;
 }
 
-int getDriver(GDALDriverH **driver, const char *driverName) {
+int getDriver(GDALDriverH **driver, const char *filePath) {
+    const char *driverName = getDriverName(filePath);
+
     *driver = (GDALDriverH*) GDALGetDriverByName(driverName);
     if(*driver == NULL) {
         return 1;
@@ -42,6 +44,10 @@ int deleteExistingDataset(GDALDriverH driver, const char* filePath) {
 }
 
 int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *filePath) {
+    if(deleteExistingDataset(driver, filePath)) {
+		return 1;
+	}
+
     *dataset = GDALCreate(driver, 
                           filePath, 
                           0, 0, 0, 

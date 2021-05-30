@@ -1,5 +1,4 @@
 ## TODO
-- Remove bad geometries
 - Fix bad geometries
 - dissolve
 - point in poly and poly in poly lookups

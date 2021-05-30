@@ -31,13 +31,9 @@ int main(int argc, char *argv[]) {
 	if(openVectorDataset(&inputDataset, inputFilePath)) {
 		error("failed to open input file");
 	}
-	fprintf(stdout, "opened input file successfully\n");
-
-	const char *driverName = getDriverName(outputFilePath);
-	fprintf(stdout, "driver name: %s\n", driverName);
 
 	GDALDriverH *driver;
-	if(getDriver(&driver, driverName)) {
+	if(getDriver(&driver, outputFilePath)) {
 		error("failed to create driver");
 	}
 
@@ -49,10 +45,6 @@ int main(int argc, char *argv[]) {
 		}
 		
 		OGR_L_ResetReading(inputLayer);
-
-	    if(deleteExistingDataset(driver, outputFilePath)) {
-			error("failed to clean output location");
-		}
 		
 		GDALDatasetH outputDataset;
 		if(createVectorDataset(&outputDataset, driver, outputFilePath)) {
@@ -86,8 +78,12 @@ int main(int argc, char *argv[]) {
 			}
 
 			OGRFeatureH outputReprojectedFeature =  OGR_F_Create(outputFeatureDef);
+			if(outputReprojectedFeature == NULL) {
+				error("failed to create output feature");
+			}
+
 			if(OGR_F_SetGeometry(outputReprojectedFeature, inputGeometry) != OGRERR_NONE) {
-				error("failed to set buffered geometry on buffered feature");
+				error("failed to set geometry on output feature");
 			}
             
 			if(OGR_L_CreateFeature(outputLayer, outputReprojectedFeature) != OGRERR_NONE) {
