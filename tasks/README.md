@@ -1,7 +1,6 @@
 ## TODO
 - Remove bad geometries
 - Fix bad geometries
-- reproject
 - dissolve
 - point in poly and poly in poly lookups
 
