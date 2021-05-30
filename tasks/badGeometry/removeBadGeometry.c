@@ -8,8 +8,8 @@ void error(const char *message) {
 }
 
 int main(int argc, char *argv[]) {
-	if(argc != 4) {
-		error("reproject requires three arguments. Input file, output file, and target projection in EPSG code format");
+	if(argc != 3) {
+		error("remove bad geometry requires two arguments. Input file and output file");
 	}
 
 	const char *inputFilePath = argv[1];
@@ -17,13 +17,6 @@ int main(int argc, char *argv[]) {
 	
 	const char *outputFilePath = argv[2];
 	fprintf(stdout, "output file path: %s\n", outputFilePath);
-
-	const char *targetProjection = argv[3];	
-	long targetProjectionLong = strtol(targetProjection, NULL, 10);
-	if(targetProjectionLong == 0) {
-		error("EPSG code must be an integer");
-	}
-	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);
 
 	GDALAllRegister();
 
@@ -63,46 +56,36 @@ int main(int argc, char *argv[]) {
 		
 		OGRFeatureDefnH outputFeatureDef = OGR_L_GetLayerDefn(outputLayer);
         		
-		OGRSpatialReferenceH outputSpatialRef = OSRNewSpatialReference("");
-		if(OSRImportFromEPSG(outputSpatialRef, targetProjectionLong) != OGRERR_NONE) {
-			error("failed to create output spatial ref");
-		}
-		OGRCoordinateTransformationH transformer = OCTNewCoordinateTransformation(inputSpatialRef, outputSpatialRef);
-
 		OGRFeatureH inputFeature;
 		while((inputFeature = OGR_L_GetNextFeature(inputLayer)) != NULL) {
             OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-			
-			if(OGR_G_Transform(inputGeometry, transformer) != OGRERR_NONE) {
-				error("failed to transform geometry");
-			}
+			if(OGR_G_IsValid(inputGeometry)) {	
+				OGRFeatureH outputFeature = OGR_F_Create(outputFeatureDef);
+				if(outputFeature == NULL) {
+					error("failed to create output feature");
+				}
 
-			OGRFeatureH outputReprojectedFeature =  OGR_F_Create(outputFeatureDef);
-			if(outputReprojectedFeature == NULL) {
-				error("failed to create output feature");
-			}
-
-			if(OGR_F_SetGeometry(outputReprojectedFeature, inputGeometry) != OGRERR_NONE) {
-				error("failed to set geometry on output feature");
-			}
+				if(OGR_F_SetGeometry(outputFeature, inputGeometry) != OGRERR_NONE) {
+					error("failed to set geometry on output feature");
+				}
             
-			if(OGR_L_CreateFeature(outputLayer, outputReprojectedFeature) != OGRERR_NONE) {
-				error("failed to create feature in output layer");
+				if(OGR_L_CreateFeature(outputLayer, outputFeature) != OGRERR_NONE) {
+					error("failed to create feature in output layer");
+				}
+
+				OGR_F_Destroy(outputFeature);
 			}
 
 			OGR_G_DestroyGeometry(inputGeometry);
-			OGR_F_Destroy(outputReprojectedFeature);
 		}
 
 		OSRDestroySpatialReference(inputSpatialRef);
-		OSRDestroySpatialReference(outputSpatialRef);
-		OCTDestroyCoordinateTransformation(transformer);
 		OGR_F_Destroy(inputFeature);
 		GDALClose(outputDataset);
 	}
 
 	GDALClose(inputDataset);
 
-	fprintf(stdout, "reproject complete successfully\n");
+	fprintf(stdout, "removed bad geometry successfully\n");
 	return 0;
 }
