@@ -1,5 +1,3 @@
-#include "gdal.h"
-#include "ogr_srs_api.h"
 #include <stdio.h>
 
 #include "../shared/shared.h"
@@ -11,7 +9,7 @@ void error(const char *message) {
 
 int main(int argc, char *argv[]) {
 	if(argc != 4) {
-		error("reproject requires three arguments. Input file, output file, and target projection");
+		error("reproject requires three arguments. Input file, output file, and target projection in EPSG code format");
 	}
 
 	const char *inputFilePath = argv[1];
@@ -20,11 +18,14 @@ int main(int argc, char *argv[]) {
 	const char *outputFilePath = argv[2];
 	fprintf(stdout, "output file path: %s\n", outputFilePath);
 
-	const char *targetProjection = argv[3];
-	fprintf(stdout, "target projection: %s\n", targetProjection);
+	const char *targetProjection = argv[3];	
+	long targetProjectionLong = strtol(targetProjection, NULL, 10);
+	if(targetProjectionLong == 0) {
+		error("EPSG code must be an integer");
+	}
+	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);
 
 	GDALAllRegister();
-	fprintf(stdout, "registered gdal successfully\n");
 
 	GDALDatasetH inputDataset;
 	if(openVectorDataset(&inputDataset, inputFilePath)) {
@@ -39,7 +40,6 @@ int main(int argc, char *argv[]) {
 	if(getDriver(&driver, driverName)) {
 		error("failed to create driver");
 	}
-	fprintf(stdout, "created driver successfully\n");
 
 	int numberOfLayers = GDALDatasetGetLayerCount(inputDataset);
 	if(numberOfLayers > 0) {
@@ -47,52 +47,60 @@ int main(int argc, char *argv[]) {
 		if(inputLayer == NULL) {
 			error("failed to get layer from intput dataset");
 		}
-		fprintf(stdout, "got layer from input dataset successfully\n");
 		
 		OGR_L_ResetReading(inputLayer);
-		fprintf(stdout, "reset layer reading successfully\n");
 
 	    if(deleteExistingDataset(driver, outputFilePath)) {
 			error("failed to clean output location");
 		}
-		fprintf(stdout, "output location is clean\n");
 		
 		GDALDatasetH outputDataset;
 		if(createVectorDataset(&outputDataset, driver, outputFilePath)) {
 			error("failed to create output dataset");
 		}
-		fprintf(stdout, "created output dataset successfully\n");
 
+		OGRSpatialReferenceH inputSpatialRef = OGR_L_GetSpatialRef(inputLayer);
 		OGRLayerH outputLayer = GDALDatasetCreateLayer(outputDataset, 
 													   OGR_L_GetName(inputLayer),  
-													   OGR_L_GetSpatialRef(inputLayer), 
+													   inputSpatialRef, 
 													   wkbPolygon, 
 													   NULL);
 		if(outputLayer == NULL) {
 			error("failed to create output layer");
 		}
-		fprintf(stdout, "created output layer successfully\n");
+		
 		OGRFeatureDefnH outputFeatureDef = OGR_L_GetLayerDefn(outputLayer);
+        		
+		OGRSpatialReferenceH outputSpatialRef = OSRNewSpatialReference("");
+		if(OSRImportFromEPSG(outputSpatialRef, targetProjectionLong) != OGRERR_NONE) {
+			error("failed to create output spatial ref");
+		}
+		OGRCoordinateTransformationH transformer = OCTNewCoordinateTransformation(inputSpatialRef, outputSpatialRef);
 
-        
 		OGRFeatureH inputFeature;
 		while((inputFeature = OGR_L_GetNextFeature(inputLayer)) != NULL) {
             OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
+			
+			if(OGR_G_Transform(inputGeometry, transformer) != OGRERR_NONE) {
+				error("failed to transform geometry");
+			}
 
-            // TODO
-            //OGRCoordinateTransformationH transformer = OCTNewCoordinateTransformation()
-           
-           	// OGRFeatureH outputBufferedFeature =  OGR_F_Create(outputFeatureDef);
-			// if(OGR_F_SetGeometry(outputBufferedFeature, bufferedGeometry) != OGRERR_NONE) {
-			// 	error("failed to set buffered geometry on buffered feature");
-			// }
-
-			if(OGR_L_CreateFeature(outputLayer, inputFeature) != OGRERR_NONE) {
+			OGRFeatureH outputReprojectedFeature =  OGR_F_Create(outputFeatureDef);
+			if(OGR_F_SetGeometry(outputReprojectedFeature, inputGeometry) != OGRERR_NONE) {
+				error("failed to set buffered geometry on buffered feature");
+			}
+            
+			if(OGR_L_CreateFeature(outputLayer, outputReprojectedFeature) != OGRERR_NONE) {
 				error("failed to create feature in output layer");
 			}
-			fprintf(stdout, "created feature in output layer successfully\n");
+
+			OGR_G_DestroyGeometry(inputGeometry);
+			OGR_F_Destroy(outputReprojectedFeature);
 		}
 
+		OSRDestroySpatialReference(inputSpatialRef);
+		OSRDestroySpatialReference(outputSpatialRef);
+		OCTDestroyCoordinateTransformation(transformer);
 		OGR_F_Destroy(inputFeature);
 		GDALClose(outputDataset);
 	}
