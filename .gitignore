@@ -1,8 +1,8 @@
 # macOS
-**/.DS_Store
+.DS_Store
 
 # vscode
-.vscode
+.vscode/
 
 # build
 bin/

@@ -11,12 +11,16 @@ import (
 func main() {
 	var cmd GeocloudCmd
 
-	cmd.Version = func () {
-		fmt.Println(geocloud.Version)
+	cmd.Version = func() {
+		_, err := fmt.Println(geocloud.Version)
+		if err != nil {
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
 	parser := flags.NewParser(&cmd, flags.HelpFlag)
+	parser.NamespaceDelimiter = "-"
 	if _, err := parser.Parse(); err != nil {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			fmt.Println(err)
@@ -26,4 +30,9 @@ func main() {
 		}
 	}
 	os.Exit(0)
+}
+
+func (cmd *VersionCmd) Execute(args []string) error {
+	_, err := fmt.Println(geocloud.Version)
+	return err
 }
