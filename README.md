@@ -20,7 +20,7 @@ docker build -t geocloud .
 docker run --rm --privileged --tmpfs /run geocloud
 
 # run on host machine
-go build -o /bin/geocloud ./cmd/
+go build -o bin/geocloud ./cmd/
 bin/geocloud
 ```
 

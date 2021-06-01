@@ -30,23 +30,23 @@ RUN chmod +x /assets/runc
 FROM build_image AS build
 COPY api/ api/
 COPY cmd/ cmd/
-COPY runners/ runners/
+COPY shared/ shared/
 COPY tasks/mock/ tasks/mock/
 COPY worker/ worker/
 COPY *.go .
 RUN go build -o /assets/geocloud ./cmd/
 
 FROM base_image AS geocloud
-COPY --from=build /assets/ /usr/local/geocloud/bin/
-COPY --from=containerd /assets/ /usr/local/geocloud/bin/
-COPY --from=runc /assets/ /usr/local/geocloud/bin/
-ENV PATH=/usr/local/geocloud/bin:$PATH
-VOLUME /var/lib/geocloud/containerd
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         dumb-init \
         pigz \
     && rm -rf /var/lib/apt/lists/*
+COPY --from=build /assets/ /usr/local/geocloud/bin/
+COPY --from=containerd /assets/ /usr/local/geocloud/bin/
+COPY --from=runc /assets/ /usr/local/geocloud/bin/
+ENV PATH=/usr/local/geocloud/bin:$PATH
+VOLUME /var/lib/geocloud/containerd
 ENTRYPOINT ["dumb-init", "geocloud"]
 CMD ["--help"]
