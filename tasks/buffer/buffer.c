@@ -2,11 +2,6 @@
 
 #include "../shared/shared.h"
 
-void error(const char *message) {
-	fprintf(stderr, "%s\n", message);
-	exit(1);
-}
-
 int main(int argc, char *argv[]) {
 	if(argc != 4) {
 		error("buffer requires three arguments. input file, output file, and a buffer distance");
@@ -24,81 +19,46 @@ int main(int argc, char *argv[]) {
 		error("buffer distance must be a valid double greater than 0");
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
-
-	GDALAllRegister();
-
-	GDALDatasetH inputDataset;
-	if(openVectorDataset(&inputDataset, inputFilePath)) {
-		error("failed to open input file");
+	
+	struct GDALHandles gdalHandles;
+	gdalHandles.inputLayer = NULL;
+	if(vectorInitialize(&gdalHandles, inputFilePath, outputFilePath)) {
+		error("failed to initialize");
+		fatalError();
 	}
-
-	GDALDriverH *driver;
-	if(getDriver(&driver, outputFilePath)) {
-		error("failed to create driver");
-	}
-
-	int numberOfLayers = GDALDatasetGetLayerCount(inputDataset);
-	if(numberOfLayers > 0) {
-		OGRLayerH inputLayer = GDALDatasetGetLayer(inputDataset, 0);
-		if(inputLayer == NULL) {
-			error("failed to get layer from intput dataset");
-		}
-		
-		OGR_L_ResetReading(inputLayer);
-
-		GDALDatasetH outputDataset;
-		if(createVectorDataset(&outputDataset, driver, outputFilePath)) {
-			error("failed to create output dataset");
-		}
-
-		OGRSpatialReferenceH inputSpatialRef = OGR_L_GetSpatialRef(inputLayer);
-		OGRLayerH outputLayer = GDALDatasetCreateLayer(outputDataset, 
-													   OGR_L_GetName(inputLayer),  
-													   inputSpatialRef, 
-													   wkbPolygon, 
-													   NULL);
-		if(outputLayer == NULL) {
-			error("failed to create output layer");
-		}
-
-		OGRFeatureDefnH outputFeatureDef = OGR_L_GetLayerDefn(outputLayer);
-
+	
+	if(gdalHandles.inputLayer != NULL) {
 		OGRFeatureH inputFeature;
-		while((inputFeature = OGR_L_GetNextFeature(inputLayer)) != NULL) {
+		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
 			OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
 			if(inputGeometry == NULL) {
-				error("failed to get input geometry");		
+				error("failed to get input geometry");	
+				fatalError();	
 			}
 
 			OGRGeometryH bufferedGeometry = OGR_G_Buffer(inputGeometry, bufferDistanceDouble, 50);
 			if(bufferedGeometry == NULL) {
 				error("failed to buffer input geometry");
+				fatalError();
 			}
 
-			OGRFeatureH outputBufferedFeature =  OGR_F_Create(outputFeatureDef);
-			if(outputBufferedFeature == NULL) {
-				error("failed to create output feature");
-			}
-
-			if(OGR_F_SetGeometry(outputBufferedFeature, bufferedGeometry) != OGRERR_NONE) {
-				error("failed to set buffered geometry on buffered feature");
-			}
-
-			if(OGR_L_CreateFeature(outputLayer, outputBufferedFeature) != OGRERR_NONE) {
-				error("failed to create buffered feature in output layer");
+			if(buildOutputVectorFeature(&gdalHandles, &bufferedGeometry, &inputFeature)) {
+				error(" failed to build output vector feature");
+				fatalError();
 			}
 
 			OGR_G_DestroyGeometry(inputGeometry);
 			OGR_G_DestroyGeometry(bufferedGeometry);
-			OGR_F_Destroy(outputBufferedFeature);
 		}
 
-		OSRDestroySpatialReference(inputSpatialRef);
 		OGR_F_Destroy(inputFeature);
-		GDALClose(outputDataset);
+		OSRDestroySpatialReference(gdalHandles.inputSpatialRef);
+		GDALClose(gdalHandles.outputDataset);
+	} else {
+		fprintf(stdout, "no layers found in input file\n");
 	}
 
-	GDALClose(inputDataset);
+	GDALClose(gdalHandles.inputDataset);
 
 	fprintf(stdout, "buffer complete successfully\n");
 	return 0;
