@@ -13,13 +13,19 @@ RUN go mod download
 
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
-ADD ${containerd_release} /tmp/containerd.tgz
-RUN tar \
-        -C /tmp/ \
-        -xzf \
-        /tmp/containerd.tgz \
-    && rm /tmp/containerd.tgz \
-    && mkdir /assets/ \
+# when its dest is a remote .tgz, ADD does not unpack the file
+# when its dest is a local .tgz, it is unpacked as a directory
+ADD ${containerd_release} /tmp/
+# this conditional handles that difference in ADD's functionality
+RUN TGZ=/tmp/$(basename ${containerd_release}); \
+    if [ -f $TGZ ]; then \
+        tar \
+            -C /tmp/ \
+            -xzf \
+            $TGZ \
+        && rm $TGZ; \
+    fi; \
+    mkdir /assets/ \
     && mv /tmp/bin/* /assets/
 
 FROM base_image AS runc

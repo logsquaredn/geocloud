@@ -2,6 +2,7 @@ resources:
 - name: containerd
   type: github-release
   icon: package-variant-closed
+  check_every: never
   source:
     owner: containerd
     repository: containerd
@@ -46,6 +47,7 @@ resources:
 - name: runc
   type: github-release
   icon: package-variant-closed
+  check_every: never
   source:
     owner: opencontainers
     repository: runc
@@ -64,7 +66,7 @@ jobs:
   - in_parallel:
     - get: containerd
       params:
-        globs: [runc.amd64]
+        globs: [containerd-*-linux-amd64.tar.gz]
     - get: geocloud
       trigger: true
     - get: golang-latest
@@ -73,12 +75,32 @@ jobs:
     - get: oci-build-task
     - get: runc
       params:
-        globs: []
+        globs: [runc.amd64]
     - get: ubuntu-bionic
       params:
         format: oci
   - load_var: containerd_version
     file: containerd/version
+  - task: check-releases
+    config:
+      image_resource:
+        type: registry-image
+        source:
+          username: ((docker_username))
+          password: ((docker_password))
+          repository: alpine
+      platform: linux
+      inputs:
+      - name: containerd
+      - name: runc
+      run:
+        path: sh
+        args:
+        - -ce
+        - |
+          echo "containerd_version: $(cat containerd/version)"
+          ls containerd/
+          ls runc/
   - task: build-geocloud
     image: oci-build-task
     privileged: true
@@ -96,10 +118,16 @@ jobs:
         CONTEXT: geocloud
         IMAGE_ARG_base_image: ubuntu-bionic/image.tar
         IMAGE_ARG_build_image: golang-latest/image.tar
-        BUILD_ARG_containerd_release: containerd/containerd-((.:containerd_version))-linux-amd64.tar.gz
-        BUILD_ARG_runc_release: runc/runc.amd64
+        BUILD_ARG_containerd_release: assets/containerd.tgz
+        BUILD_ARG_runc_release: assets/runc
       run:
-        path: build
+        path: sh
+        args:
+        - -ce
+        - |
+          cp containerd/containerd-((.:containerd_version))-linux-amd64.tar.gz geocloud/assets/containerd.tgz
+          cp runc/runc.amd64 geocloud/assets/runc
+          build
   - put: geocloud-latest
     params:
       image: image/image.tar
@@ -115,28 +143,46 @@ jobs:
       params:
         format: oci
     - get: oci-build-task
-  - across:
-    - var: task
-      values: [
-        badGeometry,
-        buffer,
-        filter,
-        reproject,
-      ]
-    task: build-geocloud
-    image: oci-build-task
-    privileged: true
-    config:
-      platform: linux
-      inputs:
-      - name: geocloud
-      - name: gdal-latest
-      outputs:
-      - name: image
-      params:
-        CONTEXT: geocloud/tasks
-        IMAGE_ARG_base_image: gdal-latest/image.tar
-        IMAGE_ARG_build_image: gdal-latest/image.tar
-        BUILD_ARG_task: ((.:task))
-      run:
-        path: build
+  - in_parallel:
+    - across:
+      - var: task
+        values: [
+          buffer,
+          filter,
+          reproject,
+        ]
+      task: build-task-with-identically-named-task-folder
+      image: oci-build-task
+      privileged: true
+      config:
+        platform: linux
+        inputs:
+        - name: geocloud
+        - name: gdal-latest
+        outputs:
+        - name: image
+        params:
+          CONTEXT: geocloud/tasks
+          IMAGE_ARG_base_image: gdal-latest/image.tar
+          IMAGE_ARG_build_image: gdal-latest/image.tar
+          BUILD_ARG_task: ((.:task))
+        run:
+          path: build
+    - task: build-task-with-differently-named-task-folder
+      image: oci-build-task
+      privileged: true
+      config:
+        platform: linux
+        inputs:
+        - name: geocloud
+        - name: gdal-latest
+        outputs:
+        - name: image
+        params:
+          CONTEXT: geocloud/tasks
+          IMAGE_ARG_base_image: gdal-latest/image.tar
+          IMAGE_ARG_build_image: gdal-latest/image.tar
+          BUILD_ARG_task: removeBadGeometry
+          BUILD_ARG_task_folder: badGeometry
+        run:
+          path: build
