@@ -1,16 +1,24 @@
-anchors:
-- &default_job_config
-  build_log_retention:
-    builds: 12
-    minimum_succeeded_builds: 3
-  serial: true
 resources:
+- name: containerd
+  type: github-release
+  icon: package-variant-closed
+  source:
+    owner: containerd
+    repository: containerd
+- name: gdal-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: osgeo/gdal
+    tag: latest
 - name: geocloud
   type: git
   icon: github
   source:
     uri: git@github.com:logsquaredn/geocloud.git
-    branch: main
+    branch: ((branch))
     private_key: ((geocloud_private_key))
 - name: geocloud-latest
   type: registry-image
@@ -35,14 +43,12 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: vito/oci-build-task
-- name: gdal-latest
-  type: registry-image
-  icon: docker
+- name: runc
+  type: github-release
+  icon: package-variant-closed
   source:
-    username: ((docker_username))
-    password: ((docker_password))
-    repository: osgeo/gdal
-    tag: latest
+    owner: opencontainers
+    repository: runc
 - name: ubuntu-bionic
   type: registry-image
   icon: docker
@@ -53,26 +59,36 @@ resources:
     tag: bionic
 jobs:
 - name: build-geocloud
-  <<: *default_job_config
+  serial: true
   plan:
   - in_parallel:
+    - get: containerd
+      params:
+        globs: [runc.amd64]
     - get: geocloud
       trigger: true
     - get: golang-latest
       params:
         format: oci
     - get: oci-build-task
+    - get: runc
+      params:
+        globs: []
     - get: ubuntu-bionic
       params:
         format: oci
+  - load_var: containerd_version
+    file: containerd/version
   - task: build-geocloud
     image: oci-build-task
     privileged: true
     config:
       platform: linux
       inputs:
+      - name: containerd
       - name: geocloud
       - name: golang-latest
+      - name: runc
       - name: ubuntu-bionic
       outputs:
       - name: image
@@ -80,6 +96,8 @@ jobs:
         CONTEXT: geocloud
         IMAGE_ARG_base_image: ubuntu-bionic/image.tar
         IMAGE_ARG_build_image: golang-latest/image.tar
+        BUILD_ARG_containerd_release: containerd/containerd-((.:containerd_version))-linux-amd64.tar.gz
+        BUILD_ARG_runc_release: runc/runc.amd64
       run:
         path: build
   - put: geocloud-latest
@@ -88,7 +106,7 @@ jobs:
     get_params:
       skip_download: true
 - name: build-tasks
-  <<: *default_job_config
+  serial: true
   plan:
   - in_parallel:
     - get: geocloud
@@ -97,12 +115,14 @@ jobs:
       params:
         format: oci
     - get: oci-build-task
-    - get: ubuntu-bionic
-      params:
-        format: oci
   - across:
     - var: task
-      values: []
+      values: [
+        badGeometry,
+        buffer,
+        filter,
+        reproject,
+      ]
     task: build-geocloud
     image: oci-build-task
     privileged: true
@@ -111,12 +131,12 @@ jobs:
       inputs:
       - name: geocloud
       - name: gdal-latest
-      - name: ubuntu-bionic
       outputs:
       - name: image
       params:
-        CONTEXT: geocloud/tasks/((.:task))
-        IMAGE_ARG_base_image: ubuntu-bionic/image.tar
+        CONTEXT: geocloud/tasks
+        IMAGE_ARG_base_image: gdal-latest/image.tar
         IMAGE_ARG_build_image: gdal-latest/image.tar
+        BUILD_ARG_task: ((.:task))
       run:
         path: build
