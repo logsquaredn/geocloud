@@ -1,6 +1,6 @@
 # geocloud
 
-## Development
+## Developing
 
 ### Prerequisites
 
@@ -14,14 +14,39 @@
 
 ### Running
 
-```sh
-# run inside of a container (recommended)
-docker build -t geocloud .
-docker run --rm --privileged --tmpfs /run geocloud
+#### Worker
 
+> _Note: when running the worker inside of a container, be sure not to override the default value for the_ `--containerd-root` _flag, as `/var/lib/geocloud/containerd` is the only non-overlayfs volume in the container_
+
+```sh
+# [recommended] run in container 
+docker build -t geocloud .
+docker run --rm --privileged --tmpfs /run geocloud worker
+```
+
+> _Note: when running the worker outside of a container, if your machine already has containerd running on it, the flags specified above may need to be altered depending on file locations on your machine and are recommended so as not to impact your containerd installation. See_ `geocloud worker --help` _for more info_
+
+```sh
 # run on host machine
-go build -o /bin/geocloud ./cmd/
+go build -o bin/geocloud ./cmd/ worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
 bin/geocloud
 ```
 
-> _Note: when running the worker outside of a container, some set up and additional flags may be required. see_ `geocloud worker --help` _for more info_
+### CI
+
+#### Set Pipeline
+
+```sh
+# login and set pipeline
+fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
+fly -t geocloud set-pipeline -p geocloud -c ci/pipeline.yml
+# set pipeline from a template
+# ytt -f ci/ | fly -t geocloud set-pipeline -p geocloud -c -
+```
+
+> _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template. e.g.:_
+
+```sh
+# set pipeline from a template using k14s/image
+docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/ | fly -t geocloud set-pipeline -p geocloud -c -
+```

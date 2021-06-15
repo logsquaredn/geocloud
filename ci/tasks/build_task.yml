@@ -1,0 +1,14 @@
+---
+platform: linux
+image_resource:
+    type: registry-image
+    source: { repository: vito/oci-build-task }
+inputs:
+- name: geocloud
+- name: gdal-latest
+outputs: [{ name: image }]
+params:
+    CONTEXT: geocloud/tasks
+    IMAGE_ARG_base_image: gdal-latest/image.tar
+    IMAGE_ARG_build_image: gdal-latest/image.tar
+run: { path: build }

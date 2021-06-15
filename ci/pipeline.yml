@@ -1,0 +1,128 @@
+jobs:
+- name: build-geocloud-image
+  serial: true
+  plan:
+  - in_parallel:
+    - get: containerd
+      params: { globs: [containerd-*-linux-amd64.tar.gz] }
+    - get: geocloud
+      trigger: true
+    - get: golang-latest
+      params: { format: oci }
+    - get: oci-build-task
+    - get: runc
+      params: { globs: [runc.amd64] }
+    - get: ubuntu-bionic
+      params: { format: oci }
+  - task: build-geocloud
+    image: oci-build-task
+    privileged: true
+    file: geocloud/ci/tasks/build_geocloud.yml
+  - put: geocloud-latest
+    params: { image: image/image.tar }
+    get_params: { skip_download: true }
+- name: build-task-images
+  serial: true
+  plan:
+  - in_parallel:
+    - get: gdal-latest
+      params: { format: oci }
+    - get: geocloud
+      trigger: true
+    - get: oci-build-task
+  - in_parallel:
+    - across:
+      - var: task
+        values: [buffer, filter, reproject]
+      task: build-task-with-same-folder-name
+      image: oci-build-task
+      privileged: true
+      file: geocloud/ci/tasks/build_task.yml
+      params:
+        BUILD_ARG_task: ((.:task))
+    - task: build-task-with-different-folder-name
+      image: oci-build-task
+      privileged: true
+      file: geocloud/ci/tasks/build_task.yml
+      params:
+        BUILD_ARG_task_folder: badGeometry
+        BUILD_ARG_task: removeBadGeometry
+
+groups: []
+
+resources:
+- name: containerd
+  type: github-release
+  icon: package-variant-closed
+  check_every: never
+  source:
+    owner: containerd
+    repository: containerd
+    access_token: ((bot_access_token))
+- name: gdal-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: osgeo/gdal
+    tag: latest
+- name: geocloud
+  type: git
+  icon: github
+  source:
+    uri: git@github.com:logsquaredn/geocloud.git
+    branch: ((branch))
+    private_key: ((geocloud_private_key))
+- name: geocloud-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    tag: latest
+#  - name: geocloud-pr
+#    type: github-pr
+#    icon: source-merge
+#    source:
+#      repository: logsquaredn/geocloud
+#      base_branch: ((branch))
+#      access_token: ((bot_access_token))
+- name: golang-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: golang
+    tag: latest
+- name: oci-build-task
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: vito/oci-build-task
+- name: runc
+  type: github-release
+  icon: package-variant-closed
+  check_every: never
+  source:
+    owner: opencontainers
+    repository: runc
+    access_token: ((bot_access_token))
+- name: ubuntu-bionic
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: ubuntu
+    tag: bionic
+
+resource_types:
+- name: github-pr
+  type: registry-image
+  source:
+    repository: teliaoss/github-pr-resource

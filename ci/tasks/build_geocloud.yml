@@ -1,0 +1,19 @@
+---
+platform: linux
+image_resource:
+    type: registry-image
+    source: { repository: vito/oci-build-task }
+inputs:
+- name: containerd
+- name: geocloud
+- name: golang-latest
+- name: runc
+- name: ubuntu-bionic
+outputs: [{ name: image }]
+params:
+    CONTEXT: geocloud
+    IMAGE_ARG_base_image: ubuntu-bionic/image.tar
+    IMAGE_ARG_build_image: golang-latest/image.tar
+    BUILD_ARG_containerd_release: assets/containerd.tgz
+    BUILD_ARG_runc_release: assets/runc
+run: { path: geocloud/ci/tasks/scripts/build_geocloud }
