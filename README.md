@@ -41,12 +41,12 @@ bin/geocloud
 fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
 fly -t geocloud set-pipeline -p geocloud -c ci/pipeline.yml
 # set pipeline from a template
-# ytt -f ci/ | fly -t geocloud set-pipeline -p geocloud -c -
+# ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c -
 ```
 
 > _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template. e.g.:_
 
 ```sh
 # set pipeline from a template using k14s/image
-docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/ | fly -t geocloud set-pipeline -p geocloud -c -
+docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c -
 ```
