@@ -5,6 +5,7 @@ image_resource:
     source: { repository: vito/oci-build-task }
 inputs:
 - name: geocloud
+- name: geocloud-version
 - name: gdal-latest
 outputs: [{ name: image }]
 params:
