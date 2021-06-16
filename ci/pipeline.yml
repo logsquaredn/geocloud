@@ -39,7 +39,7 @@ jobs:
   - in_parallel:
     - get: gdal-latest
       params: { format: oci }
-    - get: geocloud-tasks
+    - get: geocloud
       trigger: true
     - get: oci-build-task
   - in_parallel:
@@ -95,14 +95,6 @@ resources:
     uri: git@github.com:logsquaredn/geocloud.git
     branch: ((branch))
     ignore_paths: [ci/*, assets/*]
-    private_key: ((geocloud_private_key))
-- name: geocloud-tasks
-  type: git
-  icon: github
-  source:
-    uri: git@github.com:logsquaredn/geocloud.git
-    branch: ((branch))
-    paths: [tasks/*]
     private_key: ((geocloud_private_key))
 - name: geocloud-image
   type: registry-image
