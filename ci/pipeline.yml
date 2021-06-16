@@ -23,6 +23,7 @@ jobs:
     privileged: true
     file: geocloud/ci/tasks/build_geocloud.yml
     params: { BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version)) }
+    input_mapping: { build-image: golang-latest, base-image: ubuntu-bionic }
   - in_parallel:
     - put: geocloud-image
       params:
@@ -49,15 +50,13 @@ jobs:
       image: oci-build-task
       privileged: true
       file: geocloud/ci/tasks/build_task.yml
-      params:
-        BUILD_ARG_task: ((.:task))
+      params: { BUILD_ARG_task: ((.:task)) }
     - task: build-task-with-different-folder-name
       image: oci-build-task
       privileged: true
       file: geocloud/ci/tasks/build_task.yml
-      params:
-        BUILD_ARG_task_folder: badGeometry
-        BUILD_ARG_task: removeBadGeometry
+      params: { BUILD_ARG_task_folder: badGeometry, BUILD_ARG_task: removeBadGeometry }
+      input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
 # - name: set-pr-pipeline
 #   plan:
 #   - get: geocloud-pr

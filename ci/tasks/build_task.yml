@@ -5,11 +5,11 @@ image_resource:
     source: { repository: vito/oci-build-task }
 inputs:
 - name: geocloud
-- name: geocloud-version
-- name: gdal-latest
+- name: base-image
+- name: build-image
 outputs: [{ name: image }]
 params:
     CONTEXT: geocloud/tasks
-    IMAGE_ARG_base_image: gdal-latest/image.tar
-    IMAGE_ARG_build_image: gdal-latest/image.tar
+    IMAGE_ARG_base_image: base-image/image.tar
+    IMAGE_ARG_build_image: build-image/image.tar
 run: { path: build }

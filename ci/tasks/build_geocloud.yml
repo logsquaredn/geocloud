@@ -6,14 +6,21 @@ image_resource:
 inputs:
 - name: containerd
 - name: geocloud
-- name: golang-latest
+- name: build-image
 - name: runc
-- name: ubuntu-bionic
+- name: base-image
 outputs: [{ name: image }]
 params:
     CONTEXT: geocloud
-    IMAGE_ARG_base_image: ubuntu-bionic/image.tar
-    IMAGE_ARG_build_image: golang-latest/image.tar
+    IMAGE_ARG_base_image: base-image/image.tar
+    IMAGE_ARG_build_image: build-image/image.tar
     BUILD_ARG_containerd_release: assets/containerd.tgz
     BUILD_ARG_runc_release: assets/runc
-run: { path: geocloud/ci/tasks/scripts/build_geocloud }
+run:
+  path: sh
+  args:
+  - -ce
+  - |
+    cp containerd/containerd-*-linux-amd64.tar.gz geocloud/assets/containerd.tgz
+    cp runc/runc.amd64 geocloud/assets/runc
+    build
