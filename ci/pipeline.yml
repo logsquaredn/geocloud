@@ -51,6 +51,7 @@ jobs:
       privileged: true
       file: geocloud/ci/tasks/build_task.yml
       params: { BUILD_ARG_task: ((.:task)) }
+      input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
     - task: build-task-with-different-folder-name
       image: oci-build-task
       privileged: true
