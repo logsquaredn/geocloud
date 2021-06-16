@@ -14,9 +14,9 @@ RUN go mod download
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
 # when its dest is a remote .tgz, ADD does not unpack the tarball
-# when its dest is a local .tgz, the tarvall is unpacked
+# when its dest is a local .tgz, the tarball is unpacked
 ADD ${containerd_release} /tmp/
-# this conditional handles that difference in ADD's functionality
+# this conditional handles that difference in ADD's functionality between remote and local
 RUN TGZ=/tmp/$(basename ${containerd_release}); \
     if [ -f $TGZ ]; then \
         tar \
@@ -26,7 +26,7 @@ RUN TGZ=/tmp/$(basename ${containerd_release}); \
         && rm $TGZ; \
     fi; \
     mkdir /assets/ \
-        && mv /tmp/bin/* /assets/
+    && mv /tmp/bin/* /assets/
 
 FROM base_image AS runc
 ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.0-rc95/runc.amd64
@@ -41,7 +41,7 @@ COPY tasks/mock/ tasks/mock/
 COPY worker/ worker/
 COPY *.go .
 ARG ldflags
-RUN go build -ldflags "$ldflags" -o /assets/geocloud ./cmd/
+RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
 
 FROM base_image AS geocloud
 COPY --from=build /assets/ /usr/local/geocloud/bin/
@@ -56,4 +56,3 @@ RUN apt-get update \
         pigz \
     && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["dumb-init", "geocloud"]
-CMD ["--help"]

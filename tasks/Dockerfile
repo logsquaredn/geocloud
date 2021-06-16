@@ -3,7 +3,6 @@ ARG build_image=osgeo/gdal:latest
 
 # does base_image need libc6-dev?
 FROM ${base_image} AS base_image
-ENV DEBIAN_FRONTEND=noninteractive
 
 FROM ${build_image} AS build_image
 WORKDIR /src/
@@ -25,4 +24,4 @@ RUN mkdir /assets \
 
 FROM base_image AS task
 COPY --from=build /assets/ /usr/local/bin
-ENTRYPOINT [${task}]
+ENTRYPOINT ["${task}"]
