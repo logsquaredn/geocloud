@@ -13,8 +13,8 @@ RUN go mod download
 
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
-# when its dest is a remote .tgz, ADD does not unpack the file
-# when its dest is a local .tgz, it is unpacked as a directory
+# when its dest is a remote .tgz, ADD does not unpack the tarball
+# when its dest is a local .tgz, the tarvall is unpacked
 ADD ${containerd_release} /tmp/
 # this conditional handles that difference in ADD's functionality
 RUN TGZ=/tmp/$(basename ${containerd_release}); \
@@ -26,7 +26,7 @@ RUN TGZ=/tmp/$(basename ${containerd_release}); \
         && rm $TGZ; \
     fi; \
     mkdir /assets/ \
-    && mv /tmp/bin/* /assets/
+        && mv /tmp/bin/* /assets/
 
 FROM base_image AS runc
 ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.0-rc95/runc.amd64
@@ -40,7 +40,8 @@ COPY runners/ runners/
 COPY tasks/mock/ tasks/mock/
 COPY worker/ worker/
 COPY *.go .
-RUN go build -o /assets/geocloud ./cmd/
+ARG ldflags
+RUN go build -ldflags "$ldflags" -o /assets/geocloud ./cmd/
 
 FROM base_image AS geocloud
 COPY --from=build /assets/ /usr/local/geocloud/bin/

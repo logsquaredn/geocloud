@@ -47,13 +47,13 @@ jobs:
       params:
         BUILD_ARG_task_folder: badGeometry
         BUILD_ARG_task: removeBadGeometry
-- name: set-pr-pipeline
-  plan:
-  - get: geocloud-pr
-    trigger: true
-  - load_var: metadata
-    file: geocloud-pr/.git/resource/metadata.json
-    reveal: true
+# - name: set-pr-pipeline
+#   plan:
+#   - get: geocloud-pr
+#     trigger: true
+#   - load_var: metadata
+#     file: geocloud-pr/.git/resource/metadata.json
+#     reveal: true
 #   - set_pipeline: pr
 #     file: geocloud-pr/ci/pipeline.yml
 #     instance_vars:
@@ -93,13 +93,13 @@ resources:
     password: ((docker_password))
     repository: logsquaredn/geocloud
     tag: latest
-- name: geocloud-pr
-  type: github-pr
-  icon: source-merge
-  source:
-    repository: logsquaredn/geocloud
-    base_branch: ((branch))
-    access_token: ((bot_access_token))
+# - name: geocloud-pr
+#   type: github-pr
+#   icon: source-merge
+#   source:
+#     repository: logsquaredn/geocloud
+#     base_branch: ((branch))
+#     access_token: ((bot_access_token))
 - name: golang-latest
   type: registry-image
   icon: docker
