@@ -24,12 +24,12 @@ docker build -t geocloud .
 docker run --rm --privileged --tmpfs /run geocloud worker
 ```
 
-> _Note: when running the worker outside of a container, if your machine already has containerd running on it, the flags specified above may need to be altered depending on file locations on your machine and are recommended so as not to impact your containerd installation. See_ `geocloud worker --help` _for more info_
+> _Note: when running the worker outside of a container, if your machine already has containerd running on it, the flags specified below may need to be altered depending on file locations on your machine and are recommended so as not to impact your containerd installation. See_ `geocloud worker --help` _for more info_
 
 ```sh
 # run on host machine
-go build -o bin/geocloud ./cmd/ worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
-bin/geocloud
+go build -o bin/geocloud ./cmd/
+bin/geocloud worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
 ```
 
 ### CI
