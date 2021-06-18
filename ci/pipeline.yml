@@ -42,22 +42,19 @@ jobs:
     - get: geocloud
       trigger: true
     - get: oci-build-task
-  - in_parallel:
-    - across:
-      - var: task
-        values: [buffer, filter, reproject]
-      task: build-task-with-same-folder-name
-      image: oci-build-task
-      privileged: true
-      file: geocloud/ci/tasks/build_task.yml
-      params: { BUILD_ARG_task: ((.:task)) }
-      input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
-    - task: build-task-with-different-folder-name
-      image: oci-build-task
-      privileged: true
-      file: geocloud/ci/tasks/build_task.yml
-      params: { BUILD_ARG_task_folder: badGeometry, BUILD_ARG_task: removeBadGeometry }
-      input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
+  - across:
+    - var: task
+      values:
+      - { folder: buffer, name: buffer }
+      - { folder: filter, name: filter }
+      - { folder: reproject, name: reproject }
+      - { folder: badGeometry, name: removeBadGeometry }
+    task: build-task
+    image: oci-build-task
+    privileged: true
+    file: geocloud/ci/tasks/build_task.yml
+    params: { BUILD_ARG_task_folder: ((.:task.folder)), BUILD_ARG_task: ((.:task.name)) }
+    input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
 # - name: set-pr-pipeline
 #   plan:
 #   - get: geocloud-pr
