@@ -70,7 +70,9 @@ jobs:
 #     instance_vars:
 #       branch: ((branch)) # ((.:metadata[3].value))
 
-groups: []
+groups:
+- name: all
+  jobs: [build-geocloud-image, build-task-images]
 
 resources:
 - name: containerd
@@ -139,6 +141,7 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: vito/oci-build-task
+    tag: latest
 - name: runc
   type: github-release
   icon: package-variant-closed
