@@ -10,6 +10,13 @@ WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
+COPY api/ api/
+COPY cmd/ cmd/
+COPY shared/ shared/
+COPY tasks/mock/ tasks/mock/
+COPY tools/ tools/
+COPY worker/ worker/
+COPY *.go .
 
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
@@ -28,13 +35,15 @@ ADD ${runc_release} /assets/runc
 RUN chmod +x /assets/runc
 
 FROM build_image AS build
-COPY api/ api/
-COPY cmd/ cmd/
-COPY shared/ shared/
-COPY tasks/mock/ tasks/mock/
-COPY worker/ worker/
-COPY *.go .
 RUN go build -o /assets/geocloud ./cmd/
+
+FROM build_image as test
+RUN set -e; for pkg in $(go list ./...); do \
+		go test -o "/tests/$(basename $pkg).test" -c $pkg; \
+	done
+RUN set -e; for test in /tests/*.test; do \
+		$test -ginkgo.v; \
+	done
 
 FROM base_image AS geocloud
 RUN apt-get update \

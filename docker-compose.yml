@@ -4,12 +4,12 @@ services:
   api:
     build: .
     command: api
-    depends_on:
-    - postgres
+    networks: [api]
+    depends_on: [postgres]
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
-    ports:
-    - 5432:5432
+    ports: [5432:5432]
+    networks: [api, worker]
     environment:
       POSTGRES_DB: geocloud
       POSTGRES_USER: geocloud
@@ -17,12 +17,15 @@ services:
   worker:
     build: .
     command: worker
-    depends_on:
-    - postgres
-    - registry-mirror
-  registry-mirror:
+    networks: [worker]
+    depends_on: [postgres, registry]
+  registry:
     image: registry:${REGISTRY_TAG:-2}
-    ports:
-    - 5000:5000
+    ports: [5000:5000]
     volumes:
-    - ./registry-mirror/config.yml:/etc/docker/registry/config.yml:ro
+    - registry/config.yml:/etc/docker/registry/config.yml:ro
+    networks: [worker]
+
+networks:
+  api:
+  worker:
