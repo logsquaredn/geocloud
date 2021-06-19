@@ -41,12 +41,9 @@ ADD ${runc_release} /assets/runc
 RUN chmod +x /assets/runc
 
 FROM build_image AS build
-COPY api/ api/
-COPY cmd/ cmd/
-COPY runners/ runners/
-COPY tasks/mock/ tasks/mock/
-COPY worker/ worker/
-COPY *.go .
+ARG ldflags
+RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
+
 
 FROM build_image as test
 RUN set -e; for pkg in $(go list ./...); do \
