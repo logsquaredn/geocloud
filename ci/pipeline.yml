@@ -1,0 +1,163 @@
+jobs:
+- name: build-geocloud-image
+  serial: true
+  plan:
+  - in_parallel:
+    - get: containerd
+      params: { globs: [containerd-*-linux-amd64.tar.gz] }
+    - get: geocloud
+      trigger: true
+    - get: geocloud-version
+      params: { bump: patch }
+    - get: golang-latest
+      params: { format: oci }
+    - get: oci-build-task
+    - get: runc
+      params: { globs: [runc.amd64] }
+    - get: ubuntu-bionic
+      params: { format: oci }
+  - load_var: version
+    file: geocloud-version/version
+  - task: build-geocloud
+    image: oci-build-task
+    privileged: true
+    file: geocloud/ci/tasks/build_geocloud.yml
+    params: { BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version)) }
+    input_mapping: { build-image: golang-latest, base-image: ubuntu-bionic }
+  - in_parallel:
+    - put: geocloud-image
+      params:
+        image: image/image.tar
+        version: ((.:version))
+        bump_aliases: true
+      get_params: { skip_download: true }
+    - put: geocloud-version
+      params: { file: geocloud-version/version }
+- name: build-task-images
+  serial: true
+  plan:
+  - in_parallel:
+    - get: gdal-latest
+      params: { format: oci }
+    - get: geocloud
+      trigger: true
+    - get: oci-build-task
+  - across:
+    - var: task
+      values:
+      - { folder: buffer, name: buffer }
+      - { folder: filter, name: filter }
+      - { folder: reproject, name: reproject }
+      - { folder: badGeometry, name: removeBadGeometry }
+    task: build-task
+    image: oci-build-task
+    privileged: true
+    file: geocloud/ci/tasks/build_task.yml
+    params: { BUILD_ARG_task_folder: ((.:task.folder)), BUILD_ARG_task: ((.:task.name)) }
+    input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
+# - name: set-pr-pipeline
+#   plan:
+#   - get: geocloud-pr
+#     trigger: true
+#   - load_var: metadata
+#     file: geocloud-pr/.git/resource/metadata.json
+#     reveal: true
+#   - set_pipeline: pr
+#     file: geocloud-pr/ci/pipeline.yml
+#     instance_vars:
+#       branch: ((branch)) # ((.:metadata[3].value))
+
+groups:
+- name: all
+  jobs: [build-geocloud-image, build-task-images]
+
+resources:
+- name: containerd
+  type: github-release
+  icon: package-variant-closed
+  check_every: never
+  source:
+    owner: containerd
+    repository: containerd
+    access_token: ((bot_access_token))
+- name: gdal-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: osgeo/gdal
+    tag: latest
+- name: geocloud
+  type: git
+  icon: github
+  source:
+    uri: git@github.com:logsquaredn/geocloud.git
+    branch: ((branch))
+    ignore_paths: [ci/*, assets/*]
+    private_key: ((geocloud_private_key))
+- name: geocloud-image
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+# - name: geocloud-pr
+#   type: github-pr
+#   icon: source-merge
+#   source:
+#     repository: logsquaredn/geocloud
+#     base_branch: ((branch))
+#     access_token: ((bot_access_token))
+- name: geocloud-version
+  type: semver
+  icon: tag
+  check_every: never
+  source:
+    driver: git
+    uri: git@github.com:logsquaredn/geocloud.git
+    branch: version
+    file: version
+    commit_message: "%version%"
+    # see https://github.com/concourse/semver-resource/issues/115
+    private_key: |
+      ((geocloud_private_key))
+- name: golang-latest
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: golang
+    tag: latest
+- name: oci-build-task
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: vito/oci-build-task
+    tag: latest
+- name: runc
+  type: github-release
+  icon: package-variant-closed
+  check_every: never
+  source:
+    owner: opencontainers
+    repository: runc
+    access_token: ((bot_access_token))
+- name: ubuntu-bionic
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: ubuntu
+    tag: bionic
+
+resource_types:
+- name: github-pr
+  type: registry-image
+  source:
+    repository: teliaoss/github-pr-resource

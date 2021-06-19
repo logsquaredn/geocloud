@@ -1,0 +1,15 @@
+---
+platform: linux
+image_resource:
+    type: registry-image
+    source: { repository: vito/oci-build-task }
+inputs:
+- name: geocloud
+- name: base-image
+- name: build-image
+outputs: [{ name: image }]
+params:
+    CONTEXT: geocloud/tasks
+    IMAGE_ARG_base_image: base-image/image.tar
+    IMAGE_ARG_build_image: build-image/image.tar
+run: { path: build }
