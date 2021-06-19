@@ -2,11 +2,20 @@
 #define SHARED_H
 
 #include "gdal.h"
+#include <ogr_srs_api.h>
 
-int openVectorDataset(GDALDatasetH *dataset, const char *filePath);
-const char *getDriverName(const char *filePath);
-int getDriver(GDALDriverH **driver, const char *driverName);
-int deleteExistingDataset(GDALDriverH driver, const char* filePath);
-int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *filePath);
+struct GDALHandles {
+    GDALDatasetH *inputDataset;
+    GDALDatasetH *outputDataset;
+    OGRLayerH *inputLayer;
+    OGRSpatialReferenceH *inputSpatialRef;
+    OGRLayerH *outputLayer;
+    OGRFeatureDefnH *outputFeatureDefn;
+};
+
+void error(const char *message);
+void fatalError();
+int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputFilePath);
+int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
 
 #endif

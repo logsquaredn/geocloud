@@ -6,3 +6,7 @@
 
 # build
 bin/
+
+# ci
+assets/*
+!assets/.gitignore
