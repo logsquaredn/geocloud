@@ -170,7 +170,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 			return 1;
 		}
         gdalHandles->outputFeatureDefn = outputFeatureDefn;
-    } // TODO communicate layers < 1
+    }
 
     return 0;
 }
