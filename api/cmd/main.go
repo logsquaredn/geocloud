@@ -4,23 +4,21 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jessevdk/go-flags"
 	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/geocloud/api/apicmd"
 	"github.com/logsquaredn/geocloud/shared"
+	"github.com/jessevdk/go-flags"
 )
 
 func main() {
-	var cmd GeocloudCmd
-	version := func() {
+	var cmd apicmd.APICmd
+	cmd.Version = func() {
 		_, err := fmt.Println(geocloud.Version)
 		if err != nil {
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
-	cmd.Version = version
-	cmd.API.Version = version
-	cmd.Worker.Version = version
 
 	shared.SetupLogging()
 	parser := flags.NewParser(&cmd, flags.HelpFlag)

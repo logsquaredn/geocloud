@@ -3,29 +3,55 @@ package shared
 import (
 	"os"
 	"os/exec"
+
+	"github.com/rs/zerolog/log"
+	"github.com/tedsuo/ifrit"
 )
 
 type CmdRunner struct {
-	Cmd *exec.Cmd
+	cmd *exec.Cmd
+}
+
+var _ ifrit.Runner = (*CmdRunner)(nil)
+
+type CmdRunnerOpt func (c *CmdRunner)
+
+func NewCmdRunner(opts ...CmdRunnerOpt) (*CmdRunner, error) {
+	c := &CmdRunner{}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c, nil
+}
+
+func WithCmd(cmd *exec.Cmd) CmdRunnerOpt {
+	return func (c *CmdRunner) {
+		c.cmd = cmd
+	}
 }
 
 func (r *CmdRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	err := r.Cmd.Start()
+	log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("starting cmd")
+	err := r.cmd.Start()
 	if err != nil {
 		return err
 	}
 
 	wait := make(chan error, 1)
 	go func() {
-		wait <- r.Cmd.Wait()
+		log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("waiting on cmd to return")
+		wait<- r.cmd.Wait()
 	}()
 
+	log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case signal := <-signals:
-			r.Cmd.Process.Signal(signal)
+			log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner", "signal":signal.String() }).Msg("cmd processing signal")
+			r.cmd.Process.Signal(signal)
 		case err := <-wait:
+			log.Error().Err(err).Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msgf("received error from cmd")
 			return err
 		}
 	}

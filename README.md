@@ -17,7 +17,7 @@
 
 #### Worker
 
-> _Note: when running the worker inside of a container, be sure not to override the default value for the_ `--containerd-root` _flag, as_ `/var/lib/geocloud/containerd` _is the only non-overlayfs volume in the container, making it the only volume suitable for containerd's root directory_
+> _Note: when running the worker inside of a container, be sure not to override the default value for the_ `--containerd-root` _flag, as_ `/var/lib/geocloud/containerd` _is the only non-overlayfs volume in the container, making it the only volume suitable to be containerd's root directory_
 
 ```sh
 # [recommended] run in container 
@@ -47,7 +47,7 @@ fly -t geocloud set-pipeline -p geocloud -c ci/pipeline.yml -v branch=my-branch
 ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
 ```
 
-> _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template. e.g.:_
+> _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
 
 ```sh
 # set pipeline from template using k14s/image

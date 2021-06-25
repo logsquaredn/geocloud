@@ -42,27 +42,31 @@ RUN chmod +x /assets/runc
 
 FROM build_image AS build
 ARG ldflags
-RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
+RUN go build -ldflags "${ldflags}" -o /assets/api ./api/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/worker ./worker/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
 
-
-FROM build_image as test
-RUN set -e; for pkg in $(go list ./...); do \
-		go test -o "/tests/$(basename $pkg).test" -c $pkg; \
-	done
-RUN set -e; for test in /tests/*.test; do \
-		$test -ginkgo.v; \
-	done
-
-FROM base_image AS geocloud
+FROM base_image AS api
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /assets/api /usr/local/geocloud/bin/geocloud
+ENV PATH=/usr/local/geocloud/bin:$PATH
+ENTRYPOINT ["dumb-init", "geocloud"]
+
+FROM api AS worker
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
         pigz \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=build /assets/ /usr/local/geocloud/bin/
+COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
 COPY --from=containerd /assets/ /usr/local/geocloud/bin/
 COPY --from=runc /assets/ /usr/local/geocloud/bin/
-ENV PATH=/usr/local/geocloud/bin:$PATH
 VOLUME /var/lib/geocloud/containerd
-ENTRYPOINT ["dumb-init", "geocloud"]
+
+FROM worker AS geocloud
+COPY --from=build /assets/geocloud /usr/local/geocloud/bin/geocloud
+
+FROM geocloud AS final
