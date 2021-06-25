@@ -67,10 +67,5 @@ func (cmd *WorkerCmd) containerd() (ifrit.Runner, error) {
 	containerd.Stdout = os.Stdout
 	containerd.Stderr = os.Stderr
 
-	runner, err := shared.NewCmdRunner(shared.WithCmd(containerd))
-	if err != nil {
-		return nil, err
-	}
-
-	return runner, nil
+	return shared.NewCmdRunner(shared.WithCmd(containerd))
 }
