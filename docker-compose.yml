@@ -8,6 +8,8 @@ services:
     - postgres
     networks:
     - api
+    ports:
+    - 8080:8080
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     ports:

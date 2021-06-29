@@ -1,14 +1,14 @@
 package apicmd
 
 import (
-	"database/sql/driver"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type APICmd struct { // variable that ends up getting populated from arguments from the command line
@@ -17,15 +17,16 @@ type APICmd struct { // variable that ends up getting populated from arguments f
 		Username string `long:"username" description:"postgres username"`
 		Port     int    `long:"port" description:"postgres port"`
 		Host     string `long:"host" description:"postgres host"`
-	} `group:"postgres" namespace:"postgres"`	
+	} `group:"postgres" namespace:"postgres"`
 }
 
 type Handler struct {
-	conn driver.Conn
+	db *sql.DB
 }
 
 func (cmd *APICmd) getDBPath() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d", cmd.Postgres.Username, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", cmd.Postgres.Username, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
+
 }
 func isJSON(jsBytes []byte) bool {
 	var js map[string]interface{}
@@ -61,22 +62,27 @@ func (h *Handler) status(ctx *gin.Context) {
 	if len(id) < 1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
 	}
-	
-	stmt, err := h.conn.Prepare("SELECT job_name FROM job WHERE job_id = 1")
+	var scannedId string
+	var scannedJobName string
+	var scannedStatus string
+
+	err := h.db.QueryRow("SELECT * FROM job WHERE job_id = $1", id).Scan(&scannedId, &scannedJobName, &scannedStatus)
 	if err != nil {
-		// send error idk how yet
+		fmt.Println(err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query database"})
 	}
 
-	fmt.Print(stmt)
+	ctx.JSON(http.StatusOK, gin.H{"job_id": scannedId, "job_name": scannedJobName, "job_status": scannedStatus})
+
 }
 func (cmd *APICmd) Execute(args []string) error {
-	conn, err := pq.Open(cmd.getDBPath())
+	db, err := sql.Open("postgres", cmd.getDBPath())
 	if err != nil {
 		return err
 	}
 
-	h := &Handler {
-		conn: conn,
+	h := &Handler{
+		db: db,
 	}
 
 	router := gin.Default() // creating an instance of gin web framework. router = manages paths, routes a path to the request it's requested to.
