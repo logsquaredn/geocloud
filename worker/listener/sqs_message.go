@@ -10,3 +10,7 @@ type SQSMessage struct {
 }
 
 var _ worker.Message = (*SQSMessage)(nil)
+
+func (m *SQSMessage) ID() string {
+	return *m.msg.Body
+}

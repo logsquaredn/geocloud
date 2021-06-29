@@ -8,6 +8,8 @@ import (
 	"github.com/tedsuo/ifrit"
 )
 
+type f = map[string]interface{}
+
 type CmdRunner struct {
 	cmd *exec.Cmd
 }
@@ -15,6 +17,8 @@ type CmdRunner struct {
 var _ ifrit.Runner = (*CmdRunner)(nil)
 
 type CmdRunnerOpt func (c *CmdRunner)
+
+const runner = "CmdRunner"
 
 func NewCmdRunner(opts ...CmdRunnerOpt) (*CmdRunner, error) {
 	c := &CmdRunner{}
@@ -31,7 +35,7 @@ func WithCmd(cmd *exec.Cmd) CmdRunnerOpt {
 }
 
 func (r *CmdRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("starting cmd")
+	log.Debug().Fields(f{ "runner":runner }).Msg("starting cmd")
 	err := r.cmd.Start()
 	if err != nil {
 		return err
@@ -39,19 +43,19 @@ func (r *CmdRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	wait := make(chan error, 1)
 	go func() {
-		log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("waiting on cmd to return")
+		log.Debug().Fields(f{ "runner":runner }).Msg("waiting on cmd to return")
 		wait<- r.cmd.Wait()
 	}()
 
-	log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msg("ready")
+	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case signal := <-signals:
-			log.Debug().Fields(map[string]interface{}{ "runner":"CmdRunner", "signal":signal.String() }).Msg("cmd processing signal")
+			log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("cmd processing signal")
 			r.cmd.Process.Signal(signal)
 		case err := <-wait:
-			log.Error().Err(err).Fields(map[string]interface{}{ "runner":"CmdRunner" }).Msgf("received error from cmd")
+			log.Error().Err(err).Fields(f{ "runner":runner }).Msgf("received error from cmd")
 			return err
 		}
 	}

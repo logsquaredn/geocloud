@@ -11,7 +11,6 @@ import (
 
 type SQSListenerOpt func(l *SQSListener)
 
-
 func WithCallback(callback SQSListenerCallback) SQSListenerOpt {
 	return func(l *SQSListener) {
 		l.callback = callback
@@ -29,7 +28,6 @@ func WithHttpClient(client *http.Client) SQSListenerOpt {
 		l.client = client
 	}
 }
-
 
 func WithQueueNames(names ...string) SQSListenerOpt {
 	return func(l *SQSListener) {

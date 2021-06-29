@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type f = map[string]interface{}
+
 type SQSListenerCallback func (worker.Message) error
 
 type SQSListener struct {
@@ -30,6 +32,8 @@ type SQSListener struct {
 }
 
 var _ worker.Listener = (*SQSListener)(nil)
+
+const runner = "SQSListener"
 
 func New(opts ...SQSListenerOpt) (*SQSListener, error) {
 	l := &SQSListener{}
@@ -70,7 +74,7 @@ func New(opts ...SQSListenerOpt) (*SQSListener, error) {
 var maxNumberOfMessages int64 = 10
 
 func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("converting queue names to urls")
+	log.Debug().Fields(f{ "runner":runner }).Msg("converting queue names to urls")
 	for _, name := range r.names {
 		output, err := r.svc.GetQueueUrl(&sqs.GetQueueUrlInput{ QueueName: &name })
 		if err != nil {
@@ -85,7 +89,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		return fmt.Errorf("no queue names or urls provided")
 	}
 
-	log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("shuffling queues")
+	log.Debug().Fields(f{ "runner":runner }).Msg("shuffling queues")
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(q, func(i, j int) {
 		r.queues[i], r.queues[j] = r.queues[j], r.queues[i]
@@ -96,13 +100,13 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		max = int64(time.Hour.Seconds()*12)
 		min = int64(time.Minute.Seconds()*5)
 	)
-	log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msgf("given visibility %ds", visibility)
+	log.Debug().Fields(f{ "runner":runner }).Msgf("given visibility %ds", visibility)
 	if visibility < min {
 		visibility = min
 	} else if visibility > max {
 		visibility = max
 	}
-	log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msgf("using visibility %ds", visibility)
+	log.Debug().Fields(f{ "runner":runner }).Msgf("using visibility %ds", visibility)
 
 	tick := time.NewTicker(time.Duration(r.vis) * time.Second)
 	defer tick.Stop()
@@ -111,7 +115,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	go func() {
 		for i := 0;; i = (i+1)%q {
 			url := r.queues[i]
-			log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener", "url":url }).Msg("receiving messages from queue")
+			log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("receiving messages from queue")
 			output, err := r.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 				MaxNumberOfMessages: &maxNumberOfMessages,
 				QueueUrl: &url,
@@ -138,7 +142,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 
 			done := make(chan struct{}, 1)
 			go func() {
-				log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("processing messages")
+				log.Debug().Fields(f{ "runner":runner }).Msg("processing messages")
 				for _, msg := range messages {
 					err = r.callback(&SQSMessage{ msg: msg })
 					if err != nil {
@@ -153,7 +157,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 				select {
 				case <-tick.C:
 					if len(entriesVis) > 0 {
-						log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener", "url":url }).Msg("changing messages visibility")
+						log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("changing messages visibility")
 						_, err = r.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
 							Entries: entriesVis,
 							QueueUrl: &url,
@@ -163,10 +167,10 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 						}
 					}
 				case <-done:
-					log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("done processing")
+					log.Debug().Fields(f{ "runner":runner }).Msg("done processing")
 					processing = false
 					if len(entriesDel) > 0 {
-						log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener", "url":url }).Msg("deleting messages")
+						log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("deleting messages")
 						r.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 							Entries: entriesDel,
 							QueueUrl: &url,
@@ -177,14 +181,14 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		}
 	}()
 
-	log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("ready")
+	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
 	close(ready)
 	select {
 	case err := <-wait:
-		log.Error().Err(err).Fields(map[string]interface{}{ "runner":"SQSListener" }).Msg("received error")
+		log.Error().Err(err).Fields(f{ "runner":runner }).Msg("received error")
 		return err
 	case signal := <-signals:
-		log.Debug().Fields(map[string]interface{}{ "runner":"SQSListener", "signal":signal.String() }).Msg("received signal")
+		log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")
 		return nil
 	}
 }
