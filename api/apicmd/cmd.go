@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type APICmd struct { // variable that ends up getting populated from arguments from the command line
+type APICmd struct {
 	Postgres struct {
 		Password string `long:"password" description:"postgres password"`
 		Username string `long:"username" description:"postgres username"`
@@ -20,11 +20,11 @@ type APICmd struct { // variable that ends up getting populated from arguments f
 	} `group:"postgres" namespace:"postgres"`
 }
 
-type Handler struct {
+type ConnectionHandler struct {
 	db *sql.DB
 }
 
-func (cmd *APICmd) getDBPath() string {
+func (cmd *APICmd) getDBConnectionString() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", cmd.Postgres.Username, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
 
 }
@@ -33,7 +33,7 @@ func isJSON(jsBytes []byte) bool {
 	return json.Unmarshal(jsBytes, &js) == nil
 }
 
-func (h *Handler) buffer(ctx *gin.Context) { // gin.context -> contains information from the request we recieve.
+func (connHandler *ConnectionHandler) buffer(ctx *gin.Context) {
 	distance := ctx.Query("distance")
 	if len(distance) < 1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'distance' required"})
@@ -52,46 +52,43 @@ func (h *Handler) buffer(ctx *gin.Context) { // gin.context -> contains informat
 
 }
 
-/*
-pass us a job id, use the job id to get information from the database.
-1. get the job id from the query parameters and validate that it's not empty.
-	- if empty, return a 400.
-*/
-func (h *Handler) status(ctx *gin.Context) {
+func (connHandler *ConnectionHandler) status(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
 	}
-	var scannedId string
-	var scannedJobName string
-	var scannedStatus string
+	var status string
 
-	err := h.db.QueryRow("SELECT * FROM job WHERE job_id = $1", id).Scan(&scannedId, &scannedJobName, &scannedStatus)
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query database"})
+	row := connHandler.db.QueryRow("SELECT job_status FROM job WHERE job_id = $1", id)
+	err := row.Scan(&status)
+
+	if err == sql.ErrNoRows {
+		ctx.Status(http.StatusNotFound)
+		return
+	} else if err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return
 	}
-
-	ctx.JSON(http.StatusOK, gin.H{"job_id": scannedId, "job_name": scannedJobName, "job_status": scannedStatus})
+	ctx.JSON(http.StatusOK, gin.H{"status": status})
 
 }
 func (cmd *APICmd) Execute(args []string) error {
-	db, err := sql.Open("postgres", cmd.getDBPath())
+	db, err := sql.Open("postgres", cmd.getDBConnectionString())
 	if err != nil {
 		return err
 	}
 
-	h := &Handler{
+	connHandler := &ConnectionHandler{
 		db: db,
 	}
 
-	router := gin.Default() // creating an instance of gin web framework. router = manages paths, routes a path to the request it's requested to.
+	router := gin.Default()
 
-	v1_job := router.Group("/api/v1/job") // everything contained in this group will be under the specified path in the api.
+	v1_job := router.Group("/api/v1/job")
 	{
-		v1_job.POST("/buffer", h.buffer) // first endpoint, will buffer the endpoint it's given. "/api/v1/job/buffer"
-		v1_job.GET("/status", h.status)
+		v1_job.POST("/buffer", connHandler.buffer)
+		v1_job.GET("/status", connHandler.status)
 	}
 
-	return router.Run() // start's the web application and will run infinitely until it's killed.
+	return router.Run()
 }
