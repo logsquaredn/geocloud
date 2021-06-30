@@ -23,7 +23,8 @@ func main() {
 	shared.SetupLogging()
 	parser := flags.NewParser(&cmd, flags.HelpFlag)
 	parser.NamespaceDelimiter = "-"
-	if _, err := parser.Parse(); err != nil {
+	args, err := parser.Parse()
+	if err != nil {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			fmt.Println(err)
 		} else {
@@ -31,5 +32,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	cmd.Execute(args)
 	os.Exit(0)
 }

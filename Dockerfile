@@ -18,6 +18,22 @@ COPY tools/ tools/
 COPY worker/ worker/
 COPY *.go .
 
+FROM build_image AS build
+ARG ldflags
+RUN go build -ldflags "${ldflags}" -o /assets/api ./api/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/worker ./worker/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
+
+FROM base_image AS api
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /assets/api /usr/local/geocloud/bin/geocloud
+ENV PATH=/usr/local/geocloud/bin:$PATH
+ENTRYPOINT ["dumb-init", "geocloud"]
+
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
 # when its dest is a remote .tgz, ADD does not unpack the tarball
@@ -40,22 +56,6 @@ ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.0
 ADD ${runc_release} /assets/runc
 RUN chmod +x /assets/runc
 
-FROM build_image AS build
-ARG ldflags
-RUN go build -ldflags "${ldflags}" -o /assets/api ./api/cmd/ \
-    && go build -ldflags "${ldflags}" -o /assets/worker ./worker/cmd/ \
-    && go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
-
-FROM base_image AS api
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        dumb-init \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=build /assets/api /usr/local/geocloud/bin/geocloud
-ENV PATH=/usr/local/geocloud/bin:$PATH
-ENTRYPOINT ["dumb-init", "geocloud"]
-
 FROM api AS worker
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -65,6 +65,7 @@ COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
 COPY --from=containerd /assets/ /usr/local/geocloud/bin/
 COPY --from=runc /assets/ /usr/local/geocloud/bin/
 VOLUME /var/lib/geocloud/containerd
+ENV GEOCLOUD_CONTAINERD_ROOT /var/lib/geocloud/containerd
 
 FROM worker AS geocloud
 COPY --from=build /assets/geocloud /usr/local/geocloud/bin/geocloud

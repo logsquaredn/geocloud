@@ -15,9 +15,11 @@
 
 ### Running
 
+
+
 #### Worker
 
-> _Note: when running the worker inside of a container, be sure not to override the default value for the_ `--containerd-root` _flag, as_ `/var/lib/geocloud/containerd` _is the only non-overlayfs volume in the container, making it the only volume suitable to be containerd's root directory_
+> _Note: when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
 
 ```sh
 # [recommended] run in container 
