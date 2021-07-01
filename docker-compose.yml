@@ -1,11 +1,13 @@
-version: '3'
+version: '3.4' # version 3.4 adds service.build.target support
 
 services:
-  api:
-    build: .
-    command: api
-    networks: [api]
-    depends_on: [postgres]
+  # api:
+  #   build:
+  #     context: .
+  #     target: api
+  #   command: api --postgres-host postgres --postgres-password pwd
+  #   networks: [api]
+  #   depends_on: [postgres]
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     ports: [5432:5432]
@@ -15,15 +17,18 @@ services:
       POSTGRES_USER: geocloud
       POSTGRES_PASSWORD: pwd
   worker:
-    build: .
-    command: worker
+    build:
+      context: .
+      target: worker
+    privileged: true
+    command: --postgres-host postgres --postgres-password pwd
     networks: [worker]
-    depends_on: [postgres, registry]
-  registry:
-    image: registry:${REGISTRY_TAG:-2}
-    ports: [5000:5000]
-    volumes: [registry/config.yml:/etc/docker/registry/config.yml:ro]
-    networks: [worker]
+    depends_on: [postgres] # , registry]
+  # registry:
+  #   image: registry:${REGISTRY_TAG:-2}
+  #   ports: [5000:5000]
+  #   volumes: [registry/config.yml:/etc/docker/registry/config.yml:ro]
+  #   networks: [worker]
 
 networks:
   api:
