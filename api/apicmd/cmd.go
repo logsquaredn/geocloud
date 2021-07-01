@@ -11,13 +11,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Postgres struct {
+	Host     string `long:"host" description:"Postgres host"`
+	Port     int    `long:"port" default:"5432" description:"Postgres port"`
+	User     string `long:"user" default:"geocloud" description:"Postgres username"`
+	Password string `long:"password" description:"Postgres password"`
+}
+
 type APICmd struct {
-	Postgres struct {
-		Password string `long:"password" description:"postgres password"`
-		Username string `long:"username" description:"postgres username"`
-		Port     int    `long:"port" description:"postgres port"`
-		Host     string `long:"host" description:"postgres host"`
-	} `group:"postgres" namespace:"postgres"`
+	Version func() `short:"v" long:"version" description:"Print the version"`
+	
+	Postgres `group:"postgres" namespace:"postgres"`
 }
 
 type ConnectionHandler struct {
@@ -25,9 +29,9 @@ type ConnectionHandler struct {
 }
 
 func (cmd *APICmd) getDBConnectionString() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", cmd.Postgres.Username, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
-
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", cmd.Postgres.User, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
 }
+
 func isJSON(jsBytes []byte) bool {
 	var js map[string]interface{}
 	return json.Unmarshal(jsBytes, &js) == nil

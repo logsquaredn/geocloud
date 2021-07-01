@@ -10,6 +10,29 @@ WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
+COPY api/ api/
+COPY cmd/ cmd/
+COPY shared/ shared/
+COPY tasks/mock/ tasks/mock/
+COPY tools/ tools/
+COPY worker/ worker/
+COPY *.go .
+
+FROM build_image AS build
+ARG ldflags
+RUN go build -ldflags "${ldflags}" -o /assets/api ./api/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/worker ./worker/cmd/ \
+    && go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
+
+FROM base_image AS api
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /assets/api /usr/local/geocloud/bin/geocloud
+ENV PATH=/usr/local/geocloud/bin:$PATH
+ENTRYPOINT ["dumb-init", "geocloud"]
 
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
@@ -33,26 +56,18 @@ ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.0
 ADD ${runc_release} /assets/runc
 RUN chmod +x /assets/runc
 
-FROM build_image AS build
-COPY api/ api/
-COPY cmd/ cmd/
-COPY runners/ runners/
-COPY tasks/mock/ tasks/mock/
-COPY worker/ worker/
-COPY *.go .
-ARG ldflags
-RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
-
-FROM base_image AS geocloud
-COPY --from=build /assets/ /usr/local/geocloud/bin/
-COPY --from=containerd /assets/ /usr/local/geocloud/bin/
-COPY --from=runc /assets/ /usr/local/geocloud/bin/
-ENV PATH=/usr/local/geocloud/bin:$PATH
-VOLUME /var/lib/geocloud/containerd
+FROM api AS worker
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        dumb-init \
         pigz \
     && rm -rf /var/lib/apt/lists/*
-ENTRYPOINT ["dumb-init", "geocloud"]
+COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
+COPY --from=containerd /assets/ /usr/local/geocloud/bin/
+COPY --from=runc /assets/ /usr/local/geocloud/bin/
+VOLUME /var/lib/geocloud/containerd
+ENV GEOCLOUD_CONTAINERD_ROOT /var/lib/geocloud/containerd
+
+FROM worker AS geocloud
+COPY --from=build /assets/geocloud /usr/local/geocloud/bin/geocloud
+
+FROM geocloud AS final
