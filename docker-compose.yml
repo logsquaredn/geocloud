@@ -3,26 +3,25 @@ version: '3'
 services:
   api:
     build: .
-    command: api
+    command: api --postgres-password=pwd --postgres-username=geocloud --postgres-port=5432 --postgres-host=postgres
     depends_on:
     - postgres
+    networks:
+    - api
+    ports:
+    - 8080:8080
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     ports:
     - 5432:5432
+    volumes:
+    - ./postgres/:/docker-entrypoint-initdb.d/:ro
+    networks:
+    - api
     environment:
       POSTGRES_DB: geocloud
       POSTGRES_USER: geocloud
       POSTGRES_PASSWORD: pwd
-  worker:
-    build: .
-    command: worker
-    depends_on:
-    - postgres
-    - registry-mirror
-  registry-mirror:
-    image: registry:${REGISTRY_TAG:-2}
-    ports:
-    - 5000:5000
-    volumes:
-    - ./registry-mirror/config.yml:/etc/docker/registry/config.yml:ro
+  
+networks:
+  api:
