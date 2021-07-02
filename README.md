@@ -40,10 +40,8 @@ bin/geocloud worker --containerd-no-run --containerd-address /run/containerd/con
 #### Set Pipeline
 
 ```sh
-# login and set pipeline
+# login and set pipeline from template
 fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
-fly -t geocloud set-pipeline -p geocloud -c ci/pipeline.yml -v branch=my-branch
-# or set pipeline from template
 ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
 ```
 

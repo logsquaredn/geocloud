@@ -4,16 +4,16 @@ image_resource:
     type: registry-image
     source: { repository: vito/oci-build-task }
 inputs:
+- name: base_image
+- name: build_image
 - name: containerd
 - name: geocloud
-- name: build-image
 - name: runc
-- name: base-image
 outputs: [{ name: image }]
 params:
     CONTEXT: geocloud
-    IMAGE_ARG_base_image: base-image/image.tar
-    IMAGE_ARG_build_image: build-image/image.tar
+    IMAGE_ARG_base_image: base_image/image.tar
+    IMAGE_ARG_build_image: build_image/image.tar
     BUILD_ARG_containerd_release: assets/containerd.tgz
     BUILD_ARG_runc_release: assets/runc
 run:
