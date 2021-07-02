@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/containerd/containerd"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/worker"
@@ -22,6 +23,8 @@ type f = map[string]interface{}
 
 type S3Aggregrator struct {
 	svc       *s3.S3
+	dwnldr    *s3manager.Downloader
+	upldr     *s3manager.Uploader
 	sess      *session.Session
 	creds     *credentials.Credentials
 	region    string
@@ -62,12 +65,20 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 		a.hclient = http.DefaultClient
 	}
 
-	if a.svc == nil {
-		var err error
-		a.svc, err = a.service()
-		if err != nil {
-			return nil, err
-		}
+	var err error
+	a.svc, err = a.service()
+	if err != nil {
+		return nil, err
+	}
+
+	a.dwnldr, err = a.downloader()
+	if err != nil {
+		return nil, err
+	}
+
+	a.upldr, err = a.uploader()
+	if err != nil {
+		return nil, err
 	}
 
 	if a.listen == nil {
@@ -79,12 +90,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/run", &s3Handler{
-		bucket: a.bucket,
-		das: a.das,
-		prefix: a.prefix,
-		svc: a.svc,
-	})
+	mux.Handle("/api/v1/run", a)
 	a.server = &http.Server{
 		Addr: a.addr,
 		Handler: mux,
@@ -143,8 +149,8 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 }
 
 const (
-	addr   = "127.0.0.1:7777"
-	tcp    = "tcp"
+	addr = "127.0.0.1:7777"
+	tcp  = "tcp"
 )
 
 func (a *S3Aggregrator) listener() (net.Listener, error) {
@@ -169,6 +175,30 @@ func (a *S3Aggregrator) service() (*s3.S3, error) {
 	}
 
 	return s3.New(a.sess), nil
+}
+
+func (a *S3Aggregrator) uploader() (*s3manager.Uploader, error) {
+	if a.sess == nil {
+		var err error
+		a.sess, err = a.session()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s3manager.NewUploader(a.sess), nil
+}
+
+func (a *S3Aggregrator) downloader() (*s3manager.Downloader, error) {
+	if a.sess == nil {
+		var err error
+		a.sess, err = a.session()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s3manager.NewDownloader(a.sess), nil
 }
 
 func (a *S3Aggregrator) session() (*session.Session, error) {

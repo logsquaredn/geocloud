@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/containerd/containerd"
 	"github.com/logsquaredn/geocloud/shared/das"
 )
@@ -76,12 +75,6 @@ func WithPrefix(prefix string) S3AggregatorOpt {
 func WithRegion(region string) S3AggregatorOpt {
 	return func(a *S3Aggregrator) {
 		a.region = region
-	}
-}
-
-func WithService(service *s3.S3) S3AggregatorOpt {
-	return func(a *S3Aggregrator) {
-		a.svc = service
 	}
 }
 
