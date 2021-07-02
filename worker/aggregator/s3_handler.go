@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/rs/zerolog/log"
 )
 
 type s3AggregatorHandler struct {
-	db  *sql.DB
+	das *das.Das
 	svc *s3.S3
 }
 
@@ -20,6 +21,15 @@ func (h *s3AggregatorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	_, err := h.das.GetJobTypeByJobId(id)
+	if err == sql.ErrNoRows {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

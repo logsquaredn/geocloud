@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/containerd/containerd"
+	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/worker"
 	"github.com/rs/zerolog/log"
 )
@@ -28,6 +29,7 @@ type S3Aggregrator struct {
 	network   string
 	hclient   *http.Client
 	db        *sql.DB
+	das       *das.Das
 	listener  net.Listener
 	server    *http.Server
 	cclient   *containerd.Client
@@ -51,6 +53,14 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 
 	if a.db == nil {
 		return nil, fmt.Errorf("nil db")
+	}
+
+	if a.das == nil {
+		var err error
+		a.das, err = das.New(das.WithDB(a.db))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if a.hclient == nil {
@@ -89,7 +99,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/run", &s3AggregatorHandler{
-		db:  a.db,
+		das: a.das,
 		svc: a.svc,
 	})
 	a.server = &http.Server{
@@ -101,7 +111,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 }
 
 func (a *S3Aggregrator) Aggregate(m worker.Message) error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/run?id=%s", a.server.Addr, m.ID()), nil)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/run?id=%s", a.server.Addr, m.ID()), nil)
 	if err != nil {
 		return err
 	}
