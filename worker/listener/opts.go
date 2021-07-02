@@ -17,7 +17,7 @@ func WithCallback(callback SQSListenerCallback) SQSListenerOpt {
 	}
 }
 
-func WithCreds(creds *credentials.Credentials) SQSListenerOpt {
+func WithCredentials(creds *credentials.Credentials) SQSListenerOpt {
 	return func (l *SQSListener)  {
 		l.creds = creds
 	}

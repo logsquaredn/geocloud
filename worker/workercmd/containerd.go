@@ -17,7 +17,7 @@ type Containerd struct {
 	Config    flags.Filename `long:"config" default:"/etc/geocloud/containerd/config.toml" description:"Path to config file"`
 	Loglevel  string         `long:"log-level" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Containerd log level"`
 	Address   flags.Filename `long:"address" default:"/run/geocloud/containerd/containerd.sock" description:"Address for containerd's GRPC server'"`
-	Root      flags.Filename `long:"root" default:"/var/lib/geocloud/containerd" description:"Containerd root directory"`
+	Root      flags.Filename `long:"root" default:"/var/lib/geocloud/containerd" env:"GEOCLOUD_CONTAINERD_ROOT" description:"Containerd root directory"`
 	State     flags.Filename `long:"state" default:"/run/geocloud/containerd" description:"Containerd state directory"`
 	Namespace string         `long:"namespace" default:"geocloud" description:"Containerd namespace"`
 }
