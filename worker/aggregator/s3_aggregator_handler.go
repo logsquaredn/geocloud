@@ -20,6 +20,7 @@ func (h *S3Aggregrator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	_, err := h.das.GetJobTypeByJobId(id)
@@ -38,6 +39,9 @@ func (h *S3Aggregrator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else if len(output.Contents) == 0 {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
