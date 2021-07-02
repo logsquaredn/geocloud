@@ -4,7 +4,7 @@
 
 #@ def build_and_put_geocloud(target, resource):
 do:
-- task: build-geocloud
+- task: #@ "build-"+resource
   image: oci-build-task
   privileged: true
   file: geocloud/ci/tasks/build_geocloud.yml
@@ -22,7 +22,7 @@ do:
 
 #@ def build_and_put_geocloud_task(task_folder, task, resource):
 do:
-- task: build-task
+- task: #@ "build-"+resource
   image: oci-build-task
   privileged: true
   file: geocloud/ci/tasks/build_task.yml
@@ -144,7 +144,7 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: logsquaredn/geocloud
-    variant: task-buffer
+    tag: task-buffer
 - name: geocloud-task-filter
   type: registry-image
   icon: docker
@@ -152,7 +152,7 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: logsquaredn/geocloud
-    variant: task-filter
+    tag: task-filter
 - name: geocloud-task-reproject
   type: registry-image
   icon: docker
@@ -160,7 +160,7 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: logsquaredn/geocloud
-    variant: task-reproject
+    tag: task-reproject
 - name: geocloud-task-remove-bad-geometry
   type: registry-image
   icon: docker
@@ -168,7 +168,7 @@ resources:
     username: ((docker_username))
     password: ((docker_password))
     repository: logsquaredn/geocloud
-    variant: task-remove-bad-geometry
+    tag: task-remove-bad-geometry
 #! - name: geocloud-pr
 #!   type: github-pr
 #!   icon: source-merge
