@@ -14,7 +14,8 @@ type Das struct {
 
 	stmts struct {
 		getStatusById *sql.Stmt
-		getTypeById *sql.Stmt
+		getTypeById   *sql.Stmt
+		insertNewJob  *sql.Stmt
 	}
 }
 
@@ -25,6 +26,9 @@ var getStatusByIdSql string
 
 //go:embed get_job_type_by_job_id.sql
 var getTypeByIdSql string
+
+//go:embed insert_new_job.sql
+var insertNewJobSql string
 
 func New(opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -59,16 +63,16 @@ func New(opts ...DasOpt) (*Das, error) {
 		return nil, err
 	}
 
+	d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql)
+	if err != nil {
+		return nil, err
+	}
+
 	return d, nil
 }
 
 func (d *Das) GetJobStatusByJobId(id string) (jobStatus string, err error) {
-	rows, err := d.stmts.getStatusById.Query(id)
-	if err != nil {
-		return "", err
-	}
-
-	err = rows.Scan(&jobStatus)
+	err = d.stmts.getStatusById.QueryRow(id).Scan(&jobStatus)
 	if err != nil {
 		return "", err
 	}
@@ -77,17 +81,18 @@ func (d *Das) GetJobStatusByJobId(id string) (jobStatus string, err error) {
 }
 
 func (d *Das) GetJobTypeByJobId(id string) (jobType string, err error) {
-	rows, err := d.stmts.getTypeById.Query(id)
-	if err != nil {
-		return "", err
-	}
-
-	err = rows.Scan(&jobType)
+	err = d.stmts.getTypeById.QueryRow(id).Scan(&jobType)
 	if err != nil {
 		return "", err
 	}
 
 	return jobType, nil
+}
+
+func (d *Das) InsertNewJob(id string, jobType string) (err error) {
+	_, err = d.stmts.insertNewJob.Exec(id, jobType)
+
+	return err
 }
 
 func (d *Das) Close() error {
