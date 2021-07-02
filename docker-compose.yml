@@ -22,6 +22,9 @@ services:
     command: --postgres-host=postgres --postgres-password=pwd
     networks: [worker]
     depends_on: [postgres] # , registry]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   # registry:
   #   image: registry:${REGISTRY_TAG:-2}
   #   ports: [5000:5000]

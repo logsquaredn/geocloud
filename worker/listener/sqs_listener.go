@@ -192,9 +192,14 @@ func (l *SQSListener) session() (*session.Session, error) {
 		l.client = http.DefaultClient
 	}
 
-	return session.NewSession(
-		aws.NewConfig().WithCredentials(l.creds).WithHTTPClient(l.client).WithRegion(l.region),
-	)
+	cfg := aws.NewConfig().WithHTTPClient(l.client).WithRegion(l.region)
+	if l.creds != nil {
+		cfg = cfg.WithCredentials(l.creds)
+	} else {
+		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
+	}
+
+	return session.NewSession(cfg)
 }
 
 func (l *SQSListener) shuffle() {

@@ -1,7 +1,6 @@
 package workercmd
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -18,6 +17,11 @@ import (
 	"github.com/tedsuo/ifrit/grouper"
 )
 
+type S3 struct {
+	Bucket string `long:"bucket" description:"S3 bucket"`
+	Prefix string `long:"prefix" default:"jobs" description:"S3 key prefix"`
+}
+
 type SQS struct {
 	QueueNames  []string      `long:"queue-name" description:"SQS queue names to listen on"`
 	QueueURLs   []string      `long:"queue-url" description:"SQS queue urls to listen on"`
@@ -29,6 +33,7 @@ type AWS struct {
 	SecretAccessKey string `long:"secret-access-key" description:"AWS secret access key"`
 	Region          string `long:"region" description:"AWS region"`
 
+	S3  `group:"S3" namespace:"s3"`
 	SQS `group:"SQS" namespace:"sqs"`
 }
 
@@ -84,25 +89,23 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	}
 
 	http := http.DefaultClient
-	sess, err := session.NewSession(
-		aws.NewConfig().WithCredentials(
-			credentials.NewStaticCredentials(cmd.AccessKeyID, cmd.SecretAccessKey, ""),
-		).WithHTTPClient(http).WithRegion(cmd.Region),
-	)
+	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region)
+	if cmd.AccessKeyID != "" && cmd.SecretAccessKey != "" {
+		cfg = cfg.WithCredentials(credentials.NewStaticCredentials(cmd.AccessKeyID, cmd.SecretAccessKey, ""))
+	} else {
+		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
+	}
+	sess, err := session.NewSession(cfg)
 	if err != nil {
 		return err
 	}
 
-	var db *sql.DB
-	for db, err = sql.Open(driver, cmd.getConnectionString()); err != nil; {
-		time.Sleep(time.Second*15)
-	}
-	// db.SetMaxOpenConns
-
 	ag, err := aggregator.New(
-		aggregator.WithDB(db),
+		aggregator.WithConnectionString(cmd.getConnectionString()),
 		aggregator.WithSession(sess),
 		aggregator.WithRegion(cmd.Region),
+		aggregator.WithBucket(cmd.Bucket),
+		aggregator.WithPrefix(cmd.Prefix),
 		aggregator.WithHttpClient(http),
 		aggregator.WithAddress(fmt.Sprintf("%s:%d", cmd.IP, cmd.Port)),
 		aggregator.WithContainerdSocket(string(cmd.Containerd.Address)),

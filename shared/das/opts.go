@@ -15,9 +15,3 @@ func WithDB(db *sql.DB) DasOpt {
 		d.db = db
 	}
 }
-
-func WithRepository(db *sql.DB) DasOpt {
-	return func(d *Das) {
-		d.db = db
-	}
-}

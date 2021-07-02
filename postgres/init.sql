@@ -14,5 +14,5 @@ VALUES('2', 'buffer', 'pending');
 INSERT INTO job(job_id, job_type, job_status)
 VALUES('3', 'filter', 'completed');
 
-INSERT INTO job(job_id, job_type, job_status)
+INSERT INTO job(job_id, job_type, job_status, job_error)
 VALUES('4', 'reproject', 'failed', 'error: invalid geojson');
