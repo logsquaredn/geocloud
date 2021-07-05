@@ -167,7 +167,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	close(ready)
 	select {
 	case err := <-wait:
-		log.Error().Err(err).Fields(f{ "runner":runner }).Msg("received error")
+		log.Err(err).Fields(f{ "runner":runner }).Msg("received error")
 		return err
 	case signal := <-signals:
 		log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")

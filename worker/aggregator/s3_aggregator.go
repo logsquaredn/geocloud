@@ -138,7 +138,7 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 	for {
 		select {
 		case err := <-wait:
-			log.Error().Err(err).Fields(f{ "runner":runner }).Msg("received error")
+			log.Err(err).Fields(f{ "runner":runner }).Msg("received error")
 			defer a.server.Close()
 			return err
 		case signal := <-signals:

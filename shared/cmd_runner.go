@@ -53,7 +53,7 @@ func (r *CmdRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 		select {
 		case signal := <-signals:
 			log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("cmd processing signal")
-			r.cmd.Process.Signal(signal)
+			return r.cmd.Process.Signal(signal)
 		case err := <-wait:
 			log.Error().Err(err).Fields(f{ "runner":runner }).Msgf("received error from cmd")
 			return err
