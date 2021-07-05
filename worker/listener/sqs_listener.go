@@ -79,7 +79,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	
 	q := len(r.queues)
 	if q == 0 {
-		log.Warn().Fields(f{ "runner":runner }).Msgf("no queues specified")
+		log.Warn().Fields(f{ "runner":runner }).Msg("no queues specified")
 	}
 
 	log.Debug().Fields(f{ "runner":runner }).Msg("shuffling queues")
