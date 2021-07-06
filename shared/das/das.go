@@ -24,7 +24,7 @@ const driver = "postgres"
 //go:embed get_job_status_by_job_id.sql
 var getStatusByIdSql string
 
-//go:embed get_job_type_by_job_id.sql
+//go:embed get_task_type_by_job_id.sql
 var getTypeByIdSql string
 
 //go:embed insert_new_job.sql
