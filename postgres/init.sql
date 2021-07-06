@@ -1,6 +1,6 @@
-create table task (
-    task_type VARCHAR (32),
-    task_ref VARCHAR (512)
+CREATE TABLE task (
+    task_type VARCHAR (32) PRIMARY KEY,
+    task_ref VARCHAR (512) NOT NULL
 );
 
 INSERT INTO task(task_type, task_ref) 
