@@ -2,8 +2,41 @@
 #@ load("@ytt:template", "template")
 #@ load("@ytt:assert", "assert")
 
+#@ def build_and_put_geocloud(target, resource):
+do:
+- task: #@ "build-"+resource
+  image: oci-build-task
+  privileged: true
+  file: geocloud/ci/tasks/build_geocloud.yml
+  params:
+    BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version))
+    TARGET: #@ target
+  input_mapping: { build_image: golang-latest, base_image: ubuntu-bionic }
+- put: #@ resource
+  params:
+    image: image/image.tar
+    version: ((.:version))
+    bump_aliases: true
+  get_params: { skip_download: true }
+#@ end
+
+#@ def build_and_put_geocloud_task(task_folder, task, resource):
+do:
+- task: #@ "build-"+resource
+  image: oci-build-task
+  privileged: true
+  file: geocloud/ci/tasks/build_task.yml
+  params:
+    BUILD_ARG_task_folder: #@ task_folder
+    BUILD_ARG_task: #@ task
+  input_mapping: { build_image: gdal-latest, base_image: gdal-latest }
+- put: #@ resource
+  params: { image: image/image.tar }
+  get_params: { skip_download: true }
+#@ end
+
 jobs:
-- name: build-geocloud-image
+- name: build-geocloud-images
   serial: true
   plan:
   - in_parallel:
@@ -22,21 +55,11 @@ jobs:
       params: { format: oci }
   - load_var: version
     file: geocloud-version/version
-  - task: build-geocloud
-    image: oci-build-task
-    privileged: true
-    file: geocloud/ci/tasks/build_geocloud.yml
-    params: { BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version)) }
-    input_mapping: { build-image: golang-latest, base-image: ubuntu-bionic }
-  - in_parallel:
-    - put: geocloud-image
-      params:
-        image: image/image.tar
-        version: ((.:version))
-        bump_aliases: true
-      get_params: { skip_download: true }
-    - put: geocloud-version
-      params: { file: geocloud-version/version }
+  - #@ build_and_put_geocloud("", "geocloud-latest")
+  - #@ build_and_put_geocloud("api", "geocloud-api")
+  - #@ build_and_put_geocloud("worker", "geocloud-worker")
+  - put: geocloud-version
+    params: { file: geocloud-version/version }
 - name: build-task-images
   serial: true
   plan:
@@ -46,19 +69,10 @@ jobs:
     - get: geocloud
       trigger: true
     - get: oci-build-task
-  - across:
-    - var: task
-      values:
-      - { folder: buffer, name: buffer }
-      - { folder: filter, name: filter }
-      - { folder: reproject, name: reproject }
-      - { folder: badGeometry, name: removeBadGeometry }
-    task: build-task
-    image: oci-build-task
-    privileged: true
-    file: geocloud/ci/tasks/build_task.yml
-    params: { BUILD_ARG_task_folder: ((.:task.folder)), BUILD_ARG_task: ((.:task.name)) }
-    input_mapping: { build-image: gdal-latest, base-image: gdal-latest }
+  - #@ build_and_put_geocloud_task("badGeometry", "removeBadGeometry", "geocloud-task-remove-bad-geometry")
+  - #@ build_and_put_geocloud_task("buffer", "buffer", "geocloud-task-buffer")
+  - #@ build_and_put_geocloud_task("filter", "filter", "geocloud-task-filter")
+  - #@ build_and_put_geocloud_task("reproject", "reproject", "geocloud-task-reproject")
 #! - name: set-pr-pipeline
 #!   plan:
 #!   - get: geocloud-pr
@@ -73,7 +87,7 @@ jobs:
 
 groups:
 - name: all
-  jobs: [build-geocloud-image, build-task-images]
+  jobs: [build-geocloud-images, build-task-images]
 
 resources:
 - name: containerd
@@ -100,13 +114,61 @@ resources:
     branch: ((branch))
     ignore_paths: [ci/*, assets/*]
     private_key: ((geocloud_private_key))
-- name: geocloud-image
+- name: geocloud-latest
   type: registry-image
   icon: docker
   source:
     username: ((docker_username))
     password: ((docker_password))
     repository: logsquaredn/geocloud
+- name: geocloud-api
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    variant: api
+- name: geocloud-worker
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    variant: worker
+- name: geocloud-task-buffer
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    tag: task-buffer
+- name: geocloud-task-filter
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    tag: task-filter
+- name: geocloud-task-reproject
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    tag: task-reproject
+- name: geocloud-task-remove-bad-geometry
+  type: registry-image
+  icon: docker
+  source:
+    username: ((docker_username))
+    password: ((docker_password))
+    repository: logsquaredn/geocloud
+    tag: task-remove-bad-geometry
 #! - name: geocloud-pr
 #!   type: github-pr
 #!   icon: source-merge

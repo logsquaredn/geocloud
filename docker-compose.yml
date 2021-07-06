@@ -4,14 +4,14 @@ services:
   api:
     build: { context: ., target: api }
     command: --postgres-host=postgres --postgres-password=pwd
-    depends_on: [postgres]
-    networks: [api]
     ports: [8080:8080]
+    networks: [api]
+    depends_on: [postgres]
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     ports: [5432:5432]
     volumes: [./postgres/:/docker-entrypoint-initdb.d/:ro]
-    networks: [api]
+    networks: [api, worker]
     environment:
       POSTGRES_DB: geocloud
       POSTGRES_USER: geocloud
@@ -20,8 +20,12 @@ services:
     build: { context: ., target: worker }
     privileged: true
     command: --postgres-host=postgres --postgres-password=pwd
+    ports: [7777:7777]
     networks: [worker]
     depends_on: [postgres] # , registry]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   # registry:
   #   image: registry:${REGISTRY_TAG:-2}
   #   ports: [5000:5000]

@@ -79,7 +79,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	
 	q := len(r.queues)
 	if q == 0 {
-		log.Warn().Fields(f{ "runner":runner }).Msgf("no queues specified")
+		log.Warn().Fields(f{ "runner":runner }).Msg("no queues specified")
 	}
 
 	log.Debug().Fields(f{ "runner":runner }).Msg("shuffling queues")
@@ -167,7 +167,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	close(ready)
 	select {
 	case err := <-wait:
-		log.Error().Err(err).Fields(f{ "runner":runner }).Msg("received error")
+		log.Err(err).Fields(f{ "runner":runner }).Msg("received error")
 		return err
 	case signal := <-signals:
 		log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")
@@ -192,9 +192,14 @@ func (l *SQSListener) session() (*session.Session, error) {
 		l.client = http.DefaultClient
 	}
 
-	return session.NewSession(
-		aws.NewConfig().WithCredentials(l.creds).WithHTTPClient(l.client).WithRegion(l.region),
-	)
+	cfg := aws.NewConfig().WithHTTPClient(l.client).WithRegion(l.region)
+	if l.creds != nil {
+		cfg = cfg.WithCredentials(l.creds)
+	} else {
+		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
+	}
+
+	return session.NewSession(cfg)
 }
 
 func (l *SQSListener) shuffle() {
