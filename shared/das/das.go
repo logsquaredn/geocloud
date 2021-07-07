@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -24,7 +25,7 @@ const driver = "postgres"
 //go:embed get_job_status_by_job_id.sql
 var getStatusByIdSql string
 
-//go:embed get_job_type_by_job_id.sql
+//go:embed get_task_type_by_job_id.sql
 var getTypeByIdSql string
 
 //go:embed insert_new_job.sql
@@ -38,13 +39,18 @@ func New(opts ...DasOpt) (*Das, error) {
 
 	if d.db == nil {
 		if d.conn == "" {
-			return nil, fmt.Errorf("nil db empty connection string")
+			return nil, fmt.Errorf("das: nil db, empty connection string")
 		}
 
-		var err error
-		d.db, err = sql.Open(driver, d.conn)
-		if err != nil {
-			return nil, err
+		var (
+			err error
+			i = 0
+		)
+		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
+			if i > 5 {
+				return nil, fmt.Errorf("das: failed to connect to DB for 1m: %w", err)
+			}
+			time.Sleep(time.Second*10)
 		}
 	}
 

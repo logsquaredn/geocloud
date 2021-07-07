@@ -20,7 +20,7 @@ services:
     build: { context: ., target: worker }
     privileged: true
     command: --postgres-host=postgres --postgres-password=pwd
-    ports: [7777:7777]
+    ports: [7778:7777]
     networks: [worker]
     depends_on: [postgres] # , registry]
     environment:

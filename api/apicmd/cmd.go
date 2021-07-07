@@ -3,7 +3,6 @@ package apicmd
 import (
 	"fmt"
 	"os"
-	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/logsquaredn/geocloud/api/janitor"
@@ -34,9 +33,8 @@ func (cmd *APICmd) Execute(args []string) error {
 		da  *das.Das
 		err error
 	)
-	for da, err = das.New(das.WithConnectionString(cmd.getDBConnectionString())); err != nil; {
-		log.Err(err).Msg("failed to connect to DB, retrying in 10s...")
-		time.Sleep(time.Second*10)
+	if da, err = das.New(das.WithConnectionString(cmd.getDBConnectionString())); err != nil {
+		return fmt.Errorf("apicmd: failed to create das: %w", err)
 	}
 	defer da.Close()
 
