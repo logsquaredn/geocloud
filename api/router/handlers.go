@@ -16,26 +16,28 @@ func (h *Router) createJob(jobType string) (id string, err error) {
 	return id, h.das.InsertNewJob(id, jobType)
 }
 
-func (h *Router) buffer(ctx *gin.Context) {
-	distance := ctx.Query("distance")
-	if len(distance) < 1 {
-		log.Error().Msg("/buffer query paramter 'distance' not passed or empty")
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'distance' required"})
-		return
-	}
+func (h *Router) create(ctx *gin.Context) {
+	taskType := ctx.Param("type")
+
+	// TODO
+	// distance := ctx.Query("distance")
+	// if len(distance) < 1 {
+	// 	log.Error().Msg("/buffer query paramter 'distance' not passed or empty")
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'distance' required"})
+	// 	return
+	// }
 
 	jsonData, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil || !isJSON(jsonData) {
-		log.Err(err).Msg("/buffer received invalid JSON")
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "request body must be valid json"})
+		log.Err(err).Msg("/buffer received invalid json")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "request body must be valid JSON"})
 		return
 	}
 
-	var jobType = "buffer"
-	id, err := h.createJob(jobType)
+	id, err := h.createJob(taskType)
 	if err != nil {
-		log.Err(err).Msgf("/buffer failed to create job with id: %s and type: %s", id, jobType)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create %s job", jobType)})
+		log.Err(err).Msgf("/buffer failed to create job type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create %s job", taskType)})
 		return
 	}
 
