@@ -16,28 +16,47 @@ func (h *Router) createJob(jobType string) (id string, err error) {
 	return id, h.das.InsertNewJob(id, jobType)
 }
 
+func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
+	missingParams = []string{}
+	for _, param := range taskParams {
+		if len(ctx.Query(param)) < 1 {
+			missingParams = append(missingParams, param)
+		}
+	}
+
+	return missingParams
+}
+
 func (h *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
+	taskParams, err := h.das.GetTaskParamsByTaskType(taskType)
+	if err == sql.ErrNoRows {
+		log.Error().Msgf("/create invalid task type requested: %s", taskType)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid task type: %s", taskType)})
+		return
+	} else if err != nil {
+		log.Err(err).Msgf("/create failed to query for params for type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
 
-	// TODO
-	// distance := ctx.Query("distance")
-	// if len(distance) < 1 {
-	// 	log.Error().Msg("/buffer query paramter 'distance' not passed or empty")
-	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'distance' required"})
-	// 	return
-	// }
+	missingParams := validateParamsPassed(ctx, taskParams)
+	if len(missingParams) > 0 {
+		log.Error().Msgf("/create missing paramters: %v", missingParams)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("missing parameters: %v", missingParams)})
+	}
 
 	jsonData, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil || !isJSON(jsonData) {
-		log.Err(err).Msg("/buffer received invalid json")
+		log.Err(err).Msgf("/create received invalid json for type: %s", taskType)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "request body must be valid JSON"})
 		return
 	}
 
 	id, err := h.createJob(taskType)
 	if err != nil {
-		log.Err(err).Msgf("/buffer failed to create job type: %s", taskType)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create %s job", taskType)})
+		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
 		return
 	}
 
@@ -62,8 +81,8 @@ func (h *Router) status(ctx *gin.Context) {
 		ctx.Status(http.StatusNotFound)
 		return
 	} else if err != nil {
-		log.Err(err).Msgf("/status failed to query row for id: %s", id)
-		ctx.Status(http.StatusInternalServerError)
+		log.Err(err).Msgf("/status failed to query for status for id: %s", id)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed get get status for id: %s", id)})
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -13,9 +14,10 @@ type Das struct {
 	conn string
 
 	stmts struct {
-		getStatusById *sql.Stmt
-		getTypeById   *sql.Stmt
-		insertNewJob  *sql.Stmt
+		getStatusById   *sql.Stmt
+		getTypeById     *sql.Stmt
+		insertNewJob    *sql.Stmt
+		getParamsByType *sql.Stmt
 	}
 }
 
@@ -29,6 +31,9 @@ var getTypeByIdSql string
 
 //go:embed insert_new_job.sql
 var insertNewJobSql string
+
+//go:embed get_task_params_by_task_type.sql
+var getParamsByTypeSql string
 
 func New(opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -68,6 +73,11 @@ func New(opts ...DasOpt) (*Das, error) {
 		return nil, err
 	}
 
+	d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql)
+	if err != nil {
+		return nil, err
+	}
+
 	return d, nil
 }
 
@@ -93,6 +103,15 @@ func (d *Das) InsertNewJob(id string, jobType string) (err error) {
 	_, err = d.stmts.insertNewJob.Exec(id, jobType)
 
 	return err
+}
+
+func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err error) {
+	err = d.stmts.getParamsByType.QueryRow(taskType).Scan(pq.Array(&params))
+	if err != nil {
+		return nil, err
+	}
+
+	return params, nil
 }
 
 func (d *Das) Close() error {
