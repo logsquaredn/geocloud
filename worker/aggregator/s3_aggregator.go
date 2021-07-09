@@ -206,12 +206,7 @@ func (a *S3Aggregrator) session() (*session.Session, error) {
 		a.hclient = http.DefaultClient
 	}
 
-	cfg := aws.NewConfig().WithHTTPClient(a.hclient).WithRegion(a.region)
-	if a.creds != nil {
-		cfg = cfg.WithCredentials(a.creds)
-	} else {
-		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
-	}
+	cfg := aws.NewConfig().WithHTTPClient(a.hclient).WithRegion(a.region).WithCredentials(a.creds)
 
 	return session.NewSession(cfg)
 }

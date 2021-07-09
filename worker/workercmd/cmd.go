@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/jessevdk/go-flags"
 	_ "github.com/lib/pq"
 	"github.com/logsquaredn/geocloud/worker/aggregator"
 	"github.com/logsquaredn/geocloud/worker/listener"
@@ -29,9 +30,11 @@ type SQS struct {
 }
 
 type AWS struct {
-	AccessKeyID     string `long:"access-key-id" description:"AWS access key ID"`
-	SecretAccessKey string `long:"secret-access-key" description:"AWS secret access key"`
-	Region          string `long:"region" description:"AWS region"`
+	AccessKeyID     string         `long:"access-key-id" description:"AWS access key ID"`
+	SecretAccessKey string         `long:"secret-access-key" description:"AWS secret access key"`
+	Region          string         `long:"region" description:"AWS region"`
+	Profile         string         `long:"profile" description:"AWS profile"`
+	SharedCreds     flags.Filename `long:"shared-credentials-file" description:"Path to AWS shared credentials file"`
 
 	S3  `group:"S3" namespace:"s3"`
 	SQS `group:"SQS" namespace:"sqs"`
@@ -89,12 +92,23 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	}
 
 	http := http.DefaultClient
-	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region)
-	if cmd.AccessKeyID != "" && cmd.SecretAccessKey != "" {
-		cfg = cfg.WithCredentials(credentials.NewStaticCredentials(cmd.AccessKeyID, cmd.SecretAccessKey, ""))
-	} else {
-		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
-	}
+	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(
+		credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.StaticProvider{
+					Value: credentials.Value{
+						AccessKeyID: cmd.AccessKeyID,
+						SecretAccessKey: cmd.SecretAccessKey,
+					},
+				},
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{
+					Filename: string(cmd.SharedCreds),
+					Profile: cmd.Profile,
+				},
+			},
+		),
+	)
 	sess, err := session.NewSession(cfg)
 	if err != nil {
 		return err
