@@ -54,8 +54,8 @@ type Registry struct {
 type WorkerCmd struct {
 	Version    func() `short:"v" long:"version" description:"Print the version"`
 	Loglevel   string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
-	IP         string `long:"ip" default:"127.0.0.1" description:"IP for the worker to listen on"`
-	Port       int64  `long:"port" default:"7777" description:"Port for the worker to listen on"`
+	IP         string `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_WORKER_IP" description:"IP for the worker to listen on"`
+	Port       int64  `long:"port" default:"7778" description:"Port for the worker to listen on"`
 
 	AWS        `group:"AWS" namespace:"aws"`
 	Containerd `group:"Containerd" namespace:"containerd"`

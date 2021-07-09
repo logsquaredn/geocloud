@@ -59,12 +59,15 @@ FROM api AS worker
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         pigz \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
 COPY --from=containerd /assets/ /usr/local/geocloud/bin/
 COPY --from=runc /assets/ /usr/local/geocloud/bin/
 VOLUME /var/lib/geocloud/containerd
 ENV GEOCLOUD_CONTAINERD_ROOT /var/lib/geocloud/containerd
+ENV GEOCLOUD_CONTAINERD_PROMETHEUS_IP 0.0.0.0
+ENV GEOCLOUD_WORKER_IP 0.0.0.0
 
 FROM worker AS geocloud
 COPY --from=build /assets/geocloud /usr/local/geocloud/bin/geocloud
