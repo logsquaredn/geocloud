@@ -10,8 +10,9 @@ import (
 )
 
 type Das struct {
-	db   *sql.DB
-	conn string
+	db      *sql.DB
+	conn    string
+	retries int
 
 	stmts struct {
 		getStatusById *sql.Stmt
@@ -42,13 +43,17 @@ func New(opts ...DasOpt) (*Das, error) {
 			return nil, fmt.Errorf("das: nil db, empty connection string")
 		}
 
+		if d.retries == 0 {
+			d.retries = 5
+		}
+
 		var (
 			err error
 			i = 0
 		)
 		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
-			if i > 5 {
-				return nil, fmt.Errorf("das: failed to connect to DB for 1m: %w", err)
+			if i > d.retries {
+				return nil, fmt.Errorf("das: failed to connect to DB after %d attempts: %w", d.retries, err)
 			}
 			time.Sleep(time.Second*10)
 		}

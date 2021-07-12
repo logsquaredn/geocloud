@@ -43,6 +43,7 @@ type Postgres struct {
 	User     string `long:"user" default:"geocloud" description:"Postgres user"`
 	Password string `long:"password" description:"Postgres password"`
 	SSLMode  string `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
+	Retries  int    `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
 }
 
 type Registry struct {
@@ -62,10 +63,6 @@ type WorkerCmd struct {
 	Postgres   `group:"Postgres" namespace:"postgres"`
 	Registry   `group:"Registry" namespace:"registry"`
 }
-
-const (
-	driver = "postgres"
-)
 
 func (cmd *WorkerCmd) Execute(args []string) error {
 	loglevel, err := zerolog.ParseLevel(cmd.Loglevel)
@@ -102,6 +99,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 
 	ag, err := aggregator.New(
 		aggregator.WithConnectionString(cmd.getConnectionString()),
+		aggregator.WithRetries(cmd.Postgres.Retries),
 		aggregator.WithSession(sess),
 		aggregator.WithRegion(cmd.Region),
 		aggregator.WithBucket(cmd.Bucket),

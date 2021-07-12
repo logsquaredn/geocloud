@@ -34,6 +34,7 @@ type S3Aggregrator struct {
 	network   string
 	hclient   *http.Client
 	conn      string
+	retries   int
 	db        *sql.DB
 	das       *das.Das
 	listen    net.Listener
@@ -55,7 +56,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 
 	if a.das == nil {
 		var err error
-		a.das, err = das.New(das.WithConnectionString(a.conn))
+		a.das, err = das.New(das.WithConnectionString(a.conn), das.WithRetires(a.retries))
 		if err != nil {
 			return nil, err
 		}
