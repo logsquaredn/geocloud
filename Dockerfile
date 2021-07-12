@@ -13,7 +13,6 @@ RUN go mod download
 COPY api/ api/
 COPY cmd/ cmd/
 COPY shared/ shared/
-COPY tasks/mock/ tasks/mock/
 COPY tools/ tools/
 COPY worker/ worker/
 COPY *.go .
