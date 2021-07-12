@@ -34,6 +34,7 @@ type S3Aggregrator struct {
 	network   string
 	hclient   *http.Client
 	conn      string
+	retries   int
 	db        *sql.DB
 	das       *das.Das
 	listen    net.Listener
@@ -55,7 +56,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 
 	if a.das == nil {
 		var err error
-		a.das, err = das.New(das.WithConnectionString(a.conn))
+		a.das, err = das.New(das.WithConnectionString(a.conn), das.WithRetries(a.retries))
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +93,7 @@ func New(opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/run", a)
 	a.server = &http.Server{
-		Addr: a.addr,
+		Addr:    a.addr,
 		Handler: mux,
 	}
 
@@ -130,19 +131,19 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 
 	wait := make(chan error, 1)
 	go func() {
-		wait<- a.server.Serve(a.listen)
+		wait <- a.server.Serve(a.listen)
 	}()
 
-	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
+	log.Debug().Fields(f{"runner": runner}).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case err := <-wait:
-			log.Err(err).Fields(f{ "runner":runner }).Msg("received error")
+			log.Err(err).Fields(f{"runner": runner}).Msg("received error")
 			defer a.server.Close()
 			return err
 		case signal := <-signals:
-			log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")
+			log.Debug().Fields(f{"runner": runner, "signal": signal.String()}).Msg("received signal")
 			return a.server.Shutdown(ctx)
 		}
 	}
