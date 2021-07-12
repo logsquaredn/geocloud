@@ -35,7 +35,7 @@ func (cmd *APICmd) Execute(args []string) error {
 		da  *das.Das
 		err error
 	)
-	if da, err = das.New(das.WithConnectionString(cmd.getConnectionString()), das.WithRetires(cmd.Postgres.Retries)); err != nil {
+	if da, err = das.New(das.WithConnectionString(cmd.getConnectionString()), das.WithRetries(cmd.Postgres.Retries)); err != nil {
 		return fmt.Errorf("apicmd: failed to create das: %w", err)
 	}
 	defer da.Close()

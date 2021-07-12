@@ -16,7 +16,7 @@ func WithDB(db *sql.DB) DasOpt {
 	}
 }
 
-func WithRetires(retries int) DasOpt {
+func WithRetries(retries int) DasOpt {
 	return func(d *Das) {
 		d.retries = retries
 	}
