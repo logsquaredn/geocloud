@@ -59,7 +59,6 @@ FROM api AS worker
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         pigz \
-        curl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
 COPY --from=containerd /assets/ /usr/local/geocloud/bin/
