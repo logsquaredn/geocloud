@@ -17,14 +17,13 @@ func (r *Router) createJob(jobType string) (id string, err error) {
 }
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
-	missingParams = []string{}
 	for _, param := range taskParams {
 		if len(ctx.Query(param)) < 1 {
 			missingParams = append(missingParams, param)
 		}
 	}
 
-	return missingParams
+	return
 }
 
 func (r *Router) create(ctx *gin.Context) {

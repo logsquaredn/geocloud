@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 type Das struct {
@@ -54,13 +53,13 @@ func New(opts ...DasOpt) (*Das, error) {
 
 		var (
 			err error
-			i = 0
+			i   = 0
 		)
 		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
 			if i > d.retries {
 				return nil, fmt.Errorf("das: failed to connect to DB after %d attempts: %w", d.retries, err)
 			}
-			time.Sleep(time.Second*10)
+			time.Sleep(time.Second * 10)
 		}
 	}
 
