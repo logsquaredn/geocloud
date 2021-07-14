@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type Das struct {
@@ -15,9 +15,10 @@ type Das struct {
 	retries int
 
 	stmts struct {
-		getStatusById *sql.Stmt
-		getTypeById   *sql.Stmt
-		insertNewJob  *sql.Stmt
+		getStatusById   *sql.Stmt
+		getTypeById     *sql.Stmt
+		insertNewJob    *sql.Stmt
+		getParamsByType *sql.Stmt
 	}
 }
 
@@ -31,6 +32,9 @@ var getTypeByIdSql string
 
 //go:embed insert_new_job.sql
 var insertNewJobSql string
+
+//go:embed get_task_params_by_task_type.sql
+var getParamsByTypeSql string
 
 func New(opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -49,13 +53,13 @@ func New(opts ...DasOpt) (*Das, error) {
 
 		var (
 			err error
-			i = 0
+			i   = 0
 		)
 		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
 			if i > d.retries {
 				return nil, fmt.Errorf("das: failed to connect to DB after %d attempts: %w", d.retries, err)
 			}
-			time.Sleep(time.Second*10)
+			time.Sleep(time.Second * 10)
 		}
 	}
 
@@ -75,6 +79,11 @@ func New(opts ...DasOpt) (*Das, error) {
 	}
 
 	d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql)
+	if err != nil {
+		return nil, err
+	}
+
+	d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +113,15 @@ func (d *Das) InsertNewJob(id string, jobType string) (err error) {
 	_, err = d.stmts.insertNewJob.Exec(id, jobType)
 
 	return err
+}
+
+func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err error) {
+	err = d.stmts.getParamsByType.QueryRow(taskType).Scan(pq.Array(&params))
+	if err != nil {
+		return nil, err
+	}
+
+	return params, nil
 }
 
 func (d *Das) Close() error {

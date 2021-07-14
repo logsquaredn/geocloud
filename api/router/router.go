@@ -54,24 +54,24 @@ func (r *Router) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	v1_job := router.Group(r.group)
 	{
-		v1_job.POST("/buffer", r.buffer)
+		v1_job.POST("/create/:type", r.create)
 		v1_job.GET("/status", r.status)
 	}
 
 	wait := make(chan error, 1)
 	go func() {
-		wait<- router.Run()
+		wait <- router.Run()
 	}()
 
-	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
+	log.Debug().Fields(f{"runner": runner}).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case signal := <-signals:
-			log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")
+			log.Debug().Fields(f{"runner": runner, "signal": signal.String()}).Msg("received signal")
 			return nil
 		case err := <-wait:
-			log.Err(err).Fields(f{ "runner":runner }).Msg("received error from router")
+			log.Err(err).Fields(f{"runner": runner}).Msg("received error from router")
 			return err
 		}
 	}
