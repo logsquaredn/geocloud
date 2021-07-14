@@ -78,6 +78,12 @@ func WithRegion(region string) S3AggregatorOpt {
 	}
 }
 
+func WithRetries(retries int) S3AggregatorOpt {
+	return func(a *S3Aggregrator) {
+		a.retries = retries
+	}
+}
+
 func WithSession(session *session.Session) S3AggregatorOpt {
 	return func(a *S3Aggregrator) {
 		a.sess = session

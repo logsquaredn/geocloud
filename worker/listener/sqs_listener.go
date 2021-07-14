@@ -42,7 +42,7 @@ func New(opts ...SQSListenerOpt) (*SQSListener, error) {
 	}
 
 	if l.callback == nil {
-		return nil, fmt.Errorf("nil callback")
+		return nil, fmt.Errorf("listener: nil callback")
 	}
 
 	if l.svc == nil {

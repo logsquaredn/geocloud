@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
 type Das struct {
-	db   *sql.DB
-	conn string
+	db      *sql.DB
+	conn    string
+	retries int
 
 	stmts struct {
 		getStatusById   *sql.Stmt
@@ -43,13 +45,22 @@ func New(opts ...DasOpt) (*Das, error) {
 
 	if d.db == nil {
 		if d.conn == "" {
-			return nil, fmt.Errorf("nil db empty connection string")
+			return nil, fmt.Errorf("das: nil db, empty connection string")
 		}
 
-		var err error
-		d.db, err = sql.Open(driver, d.conn)
-		if err != nil {
-			return nil, err
+		if d.retries == 0 {
+			d.retries = 5
+		}
+
+		var (
+			err error
+			i = 0
+		)
+		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
+			if i > d.retries {
+				return nil, fmt.Errorf("das: failed to connect to DB after %d attempts: %w", d.retries, err)
+			}
+			time.Sleep(time.Second*10)
 		}
 	}
 

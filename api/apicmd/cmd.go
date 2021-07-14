@@ -3,7 +3,6 @@ package apicmd
 import (
 	"fmt"
 	"os"
-	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/logsquaredn/geocloud/api/janitor"
@@ -19,6 +18,8 @@ type Postgres struct {
 	Port     int    `long:"port" default:"5432" description:"Postgres port"`
 	User     string `long:"user" default:"geocloud" description:"Postgres username"`
 	Password string `long:"password" description:"Postgres password"`
+	SSLMode  string `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
+	Retries  int    `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
 }
 
 type APICmd struct {
@@ -34,9 +35,8 @@ func (cmd *APICmd) Execute(args []string) error {
 		da  *das.Das
 		err error
 	)
-	for da, err = das.New(das.WithConnectionString(cmd.getDBConnectionString())); err != nil; {
-		log.Err(err).Msg("failed to connect to DB, retrying in 10s...")
-		time.Sleep(time.Second*10)
+	if da, err = das.New(das.WithConnectionString(cmd.getConnectionString()), das.WithRetries(cmd.Postgres.Retries)); err != nil {
+		return fmt.Errorf("apicmd: failed to create das: %w", err)
 	}
 	defer da.Close()
 
@@ -65,6 +65,6 @@ func (cmd *APICmd) Execute(args []string) error {
 	return <-ifrit.Invoke(grouper.NewOrdered(os.Interrupt, members)).Wait()
 }
 
-func (cmd *APICmd) getDBConnectionString() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", cmd.Postgres.User, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port)
+func (cmd *APICmd) getConnectionString() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=%s", cmd.Postgres.User, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port, cmd.Postgres.SSLMode)
 }
