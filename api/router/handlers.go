@@ -11,9 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h *Router) createJob(jobType string) (id string, err error) {
+func (r *Router) createJob(jobType string) (id string, err error) {
 	id = uuid.New().String()
-	return id, h.das.InsertNewJob(id, jobType)
+	return id, r.das.InsertNewJob(id, jobType)
 }
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
@@ -27,9 +27,9 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 	return missingParams
 }
 
-func (h *Router) create(ctx *gin.Context) {
+func (r *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
-	taskParams, err := h.das.GetTaskParamsByTaskType(taskType)
+	taskParams, err := r.das.GetTaskParamsByTaskType(taskType)
 	if err == sql.ErrNoRows {
 		log.Error().Msgf("/create invalid task type requested: %s", taskType)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid task type: %s", taskType)})
@@ -53,7 +53,7 @@ func (h *Router) create(ctx *gin.Context) {
 		return
 	}
 
-	id, err := h.createJob(taskType)
+	id, err := r.createJob(taskType)
 	if err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
@@ -67,7 +67,7 @@ func (h *Router) create(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"id": id})
 }
 
-func (h *Router) status(ctx *gin.Context) {
+func (r *Router) status(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/status query paramter 'id' not passed or empty")
@@ -75,7 +75,7 @@ func (h *Router) status(ctx *gin.Context) {
 		return
 	}
 
-	status, err := h.das.GetJobStatusByJobId(id)
+	status, err := r.das.GetJobStatusByJobId(id)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/status got 0 results querying for id: %s", id)
 		ctx.Status(http.StatusNotFound)
