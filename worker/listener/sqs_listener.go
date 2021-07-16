@@ -192,12 +192,7 @@ func (l *SQSListener) session() (*session.Session, error) {
 		l.client = http.DefaultClient
 	}
 
-	cfg := aws.NewConfig().WithHTTPClient(l.client).WithRegion(l.region)
-	if l.creds != nil {
-		cfg = cfg.WithCredentials(l.creds)
-	} else {
-		cfg = cfg.WithCredentials(credentials.NewEnvCredentials())
-	}
+	cfg := aws.NewConfig().WithHTTPClient(l.client).WithRegion(l.region).WithCredentials(l.creds)
 
 	return session.NewSession(cfg)
 }

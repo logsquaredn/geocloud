@@ -9,3 +9,6 @@ disabled_plugins = [
 ]
 subreaper = true
 oom_score = -999
+
+[metrics]
+  address = "%s:%d"

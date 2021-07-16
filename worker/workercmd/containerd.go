@@ -2,6 +2,7 @@ package workercmd
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +11,11 @@ import (
 	"github.com/logsquaredn/geocloud/shared"
 	"github.com/tedsuo/ifrit"
 )
+
+type Prometheus struct {
+	IP   string `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_CONTAINERD_PROMETHEUS_IP" description:"IP for Containerd's Prometheus to listen on"`
+	Port int64  `long:"port" default:"1338" description:"Port for Containerd's Prometheus to listen on"`
+}
 
 type Containerd struct {
 	NoRun     bool           `long:"no-run" description:"Whether or not to run its own containerd process. If specified, must target an already-running containerd address"`
@@ -20,10 +26,12 @@ type Containerd struct {
 	Root      flags.Filename `long:"root" default:"/var/lib/geocloud/containerd" env:"GEOCLOUD_CONTAINERD_ROOT" description:"Containerd root directory"`
 	State     flags.Filename `long:"state" default:"/run/geocloud/containerd" description:"Containerd state directory"`
 	Namespace string         `long:"namespace" default:"geocloud" description:"Containerd namespace"`
+
+	Prometheus `group:"Prometheus" namespace:"prometheus"`
 }
 
 //go:embed "config.toml"
-var toml []byte
+var toml string
 
 func (cmd *WorkerCmd) containerd() (ifrit.Runner, error) {
 	var (
@@ -39,7 +47,7 @@ func (cmd *WorkerCmd) containerd() (ifrit.Runner, error) {
 		return nil, err
 	}
 
-	if err := os.WriteFile(config, toml, 0755); err != nil {
+	if err := os.WriteFile(config, []byte(fmt.Sprintf(toml, cmd.Containerd.Prometheus.IP, cmd.Containerd.Prometheus.Port)), 0755); err != nil {
 		return nil, err
 	}
 

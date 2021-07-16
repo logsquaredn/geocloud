@@ -4,9 +4,13 @@ services:
   api:
     build: { context: ., target: api }
     command: --postgres-host=postgres --postgres-password=pwd
+    volumes: [~/.aws/:/root/.aws/:ro]
     ports: [8080:8080]
     networks: [api]
     depends_on: [postgres]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   postgres:
     image: postgres:${POSTGRES_TAG:-latest}
     ports: [5432:5432]
@@ -20,7 +24,8 @@ services:
     build: { context: ., target: worker }
     privileged: true
     command: --postgres-host=postgres --postgres-password=pwd
-    ports: [7778:7777]
+    volumes: [~/.aws/:/root/.aws/:ro]
+    ports: [7778:7778, 1338:1338]
     networks: [worker]
     depends_on: [postgres] # , registry]
     environment:
