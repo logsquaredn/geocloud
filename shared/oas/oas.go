@@ -1,16 +1,17 @@
 package oas
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type Oas struct {
-	s3      *s3.S3
+	upldr   *s3manager.Uploader
 	sess    *session.Session
 	region  string
 	creds   *credentials.Credentials
@@ -25,7 +26,7 @@ func New(opts ...OasOpt) (*Oas, error) {
 	}
 
 	var err error
-	o.s3, err = o.GetS3Service()
+	o.upldr, err = o.GetUploader()
 	if err != nil {
 		return nil, err
 	}
@@ -33,14 +34,17 @@ func New(opts ...OasOpt) (*Oas, error) {
 	return o, nil
 }
 
-func (o *Oas) PutObject(key string) error {
-	putObjectParams := o.s3.PutObjectInput {
-		Bucket: o.bucket,
-		
+func (o *Oas) PutObject(key string, content io.Reader) (*s3manager.UploadOutput, error) {
+	upParams := &s3manager.UploadInput{
+		Bucket: &o.bucket,
+		Key:    &key,
+		Body:   content,
 	}
+
+	return o.upldr.Upload(upParams)
 }
 
-func (o *Oas) GetS3Service() (*s3.S3, error) {
+func (o *Oas) GetUploader() (*s3manager.Uploader, error) {
 	if o.sess == nil {
 		var err error
 		o.sess, err = o.GetSession()
@@ -49,7 +53,7 @@ func (o *Oas) GetS3Service() (*s3.S3, error) {
 		}
 	}
 
-	return s3.New(o.sess), nil
+	return s3manager.NewUploader(o.sess), nil
 }
 
 func (o *Oas) GetSession() (*session.Session, error) {

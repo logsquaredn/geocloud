@@ -4,9 +4,10 @@ import (
 	"database/sql"
 
 	"github.com/logsquaredn/geocloud/shared/das"
+	"github.com/logsquaredn/geocloud/shared/oas"
 )
 
-type RouterOpt func (r *Router)
+type RouterOpt func(r *Router)
 
 func WithConnectionString(conn string) RouterOpt {
 	return func(r *Router) {
@@ -23,5 +24,11 @@ func WithDas(das *das.Das) RouterOpt {
 func WithDB(db *sql.DB) RouterOpt {
 	return func(r *Router) {
 		r.db = db
+	}
+}
+
+func WithOas(oas *oas.Oas) RouterOpt {
+	return func(r *Router) {
+		r.oas = oas
 	}
 }

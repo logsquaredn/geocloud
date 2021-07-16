@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud/shared/das"
+	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 )
@@ -15,6 +16,7 @@ type f = map[string]interface{}
 type Router struct {
 	conn  string
 	das   *das.Das
+	oas   *oas.Oas
 	db    *sql.DB
 	group string
 }
@@ -39,6 +41,19 @@ func New(opts ...RouterOpt) (*Router, error) {
 
 		var err error
 		r.das, err = das.New(opts...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if r.oas == nil {
+		opts := []oas.OasOpt{
+			oas.WithBucket(""),
+			oas.WithRegion(""),
+		}
+
+		var err error
+		r.oas, err = oas.New(opts...)
 		if err != nil {
 			return nil, err
 		}

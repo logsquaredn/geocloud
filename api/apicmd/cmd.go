@@ -8,6 +8,7 @@ import (
 	"github.com/logsquaredn/geocloud/api/janitor"
 	"github.com/logsquaredn/geocloud/api/router"
 	"github.com/logsquaredn/geocloud/shared/das"
+	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
@@ -32,22 +33,30 @@ func (cmd *APICmd) Execute(args []string) error {
 	var members grouper.Members
 
 	var (
-		da  *das.Das
-		err error
+		da    *das.Das
+		daErr error
 	)
-	if da, err = das.New(das.WithConnectionString(cmd.getConnectionString()), das.WithRetries(cmd.Postgres.Retries)); err != nil {
-		return fmt.Errorf("apicmd: failed to create das: %w", err)
+	if da, daErr = das.New(das.WithConnectionString(cmd.getConnectionString()), das.WithRetries(cmd.Postgres.Retries)); daErr != nil {
+		return fmt.Errorf("apicmd: failed to create das: %w", daErr)
 	}
 	defer da.Close()
 
-	rtr, err := router.New(router.WithDas(da))
+	var (
+		oa    *oas.Oas
+		oaErr error
+	)
+	if oa, oaErr = oas.New(oas.WithBucket(""), oas.WithRegion("us-east-1")); oaErr != nil {
+		return fmt.Errorf("apicmd: failed to create oas: %w", oaErr)
+	}
+
+	rtr, err := router.New(router.WithDas(da), router.WithOas(oa))
 	if err != nil {
 		log.Err(err).Msg("failed to create router")
 		return err
 	}
 
 	members = append(members, grouper.Member{
-		Name: "router",
+		Name:   "router",
 		Runner: rtr,
 	})
 
@@ -58,10 +67,10 @@ func (cmd *APICmd) Execute(args []string) error {
 	}
 
 	members = append(members, grouper.Member{
-		Name: "janitor",
+		Name:   "janitor",
 		Runner: jn,
 	})
-	
+
 	return <-ifrit.Invoke(grouper.NewOrdered(os.Interrupt, members)).Wait()
 }
 
