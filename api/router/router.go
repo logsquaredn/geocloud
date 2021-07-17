@@ -1,7 +1,7 @@
 package router
 
 import (
-	"database/sql"
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -14,16 +14,14 @@ import (
 type f = map[string]interface{}
 
 type Router struct {
-	conn  string
 	das   *das.Das
 	oas   *oas.Oas
-	db    *sql.DB
 	group string
 }
 
 var _ ifrit.Runner = (*Router)(nil)
 
-func New(opts ...RouterOpt) (*Router, error) {
+func New(das *das.Das, oas *oas.Oas, opts ...RouterOpt) (*Router, error) {
 	r := &Router{}
 	for _, opt := range opts {
 		opt(r)
@@ -33,30 +31,14 @@ func New(opts ...RouterOpt) (*Router, error) {
 		r.group = "/api/v1/job"
 	}
 
+	r.das = das
 	if r.das == nil {
-		opts := []das.DasOpt{
-			das.WithConnectionString(r.conn),
-			das.WithDB(r.db),
-		}
-
-		var err error
-		r.das, err = das.New(opts...)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("aggregator: nil das")
 	}
 
+	r.oas = oas
 	if r.oas == nil {
-		opts := []oas.OasOpt{
-			oas.WithBucket(""),
-			oas.WithRegion(""),
-		}
-
-		var err error
-		r.oas, err = oas.New(opts...)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("aggregator: nil oas")
 	}
 
 	return r, nil
@@ -78,16 +60,16 @@ func (r *Router) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 		wait <- router.Run()
 	}()
 
-	log.Debug().Fields(f{"runner": runner}).Msg("ready")
+	log.Debug().Fields(f{ "runner": runner }).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case signal := <-signals:
-			log.Debug().Fields(f{"runner": runner, "signal": signal.String()}).Msg("received signal")
+			log.Debug().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
 			return nil
 		case err := <-wait:
-			log.Err(err).Fields(f{"runner": runner}).Msg("received error from router")
-			return err
+			log.Err(err).Fields(f{ "runner": runner }).Msg("received error from router")
+			return fmt.Errorf("router: received error: %w", err)
 		}
 	}
 }

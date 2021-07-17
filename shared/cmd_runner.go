@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -16,47 +17,37 @@ type CmdRunner struct {
 
 var _ ifrit.Runner = (*CmdRunner)(nil)
 
-type CmdRunnerOpt func (c *CmdRunner)
-
 const runner = "CmdRunner"
 
-func NewCmdRunner(opts ...CmdRunnerOpt) (*CmdRunner, error) {
-	c := &CmdRunner{}
-	for _, opt := range opts {
-		opt(c)
-	}
-	return c, nil
-}
-
-func WithCmd(cmd *exec.Cmd) CmdRunnerOpt {
-	return func (c *CmdRunner) {
-		c.cmd = cmd
-	}
+func NewCmdRunner(cmd *exec.Cmd) (*CmdRunner, error) {
+	return &CmdRunner{
+		cmd: cmd,
+	}, nil
 }
 
 func (r *CmdRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	log.Debug().Fields(f{ "runner":runner }).Msg("starting cmd")
+	log.Debug().Fields(f{ "runner": runner }).Msg("starting cmd")
 	err := r.cmd.Start()
 	if err != nil {
-		return err
+		return fmt.Errorf("shared: failed to start cmd: %w", err)
 	}
 
 	wait := make(chan error, 1)
 	go func() {
-		log.Debug().Fields(f{ "runner":runner }).Msg("waiting on cmd to return")
+		log.Debug().Fields(f{ "runner": runner }).Msg("waiting on cmd to return")
 		wait<- r.cmd.Wait()
 	}()
 
-	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
+	log.Debug().Fields(f{ "runner": runner }).Msg("ready")
 	close(ready)
 	for {
 		select {
 		case signal := <-signals:
-			log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("cmd processing signal")
+			log.Debug().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("cmd processing signal")
 			return r.cmd.Process.Signal(signal)
 		case err := <-wait:
-			log.Error().Err(err).Fields(f{ "runner":runner }).Msg("received error from cmd")
-			return err
+			log.Error().Err(err).Fields(f{ "runner": runner }).Msg("received error from cmd")
+			return fmt.Errorf("shared: received error from cmd: %w", err)
 		}
 	}
 }

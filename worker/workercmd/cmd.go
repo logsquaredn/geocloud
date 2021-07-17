@@ -11,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/jessevdk/go-flags"
 	_ "github.com/lib/pq"
+	"github.com/logsquaredn/geocloud/shared/das"
+	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/logsquaredn/geocloud/worker/aggregator"
 	"github.com/logsquaredn/geocloud/worker/listener"
 	"github.com/rs/zerolog"
@@ -56,7 +58,7 @@ type Registry struct {
 }
 
 type WorkerCmd struct {
-	Version    func() `short:"v" long:"version" description:"Print the version"`
+	Version    func() `long:"version" short:"v" description:"Print the version"`
 	Loglevel   string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
 	IP         string `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_WORKER_IP" description:"IP for the worker to listen on"`
 	Port       int64  `long:"port" default:"7778" description:"Port for the worker to listen on"`
@@ -70,7 +72,7 @@ type WorkerCmd struct {
 func (cmd *WorkerCmd) Execute(args []string) error {
 	loglevel, err := zerolog.ParseLevel(cmd.Loglevel)
 	if err != nil {
-		return err
+		return fmt.Errorf("workercmd: failed to parse log-level: %w", err)
 	}
 	zerolog.SetGlobalLevel(loglevel)
 
@@ -79,7 +81,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	if !cmd.Containerd.NoRun {
 		containerd, err := cmd.containerd()
 		if err != nil {
-			return err
+			return fmt.Errorf("workercmd: failed to execute containerd: %w", err)
 		}
 
 		members = append(members, grouper.Member{
@@ -108,34 +110,39 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	)
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("workercmd: failed to create session: %w", err)
+	}
+
+	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries))
+	if err != nil {
+		return fmt.Errorf("workercmd: failed to create das: %w", err)
+	}
+	defer da.Close()
+
+	oa, err := oas.New(sess, cmd.AWS.S3.Bucket)
+	if err != nil {
+		return fmt.Errorf("workercmd: failed to create oas: %w", err)
 	}
 
 	ag, err := aggregator.New(
-		aggregator.WithConnectionString(cmd.getConnectionString()),
-		aggregator.WithRetries(cmd.Postgres.Retries),
-		aggregator.WithSession(sess),
-		aggregator.WithRegion(cmd.Region),
-		aggregator.WithBucket(cmd.Bucket),
-		aggregator.WithPrefix(cmd.Prefix),
+		da, oa,
 		aggregator.WithHttpClient(http),
 		aggregator.WithAddress(fmt.Sprintf("%s:%d", cmd.IP, cmd.Port)),
+		aggregator.WithContainerdNamespace(cmd.Containerd.Namespace),
 		aggregator.WithContainerdSocket(string(cmd.Containerd.Address)),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("workercmd: failed to create aggregator: %w", err)
 	}
 
 	ln, err := listener.New(
-		listener.WithSession(sess),
-		listener.WithRegion(cmd.Region),
+		sess, ag.Aggregate,
 		listener.WithQueueUrls(cmd.QueueURLs...),
 		listener.WithQueueNames(cmd.QueueNames...),
 		listener.WithVisibilityTimeout(cmd.Visibility),
-		listener.WithCallback(ag.Aggregate),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("workercmd: failed to create listener: %w", err)
 	}
 
 	members = append(members, grouper.Member{

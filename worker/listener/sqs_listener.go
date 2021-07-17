@@ -3,12 +3,9 @@ package listener
 import (
 	"fmt"
 	"math/rand"
-	"net/http"
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/logsquaredn/geocloud/worker"
@@ -21,10 +18,6 @@ type SQSListenerCallback func (worker.Message) error
 
 type SQSListener struct {
 	svc      *sqs.SQS
-	sess     *session.Session
-	creds    *credentials.Credentials
-	region   string
-	client   *http.Client
 	names    []string
 	queues   []string
 	vis      time.Duration
@@ -35,31 +28,22 @@ var _ worker.Listener = (*SQSListener)(nil)
 
 const runner = "SQSListener"
 
-func New(opts ...SQSListenerOpt) (*SQSListener, error) {
+func New(sess *session.Session, callback SQSListenerCallback, opts ...SQSListenerOpt) (*SQSListener, error) {
 	l := &SQSListener{}
 	for _, opt := range opts {
 		opt(l)
 	}
 
+	l.callback = callback
 	if l.callback == nil {
 		return nil, fmt.Errorf("listener: nil callback")
 	}
 
-	if l.svc == nil {
-		var err error
-		l.svc, err = l.service()
-		if err != nil {
-			return nil, err
-		}
+	if sess == nil {
+		return nil, fmt.Errorf("listener: nil session")
 	}
 
-	if l.queues == nil {
-		l.queues = []string{}
-	}
-
-	if l.names == nil {
-		l.names = []string{}
-	}
+	l.svc = sqs.New(sess)
 
 	return l, nil
 }
@@ -67,7 +51,7 @@ func New(opts ...SQSListenerOpt) (*SQSListener, error) {
 var maxNumberOfMessages int64 = 10
 
 func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	log.Debug().Fields(f{ "runner":runner }).Msg("converting queue names to urls")
+	log.Debug().Fields(f{ "runner": runner }).Msg("converting queue names to urls")
 	for _, name := range r.names {
 		output, err := r.svc.GetQueueUrl(&sqs.GetQueueUrlInput{ QueueName: &name })
 		if err != nil {
@@ -79,15 +63,15 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	
 	q := len(r.queues)
 	if q == 0 {
-		log.Warn().Fields(f{ "runner":runner }).Msg("no queues specified")
+		log.Warn().Fields(f{ "runner": runner }).Msg("no queues specified")
 	}
 
-	log.Debug().Fields(f{ "runner":runner }).Msg("shuffling queues")
+	log.Debug().Fields(f{ "runner": runner }).Msg("shuffling queues")
 	r.shuffle()
 
-	log.Debug().Fields(f{ "runner":runner }).Msgf("given visibility %ds", int64(r.vis.Seconds()))
+	log.Debug().Fields(f{ "runner": runner }).Msgf("given visibility %ds", int64(r.vis.Seconds()))
 	visibility := r.visibility()
-	log.Debug().Fields(f{ "runner":runner }).Msgf("using visibility %ds", visibility)
+	log.Debug().Fields(f{ "runner": runner }).Msgf("using visibility %ds", visibility)
 
 	ticker := r.ticker()
 
@@ -96,7 +80,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		defer ticker.Stop()
 		for i := 0; q > 0; i = (i+1)%q {
 			url := r.queues[i]
-			log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("receiving messages from queue")
+			log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("receiving messages from queue")
 			output, err := r.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 				MaxNumberOfMessages: &maxNumberOfMessages,
 				QueueUrl: &url,
@@ -124,7 +108,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 
 			done := make(chan struct{}, 1)
 			go func() {
-				log.Debug().Fields(f{ "runner":runner }).Msg("processing messages")
+				log.Debug().Fields(f{ "runner": runner }).Msg("processing messages")
 				for _, msg := range messages {
 					err = r.callback(&SQSMessage{ msg })
 					if err != nil {
@@ -139,7 +123,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 				select {
 				case <-ticker.C:
 					if len(entriesVis) > 0 {
-						log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("changing messages visibility")
+						log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("changing messages visibility")
 						_, err = r.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
 							Entries: entriesVis,
 							QueueUrl: &url,
@@ -149,10 +133,10 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 						}
 					}
 				case <-done:
-					log.Debug().Fields(f{ "runner":runner }).Msg("done processing")
+					log.Debug().Fields(f{ "runner": runner }).Msg("done processing")
 					processing = false
 					if len(entriesDel) > 0 {
-						log.Debug().Fields(f{ "runner":runner, "url":url }).Msg("deleting messages")
+						log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("deleting messages")
 						r.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 							Entries: entriesDel,
 							QueueUrl: &url,
@@ -163,38 +147,16 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		}
 	}()
 
-	log.Debug().Fields(f{ "runner":runner }).Msg("ready")
+	log.Debug().Fields(f{ "runner": runner }).Msg("ready")
 	close(ready)
 	select {
 	case err := <-wait:
-		log.Err(err).Fields(f{ "runner":runner }).Msg("received error")
+		log.Err(err).Fields(f{ "runner": runner }).Msg("received error")
 		return err
 	case signal := <-signals:
-		log.Debug().Fields(f{ "runner":runner, "signal":signal.String() }).Msg("received signal")
+		log.Debug().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
 		return nil
 	}
-}
-
-func (l *SQSListener) service() (*sqs.SQS, error) {
-	if l.sess == nil {
-		var err error
-		l.sess, err = l.session()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return sqs.New(l.sess), nil
-}
-
-func (l *SQSListener) session() (*session.Session, error) {
-	if l.client == nil {
-		l.client = http.DefaultClient
-	}
-
-	cfg := aws.NewConfig().WithHTTPClient(l.client).WithRegion(l.region).WithCredentials(l.creds)
-
-	return session.NewSession(cfg)
 }
 
 func (l *SQSListener) shuffle() {

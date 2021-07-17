@@ -1,67 +1,64 @@
 package oas
 
 import (
+	"fmt"
 	"io"
-	"net/http"
+	"path"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type Oas struct {
+	svc     *s3.S3
 	upldr   *s3manager.Uploader
-	sess    *session.Session
-	region  string
-	creds   *credentials.Credentials
-	hClient *http.Client
+	dwnldr  *s3manager.Downloader
 	bucket  string
+	prefix  string
 }
 
-func New(opts ...OasOpt) (*Oas, error) {
+func New(sess *session.Session, bucket string, opts ...OasOpt) (*Oas, error) {
 	o := &Oas{}
 	for _, opt := range opts {
 		opt(o)
 	}
 
-	var err error
-	o.upldr, err = o.GetUploader()
-	if err != nil {
-		return nil, err
+	if sess == nil {
+		return nil, fmt.Errorf("oas: nil session")
 	}
+
+	if o.prefix == "" {
+		o.prefix = "jobs"
+	}
+
+	o.svc = s3.New(sess)
+	o.upldr = s3manager.NewUploader(sess)
+	o.dwnldr = s3manager.NewDownloader(sess)
+	o.bucket = bucket
 
 	return o, nil
 }
 
-func (o *Oas) PutObject(key string, content io.Reader) (*s3manager.UploadOutput, error) {
-	upParams := &s3manager.UploadInput{
+const (
+	input = "input"
+	output = "output"
+)
+
+func (o *Oas) PutJobInput(id string, content io.Reader) (*s3manager.UploadOutput, error) {
+	key := path.Join(o.prefix, id, input)
+	return o.upldr.Upload(&s3manager.UploadInput{
 		Bucket: &o.bucket,
 		Key:    &key,
 		Body:   content,
-	}
-
-	return o.upldr.Upload(upParams)
+	})
 }
 
-func (o *Oas) GetUploader() (*s3manager.Uploader, error) {
-	if o.sess == nil {
-		var err error
-		o.sess, err = o.GetSession()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return s3manager.NewUploader(o.sess), nil
-}
-
-func (o *Oas) GetSession() (*session.Session, error) {
-	if o.hClient == nil {
-		o.hClient = http.DefaultClient
-	}
-
-	cfg := aws.NewConfig().WithHTTPClient(o.hClient).WithRegion(o.region).WithCredentials(o.creds)
-
-	return session.NewSession(cfg)
+func (o *Oas) PutJobOutput(id string, content io.Reader) (*s3manager.UploadOutput, error) {
+	key := path.Join(o.prefix, id, output)
+	return o.upldr.Upload(&s3manager.UploadInput{
+		Bucket: &o.bucket,
+		Key:    &key,
+		Body:   content,
+	})
 }

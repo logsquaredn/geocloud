@@ -14,8 +14,15 @@ type Janitor struct {
 	das *das.Das
 }
 
-func New(opts... JanitorOpt) (*Janitor, error) {
-	return &Janitor{}, nil
+func New(das *das.Das, opts... JanitorOpt) (*Janitor, error) {
+	j := &Janitor{}
+	for _, opt := range opts {
+		opt(j)
+	}
+
+	j.das = das
+
+	return j, nil
 }
 
 var _ ifrit.Runner = (*Janitor)(nil)

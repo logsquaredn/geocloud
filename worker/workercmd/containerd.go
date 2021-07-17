@@ -75,5 +75,5 @@ func (cmd *WorkerCmd) containerd() (ifrit.Runner, error) {
 	containerd.Stdout = os.Stdout
 	containerd.Stderr = os.Stderr
 
-	return shared.NewCmdRunner(shared.WithCmd(containerd))
+	return shared.NewCmdRunner(containerd)
 }
