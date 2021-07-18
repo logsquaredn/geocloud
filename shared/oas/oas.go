@@ -5,6 +5,7 @@ import (
 	"io"
 	"path"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -19,13 +20,13 @@ type Oas struct {
 }
 
 func New(sess *session.Session, bucket string, opts ...OasOpt) (*Oas, error) {
+	if sess == nil {
+		return nil, fmt.Errorf("oas: nil session")
+	}
+
 	o := &Oas{}
 	for _, opt := range opts {
 		opt(o)
-	}
-
-	if sess == nil {
-		return nil, fmt.Errorf("oas: nil session")
 	}
 
 	if o.prefix == "" {
@@ -40,25 +41,37 @@ func New(sess *session.Session, bucket string, opts ...OasOpt) (*Oas, error) {
 	return o, nil
 }
 
+var ctx = aws.BackgroundContext()
+
 const (
 	input = "input"
 	output = "output"
 )
 
-func (o *Oas) PutJobInput(id string, content io.Reader) (*s3manager.UploadOutput, error) {
-	key := path.Join(o.prefix, id, input)
-	return o.upldr.Upload(&s3manager.UploadInput{
-		Bucket: &o.bucket,
-		Key:    &key,
-		Body:   content,
-	})
+func (o *Oas) PutJobInput(id string, bodies ...io.Reader) error {
+	prefix := path.Join(o.prefix, id, input)
+	return o.putObjects(prefix, bodies...)
 }
 
-func (o *Oas) PutJobOutput(id string, content io.Reader) (*s3manager.UploadOutput, error) {
-	key := path.Join(o.prefix, id, output)
-	return o.upldr.Upload(&s3manager.UploadInput{
-		Bucket: &o.bucket,
-		Key:    &key,
-		Body:   content,
+func (o *Oas) PutJobOutput(id string, bodies ...io.Reader) error {
+	prefix := path.Join(o.prefix, id, output)
+	return o.putObjects(prefix, bodies...)
+}
+
+func (o *Oas) putObjects(prefix string, bodies ...io.Reader) error {
+	objects := make([]s3manager.BatchUploadObject, len(bodies))
+	for i, body := range bodies {
+		key := path.Join(prefix, fmt.Sprintf("%d", i))
+		objects[i] = s3manager.BatchUploadObject{
+			Object: &s3manager.UploadInput{
+				Body: body,
+				Bucket: &o.bucket,
+				Key: &key,
+			},
+		}
+	}
+
+	return o.upldr.UploadWithIterator(ctx, &s3manager.UploadObjectsIterator{
+		Objects: objects,
 	})
 }

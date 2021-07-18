@@ -34,23 +34,17 @@ var _ worker.Aggregator = (*S3Aggregrator)(nil)
 const runner = "S3Aggregator"
 
 func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, error) {
-	a := &S3Aggregrator{}
-	for _, opt := range opts {
-		opt(a)
-	}
-
-	a.das = das
-	if a.das == nil {
+	if das == nil {
 		return nil, fmt.Errorf("aggregator: nil das")
 	}
 
-	a.oas = oas
-	if a.oas == nil {
+	if oas == nil {
 		return nil, fmt.Errorf("aggregator: nil oas")
 	}
 
-	if a.hclient == nil {
-		a.hclient = http.DefaultClient
+	a := &S3Aggregrator{}
+	for _, opt := range opts {
+		opt(a)
 	}
 
 	if a.listen == nil {
@@ -59,6 +53,13 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 		if err != nil {
 			return nil, fmt.Errorf("aggregator: unable to create listener: %w", err)
 		}
+	}
+
+	a.das = das
+	a.oas = oas
+
+	if a.hclient == nil {
+		a.hclient = http.DefaultClient
 	}
 
 	mux := http.NewServeMux()

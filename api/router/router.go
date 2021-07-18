@@ -22,6 +22,14 @@ type Router struct {
 var _ ifrit.Runner = (*Router)(nil)
 
 func New(das *das.Das, oas *oas.Oas, opts ...RouterOpt) (*Router, error) {
+	if das == nil {
+		return nil, fmt.Errorf("aggregator: nil das")
+	}
+
+	if oas == nil {
+		return nil, fmt.Errorf("aggregator: nil oas")
+	}
+
 	r := &Router{}
 	for _, opt := range opts {
 		opt(r)
@@ -32,14 +40,7 @@ func New(das *das.Das, oas *oas.Oas, opts ...RouterOpt) (*Router, error) {
 	}
 
 	r.das = das
-	if r.das == nil {
-		return nil, fmt.Errorf("aggregator: nil das")
-	}
-
 	r.oas = oas
-	if r.oas == nil {
-		return nil, fmt.Errorf("aggregator: nil oas")
-	}
 
 	return r, nil
 }

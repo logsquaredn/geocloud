@@ -1,6 +1,7 @@
 package janitor
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/logsquaredn/geocloud/shared/das"
@@ -15,6 +16,10 @@ type Janitor struct {
 }
 
 func New(das *das.Das, opts... JanitorOpt) (*Janitor, error) {
+	if das == nil {
+		return nil, fmt.Errorf("janitor: nil das")
+	}
+
 	j := &Janitor{}
 	for _, opt := range opts {
 		opt(j)

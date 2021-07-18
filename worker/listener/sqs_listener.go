@@ -29,20 +29,20 @@ var _ worker.Listener = (*SQSListener)(nil)
 const runner = "SQSListener"
 
 func New(sess *session.Session, callback SQSListenerCallback, opts ...SQSListenerOpt) (*SQSListener, error) {
-	l := &SQSListener{}
-	for _, opt := range opts {
-		opt(l)
-	}
-
-	l.callback = callback
-	if l.callback == nil {
+	if callback == nil {
 		return nil, fmt.Errorf("listener: nil callback")
 	}
 
 	if sess == nil {
 		return nil, fmt.Errorf("listener: nil session")
 	}
+	
+	l := &SQSListener{}
+	for _, opt := range opts {
+		opt(l)
+	}
 
+	l.callback = callback
 	l.svc = sqs.New(sess)
 
 	return l, nil
