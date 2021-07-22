@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/jessevdk/go-flags"
-	_ "github.com/lib/pq"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/logsquaredn/geocloud/worker/aggregator"
@@ -28,13 +27,13 @@ type S3 struct {
 type SQS struct {
 	QueueNames  []string      `long:"queue-name" description:"SQS queue names to listen on"`
 	QueueURLs   []string      `long:"queue-url" description:"SQS queue urls to listen on"`
-	Visibility  time.Duration `long:"visibility-timeout" default:"1h" description:"Visibilty timeout for SQS messages"`
+	Visibility  time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
 }
 
 type AWS struct {
 	AccessKeyID     string         `long:"access-key-id" description:"AWS access key ID"`
 	SecretAccessKey string         `long:"secret-access-key" description:"AWS secret access key"`
-	Region          string         `long:"region" description:"AWS region"`
+	Region          string         `long:"region" default:"us-east-1" description:"AWS region"`
 	Profile         string         `long:"profile" description:"AWS profile"`
 	SharedCreds     flags.Filename `long:"shared-credentials-file" description:"Path to AWS shared credentials file"`
 

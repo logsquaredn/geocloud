@@ -2,6 +2,8 @@
 
 ## Developing
 
+> _Note: many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
+
 ### Prerequisites
 
 * golang is *required* - version 1.11.x or above is required for go mod to work
@@ -9,31 +11,55 @@
 * runc is *required* - version 1.0.0-rc9x is tested; earlier versions may also work
 * docker is recommended - version 20.10.x is tested; earlier versions may also work
 * ytt is recommended - version 0.34.x is tested; earlier versions may also work; docker can be used instead
+* terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
+* awscli is recommended - version 1.18.69 is tested; earlier versions may also work
 * go mod is used for dependency management of golang packages
 
 > _Note: containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
 
 ### Running
 
+> `docker-compose` _requires credentials to be supplied through the shell via the environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
+
+#### All
+
+```sh
+docker-compose up --build
+```
+
+#### API
+
+```sh
+docker-compose run worker
+```
+
 #### Worker
 
 > _Note: when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
 
-```sh
-# [recommended] run in container 
-docker build -t geocloud .
-docker run --rm --privileged --tmpfs /run geocloud worker
-```
-
-> _Note: when running the worker outside of a container, it is recommended that you target an already-running containerd process by specifying the_ `--containerd-no-run` _and_ `--containerd-address` _flags. See_ `geocloud worker --help` _for more info_
+> _Note: when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
-# run on host machine
-go run ./cmd/ worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
-# or
-go build -o bin/geocloud ./cmd/
-bin/geocloud worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
+docker-compose run worker
 ```
+
+### Infrastructure
+
+> `terraform` _requires credentials to be supplied through the shell via the environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or a credentials file configured in_ `~/.aws/`
+
+#### Create Infrastructure
+
+```sh
+# create queue and bucket
+terraform -chdir=infrastructure/ apply
+```
+
+```sh
+# create queue and bucket using hashicorp/terraform 
+docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY hashicorp/terraform -chdir=/src/infrastructure/ apply
+```
+
+> _Note: The_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
 
 ### CI
 
