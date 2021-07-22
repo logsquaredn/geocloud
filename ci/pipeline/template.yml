@@ -9,7 +9,7 @@ do:
   privileged: true
   file: geocloud/ci/tasks/build_geocloud.yml
   params:
-    BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version))
+    BUILD_ARG_ldflags: -X github.com/logsquaredn/geocloud.Version=((.:version)) -X github.com/logsquaredn/geocloud.Commit=((.:commit))
     TARGET: #@ target
   input_mapping: { build_image: golang-latest, base_image: ubuntu-bionic }
 - put: #@ resource
@@ -55,6 +55,8 @@ jobs:
       params: { format: oci }
   - load_var: version
     file: geocloud-version/version
+  - load_var: commit
+    file: geocloud/.git/ref
   - #@ build_and_put_geocloud("", "geocloud-latest")
   - #@ build_and_put_geocloud("api", "geocloud-api")
   - #@ build_and_put_geocloud("worker", "geocloud-worker")
