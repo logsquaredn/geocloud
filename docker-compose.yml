@@ -4,15 +4,23 @@ services:
   api:
     build: { context: ., target: api }
     command: --postgres-host=postgres --postgres-password=pwd
-    volumes: [~/.aws/:/root/.aws/:ro]
+    volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/:ro]
     ports: [8080:8080]
     networks: [api]
-    depends_on: [postgres]
+    depends_on: [postgres, infrastructure,]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  infrastructure:
+    image: hashicorp/terraform:${TERRAFORM_TAG:-light}
+    working_dir: /src/infrastructure
+    entrypoint: sh -c 'terraform init && terraform apply -input=false && terraform output -json > /tmp/geocloud/config.json'
+    volumes: [~/.aws/:/root/.aws/:ro, ./infrastructure/:/src/infrastructure, config:/tmp/geocloud/]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   postgres:
-    image: postgres:${POSTGRES_TAG:-latest}
+    image: postgres:${POSTGRES_TAG:-alpine}
     ports: [5432:5432]
     volumes: [./postgres/:/docker-entrypoint-initdb.d/:ro]
     networks: [api, worker]
@@ -23,20 +31,23 @@ services:
   worker:
     build: { context: ., target: worker }
     privileged: true
-    command: --postgres-host=postgres --postgres-password=pwd
-    volumes: [~/.aws/:/root/.aws/:ro]
+    command: --postgres-host=postgres --postgres-password=pwd --aws-s3-bucket=logsquaredn-geocloud --aws-sqs-queue-name=logsquaredn-geocloud -l=trace
+    volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/]
     ports: [7778:7778, 1338:1338]
     networks: [worker]
-    depends_on: [postgres] # , registry]
+    depends_on: [postgres, infrastructure] # , registry]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   # registry:
   #   image: registry:${REGISTRY_TAG:-2}
   #   ports: [5000:5000]
-  #   volumes: [registry/config.yml:/etc/docker/registry/config.yml:ro]
+  #   volumes: [./registry/config.yml:/etc/docker/registry/config.yml:ro]
   #   networks: [worker]
 
 networks:
   api:
   worker:
+
+volumes:
+  config:

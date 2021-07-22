@@ -58,7 +58,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			return err
 		}
 
-		r.queues = append(r.queues, output.GoString())
+		r.queues = append(r.queues, *output.QueueUrl)
 	}
 	
 	q := len(r.queues)
@@ -144,6 +144,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 					}
 				}
 			}
+
 		}
 	}()
 
