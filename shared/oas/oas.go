@@ -48,30 +48,21 @@ const (
 	output = "output"
 )
 
-func (o *Oas) PutJobInput(id string, bodies ...io.Reader) error {
-	prefix := path.Join(o.prefix, id, input)
-	return o.putObjects(prefix, bodies...)
+func (o *Oas) PutJobInput(id string, body io.Reader, ext string) error {
+	prefix := path.Join(o.prefix, id, input, fmt.Sprintf("%s.%s", input, ext))
+	return o.putObjects(prefix, body)
 }
 
-func (o *Oas) PutJobOutput(id string, bodies ...io.Reader) error {
-	prefix := path.Join(o.prefix, id, output)
-	return o.putObjects(prefix, bodies...)
+func (o *Oas) PutJobOutput(id string, body io.Reader, ext string) error {
+	prefix := path.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	return o.putObjects(prefix, body)
 }
 
-func (o *Oas) putObjects(prefix string, bodies ...io.Reader) error {
-	objects := make([]s3manager.BatchUploadObject, len(bodies))
-	for i, body := range bodies {
-		key := path.Join(prefix, fmt.Sprintf("%d", i))
-		objects[i] = s3manager.BatchUploadObject{
-			Object: &s3manager.UploadInput{
-				Body: body,
-				Bucket: &o.bucket,
-				Key: &key,
-			},
-		}
-	}
-
-	return o.upldr.UploadWithIterator(ctx, &s3manager.UploadObjectsIterator{
-		Objects: objects,
+func (o *Oas) putObjects(key string, body io.Reader) (err error) {
+	_, err = o.upldr.Upload(&s3manager.UploadInput{
+		Body: body,
+		Bucket: &o.bucket,
+		Key: &key,
 	})
+	return
 }

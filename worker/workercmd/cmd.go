@@ -34,7 +34,7 @@ type SQS struct {
 type AWS struct {
 	AccessKeyID     string         `long:"access-key-id" description:"AWS access key ID"`
 	SecretAccessKey string         `long:"secret-access-key" description:"AWS secret access key"`
-	Region          string         `long:"region" description:"AWS region"`
+	Region          string         `long:"region" default:"us-east-1" description:"AWS region"`
 	Profile         string         `long:"profile" description:"AWS profile"`
 	SharedCreds     flags.Filename `long:"shared-credentials-file" description:"Path to AWS shared credentials file"`
 
