@@ -144,7 +144,6 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 					}
 				}
 			}
-
 		}
 	}()
 

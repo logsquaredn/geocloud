@@ -31,7 +31,7 @@ services:
   worker:
     build: { context: ., target: worker }
     privileged: true
-    command: --postgres-host=postgres --postgres-password=pwd --aws-s3-bucket=logsquaredn-geocloud --aws-sqs-queue-name=logsquaredn-geocloud -l=trace
+    command: --postgres-host=postgres --postgres-password=pwd --aws-s3-bucket=logsquaredn-geocloud --aws-sqs-queue-name=logsquaredn-geocloud
     volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/]
     ports: [7778:7778, 1338:1338]
     networks: [worker]
