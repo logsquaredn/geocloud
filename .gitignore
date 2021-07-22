@@ -1,0 +1,15 @@
+# build
+bin/
+
+# ci
+assets/*
+!assets/.gitkeep
+
+# macOS
+.DS_Store
+
+# terraform
+.terraform/
+
+# vscode
+.vscode/

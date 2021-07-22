@@ -14,8 +14,8 @@ services:
   infrastructure:
     image: hashicorp/terraform:${TERRAFORM_TAG:-light}
     working_dir: /src/infrastructure
-    entrypoint: sh -c 'terraform apply -input=false && terraform output -json > /tmp/geocloud/config.json'
-    volumes: [~/.aws/:/root/.aws/:ro, ./infrastructure/:/src/infrastructure:ro, config:/tmp/geocloud/]
+    entrypoint: sh -c 'terraform init && terraform apply -input=false && terraform output -json > /tmp/geocloud/config.json'
+    volumes: [~/.aws/:/root/.aws/:ro, ./infrastructure/:/src/infrastructure, config:/tmp/geocloud/]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
