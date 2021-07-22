@@ -3,15 +3,12 @@ package das
 import (
 	"database/sql"
 	_ "embed"
-	"fmt"
-	"time"
 
 	"github.com/lib/pq"
 )
 
 type Das struct {
 	db      *sql.DB
-	conn    string
 	retries int
 
 	stmts struct {
@@ -36,34 +33,19 @@ var insertNewJobSql string
 //go:embed get_task_params_by_task_type.sql
 var getParamsByTypeSql string
 
-func New(opts ...DasOpt) (*Das, error) {
+func New(conn string, opts ...DasOpt) (*Das, error) {
 	d := &Das{}
 	for _, opt := range opts {
 		opt(d)
 	}
 
-	if d.db == nil {
-		if d.conn == "" {
-			return nil, fmt.Errorf("das: nil db, empty connection string")
-		}
-
-		if d.retries == 0 {
-			d.retries = 5
-		}
-
-		var (
-			err error
-			i   = 0
-		)
-		for d.db, err = sql.Open(driver, d.conn); err != nil; i++ {
-			if i > d.retries {
-				return nil, fmt.Errorf("das: failed to connect to DB after %d attempts: %w", d.retries, err)
-			}
-			time.Sleep(time.Second * 10)
-		}
+	var err error
+	d.db, err = sql.Open(driver, conn)
+	if err != nil {
+		return nil, err
 	}
 
-	err := d.db.Ping()
+	err = d.db.Ping()
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 
 // GeocloudCmd is groups all of geocloud's subcommands and options go buiunder one binary
 type GeocloudCmd struct {
-	Version    func()     `short:"v" long:"version" description:"Print the version"`
+	Version    func()     `long:"version" short:"v" description:"Print the version"`
 	VersionCmd VersionCmd `command:"version" description:"Print the version"`
 
 	API    apicmd.APICmd       `command:"api" description:"Run the api"`  
