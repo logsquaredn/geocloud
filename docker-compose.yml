@@ -7,7 +7,7 @@ services:
     volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/:ro]
     ports: [8080:8080]
     networks: [api]
-    depends_on: [postgres, infrastructure,]
+    depends_on: [postgres, infrastructure]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
