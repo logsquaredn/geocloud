@@ -6,7 +6,7 @@ import (
 	"github.com/logsquaredn/geocloud/worker/workercmd"
 )
 
-// GeocloudCmd is groups all of geocloud's subcommands and options go buiunder one binary
+// GeocloudCmd is groups all of geocloud's subcommands and options under one binary
 type GeocloudCmd struct {
 	Version    func()     `long:"version" short:"v" description:"Print the version"`
 
