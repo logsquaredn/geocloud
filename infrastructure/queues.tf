@@ -33,5 +33,5 @@ output "queue_urls" {
 
 output "queue_names" {
     value = [for q in var.queues : q]
-    description = "AWS SQS urls"
+    description = "AWS SQS names"
 }
