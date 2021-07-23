@@ -19,7 +19,7 @@
 
 ### Running
 
-> `docker-compose` _requires credentials to be supplied through the shell via the environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
+> `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
 
 #### All
 
@@ -45,7 +45,7 @@ docker-compose run worker
 
 ### Infrastructure
 
-> `terraform` _requires credentials to be supplied through the shell via the environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or a credentials file configured in_ `~/.aws/`
+> `terraform` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or a credentials file configured in_ `~/.aws/`
 
 #### Create Infrastructure
 
@@ -54,12 +54,12 @@ docker-compose run worker
 terraform -chdir=infrastructure/ apply
 ```
 
+> _Note: The_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
+
 ```sh
 # create queue and bucket using hashicorp/terraform 
 docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY hashicorp/terraform -chdir=/src/infrastructure/ apply
 ```
-
-> _Note: The_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
 
 ### CI
 
