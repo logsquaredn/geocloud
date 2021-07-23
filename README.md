@@ -30,7 +30,7 @@ docker-compose up --build
 #### API
 
 ```sh
-docker-compose run worker
+docker-compose run api
 ```
 
 #### Worker
