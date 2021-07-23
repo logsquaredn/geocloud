@@ -2,7 +2,7 @@
 
 ## Developing
 
-> _Note: many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
+> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
 
 ### Prerequisites
 
@@ -15,7 +15,7 @@
 * awscli is recommended - version 1.18.69 is tested; earlier versions may also work
 * go mod is used for dependency management of golang packages
 
-> _Note: containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
+> _containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
 
 ### Running
 
@@ -35,9 +35,9 @@ docker-compose run api
 
 #### Worker
 
-> _Note: when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
+> _when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
 
-> _Note: when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
+> _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
 docker-compose run worker
@@ -54,7 +54,7 @@ docker-compose run worker
 terraform -chdir=infrastructure/ apply
 ```
 
-> _Note: The_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
+> _the_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
 
 ```sh
 # create queue and bucket using hashicorp/terraform 
@@ -71,7 +71,7 @@ fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
 ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
 ```
 
-> _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
+> _the_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
 
 ```sh
 # set pipeline from template using k14s/image
