@@ -8,7 +8,6 @@ variable "visibility_timeout_seconds" {
     type        = number
     default     = 15
     description = "Seconds for SQS to hide a message"
-
 }
 
 variable "message_retention_seconds" {
