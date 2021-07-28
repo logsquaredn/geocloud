@@ -62,22 +62,22 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 
 	d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.getTypeById, err = d.db.Prepare(getTypeByIdSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	return d, nil
