@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/logsquaredn/geocloud/api/janitor"
 	"github.com/logsquaredn/geocloud/api/router"
@@ -38,14 +37,14 @@ func (cmd *APICmd) Execute(args []string) error {
 	var members grouper.Members
 
 	http := http.DefaultClient
-	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(cmd.getCredentials())
+	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(cmd.AWS.Credentials())
 	sess, err := session.NewSession(cfg)
 	if err != nil {
 		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create session: %w", err)
 	}
 
-	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries), das.WithRetryDelay(cmd.Postgres.RetryDelay))
+	da, err := das.New(cmd.Postgres.ConnectionString(), das.WithRetries(cmd.Postgres.Retries), das.WithRetryDelay(cmd.Postgres.RetryDelay))
 	if err != nil {
 		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create das: %w", err)
@@ -81,26 +80,4 @@ func (cmd *APICmd) Execute(args []string) error {
 	})
 
 	return <-ifrit.Invoke(grouper.NewOrdered(os.Interrupt, members)).Wait()
-}
-
-func (cmd *APICmd) getConnectionString() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=%s", cmd.Postgres.User, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port, cmd.Postgres.SSLMode)
-}
-
-func (cmd *APICmd) getCredentials() *credentials.Credentials {
-	return credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.StaticProvider{
-				Value: credentials.Value{
-					AccessKeyID: cmd.AWS.AccessKeyID,
-					SecretAccessKey: cmd.AWS.SecretAccessKey,
-				},
-			},
-			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{
-				Filename: string(cmd.SharedCreds),
-				Profile: cmd.AWS.Profile,
-			},
-		},
-	)
 }

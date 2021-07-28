@@ -1,8 +1,10 @@
 package sharedcmd
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/jessevdk/go-flags"
 )
 
@@ -36,4 +38,26 @@ type Postgres struct {
 	SSLMode    string        `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
 	Retries    int           `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
 	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
+}
+
+func (p *Postgres) ConnectionString() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.Host, p.Port, p.SSLMode)
+}
+
+func (a *AWS) Credentials() *credentials.Credentials {
+	return credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.StaticProvider{
+				Value: credentials.Value{
+					AccessKeyID: a.AccessKeyID,
+					SecretAccessKey: a.SecretAccessKey,
+				},
+			},
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{
+				Filename: string(a.SharedCreds),
+				Profile:a.Profile,
+			},
+		},
+	)
 }
