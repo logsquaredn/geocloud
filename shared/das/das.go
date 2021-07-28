@@ -3,6 +3,8 @@ package das
 import (
 	"database/sql"
 	_ "embed"
+	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -39,15 +41,23 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		opt(d)
 	}
 
-	var err error
-	d.db, err = sql.Open(driver, conn)
-	if err != nil {
-		return nil, err
+	var (
+		err error
+		i = 0
+	)
+	for d.db, err = sql.Open(driver, conn); err != nil; i++ {
+		if i >= d.retries {
+			return nil, fmt.Errorf("das: failed to connect to db after %d attempts: %w", d.retries+1, err)
+		}
+		time.Sleep(5*time.Second)
 	}
 
-	err = d.db.Ping()
-	if err != nil {
-		return nil, err
+	i = 0
+	for err = d.db.Ping(); err != nil; i++ {
+		if i >= d.retries {
+			return nil, fmt.Errorf("das: failed to ping db after %d attempts: %w", d.retries+1, err)
+		}
+		time.Sleep(5*time.Second)
 	}
 
 	d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql)

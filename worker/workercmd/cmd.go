@@ -4,51 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/jessevdk/go-flags"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
+	"github.com/logsquaredn/geocloud/shared/sharedcmd"
 	"github.com/logsquaredn/geocloud/worker/aggregator"
 	"github.com/logsquaredn/geocloud/worker/listener"
 	"github.com/rs/zerolog"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 )
-
-type S3 struct {
-	Bucket string `long:"bucket" description:"S3 bucket"`
-	Prefix string `long:"prefix" default:"jobs" description:"S3 key prefix"`
-}
-
-type SQS struct {
-	QueueNames  []string      `long:"queue-name" description:"SQS queue names to listen on"`
-	QueueURLs   []string      `long:"queue-url" description:"SQS queue urls to listen on"`
-	Visibility  time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
-}
-
-type AWS struct {
-	AccessKeyID     string         `long:"access-key-id" description:"AWS access key ID"`
-	SecretAccessKey string         `long:"secret-access-key" description:"AWS secret access key"`
-	Region          string         `long:"region" default:"us-east-1" description:"AWS region"`
-	Profile         string         `long:"profile" description:"AWS profile"`
-	SharedCreds     flags.Filename `long:"shared-credentials-file" description:"Path to AWS shared credentials file"`
-
-	S3  `group:"S3" namespace:"s3"`
-	SQS `group:"SQS" namespace:"sqs"`
-}
-
-type Postgres struct {
-	Host     string `long:"host" description:"Postgres host"`
-	Port     int64  `long:"port" default:"5432" description:"Postgres port"`
-	User     string `long:"user" default:"geocloud" description:"Postgres user"`
-	Password string `long:"password" description:"Postgres password"`
-	SSLMode  string `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
-	Retries  int    `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
-}
 
 type Registry struct {
 	Address  string `long:"address" default:"registry-1.docker.io" description:"URL of the registry to pull images from"`
@@ -62,16 +30,16 @@ type WorkerCmd struct {
 	IP         string `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_WORKER_IP" description:"IP for the worker to listen on"`
 	Port       int64  `long:"port" default:"7778" description:"Port for the worker to listen on"`
 
-	AWS        `group:"AWS" namespace:"aws"`
-	Containerd `group:"Containerd" namespace:"containerd"`
-	Postgres   `group:"Postgres" namespace:"postgres"`
-	Registry   `group:"Registry" namespace:"registry"`
+	sharedcmd.AWS      `group:"AWS" namespace:"aws"`
+	Containerd         `group:"Containerd" namespace:"containerd"`
+	sharedcmd.Postgres `group:"Postgres" namespace:"postgres"`
+	Registry           `group:"Registry" namespace:"registry"`
 }
 
 func (cmd *WorkerCmd) Execute(args []string) error {
 	loglevel, err := zerolog.ParseLevel(cmd.Loglevel)
 	if err != nil {
-		return fmt.Errorf("workercmd: failed to parse log-level: %w", err)
+		return fmt.Errorf("workercmd: failed to parse --log-level: %w", err)
 	}
 	zerolog.SetGlobalLevel(loglevel)
 
@@ -90,23 +58,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	}
 
 	http := http.DefaultClient
-	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(
-		credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.StaticProvider{
-					Value: credentials.Value{
-						AccessKeyID: cmd.AccessKeyID,
-						SecretAccessKey: cmd.SecretAccessKey,
-					},
-				},
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{
-					Filename: string(cmd.SharedCreds),
-					Profile: cmd.Profile,
-				},
-			},
-		),
-	)
+	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(cmd.getCredentials())
 	sess, err := session.NewSession(cfg)
 	if err != nil {
 		return fmt.Errorf("workercmd: failed to create session: %w", err)
@@ -136,20 +88,20 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 
 	ln, err := listener.New(
 		sess, ag.Aggregate,
-		listener.WithQueueUrls(cmd.QueueURLs...),
-		listener.WithQueueNames(cmd.QueueNames...),
-		listener.WithVisibilityTimeout(cmd.Visibility),
+		listener.WithQueueUrls(cmd.AWS.SQS.QueueURLs...),
+		listener.WithQueueNames(cmd.AWS.SQS.QueueNames...),
+		listener.WithVisibilityTimeout(cmd.AWS.SQS.Visibility),
 	)
 	if err != nil {
 		return fmt.Errorf("workercmd: failed to create listener: %w", err)
 	}
 
 	members = append(members, grouper.Member{
-		Name: "listener",
-		Runner: ln,
-	}, grouper.Member{
 		Name: "aggregator",
 		Runner: ag,
+	}, grouper.Member{
+		Name: "listener",
+		Runner: ln,
 	})
 
 	return <-ifrit.Invoke(grouper.NewOrdered(os.Interrupt, members)).Wait()
@@ -157,4 +109,22 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 
 func (cmd *WorkerCmd) getConnectionString() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=%s", cmd.Postgres.User, cmd.Postgres.Password, cmd.Postgres.Host, cmd.Postgres.Port, cmd.Postgres.SSLMode)
+}
+
+func (cmd *WorkerCmd) getCredentials() *credentials.Credentials {
+	return credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.StaticProvider{
+				Value: credentials.Value{
+					AccessKeyID: cmd.AWS.AccessKeyID,
+					SecretAccessKey: cmd.AWS.SecretAccessKey,
+				},
+			},
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{
+				Filename: string(cmd.SharedCreds),
+				Profile: cmd.AWS.Profile,
+			},
+		},
+	)
 }
