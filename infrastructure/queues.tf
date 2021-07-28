@@ -1,6 +1,6 @@
 variable "queues" {
     type        = list(string)
-    default     = ["logsquaredn-geocloud"]
+    default     = ["logsquaredn-geocloud-1", "logsquaredn-geocloud-2"]
     description = "AWS SQS queue names to create"
 }
 

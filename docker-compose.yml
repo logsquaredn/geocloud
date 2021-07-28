@@ -14,7 +14,7 @@ services:
   infrastructure:
     image: hashicorp/terraform:${TERRAFORM_TAG:-light}
     working_dir: /src/infrastructure
-    entrypoint: sh -c 'terraform init && terraform apply -input=false && terraform output -json > /tmp/geocloud/config.json'
+    entrypoint: sh -c 'terraform init && terraform apply -auto-approve -input=false && terraform output -json > /tmp/geocloud/config.json'
     volumes: [~/.aws/:/root/.aws/:ro, ./infrastructure/:/src/infrastructure, config:/tmp/geocloud/]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
@@ -31,7 +31,7 @@ services:
   worker:
     build: { context: ., target: worker }
     privileged: true
-    command: --postgres-host=postgres --postgres-password=pwd --aws-shared-credentials-file=/root/.aws/credentials --aws-s3-bucket=logsquaredn-geocloud --aws-sqs-queue-name=logsquaredn-geocloud
+    command: --postgres-host=postgres --postgres-password=pwd --aws-shared-credentials-file=/root/.aws/credentials --aws-s3-bucket=logsquaredn-geocloud --aws-sqs-queue-name=logsquaredn-geocloud-1 --aws-sqs-queue-name=logsquaredn-geocloud-2
     volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/]
     ports: [7778:7778, 1338:1338]
     networks: [worker]
