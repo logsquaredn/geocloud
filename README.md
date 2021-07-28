@@ -30,7 +30,9 @@ docker-compose up --build
 #### API
 
 ```sh
-docker-compose run api
+# if you have made changes
+docker-compose build
+docker-compose run --rm --service-ports api
 ```
 
 #### Worker
@@ -40,7 +42,9 @@ docker-compose run api
 > _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
-docker-compose run worker
+# if you have made changes
+docker-compose build
+docker-compose run --rm --service-ports worker
 ```
 
 ### Infrastructure

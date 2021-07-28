@@ -14,6 +14,7 @@ import (
 	"github.com/logsquaredn/geocloud/worker/aggregator"
 	"github.com/logsquaredn/geocloud/worker/listener"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 )
@@ -39,6 +40,7 @@ type WorkerCmd struct {
 func (cmd *WorkerCmd) Execute(args []string) error {
 	loglevel, err := zerolog.ParseLevel(cmd.Loglevel)
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to parse --log-level: %w", err)
 	}
 	zerolog.SetGlobalLevel(loglevel)
@@ -48,6 +50,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	if !cmd.Containerd.NoRun {
 		containerd, err := cmd.containerd()
 		if err != nil {
+			log.Err(err).Msg("worker exiting with error")
 			return fmt.Errorf("workercmd: failed to execute containerd: %w", err)
 		}
 
@@ -61,17 +64,20 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(cmd.getCredentials())
 	sess, err := session.NewSession(cfg)
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create session: %w", err)
 	}
 
 	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries))
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create das: %w", err)
 	}
 	defer da.Close()
 
 	oa, err := oas.New(sess, cmd.AWS.S3.Bucket)
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create oas: %w", err)
 	}
 
@@ -83,6 +89,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 		aggregator.WithContainerdSocket(string(cmd.Containerd.Address)),
 	)
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create aggregator: %w", err)
 	}
 
@@ -93,6 +100,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 		listener.WithVisibilityTimeout(cmd.AWS.SQS.Visibility),
 	)
 	if err != nil {
+		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create listener: %w", err)
 	}
 

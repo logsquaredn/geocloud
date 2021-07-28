@@ -43,19 +43,19 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 
 	var (
 		err error
-		i = 0
+		i = 1
 	)
 	for d.db, err = sql.Open(driver, conn); err != nil; i++ {
 		if i >= d.retries {
-			return nil, fmt.Errorf("das: failed to connect to db after %d attempts: %w", d.retries+1, err)
+			return nil, fmt.Errorf("das: failed to connect to db after %d attempts: %w", i, err)
 		}
 		time.Sleep(5*time.Second)
 	}
 
-	i = 0
+	i = 1
 	for err = d.db.Ping(); err != nil; i++ {
 		if i >= d.retries {
-			return nil, fmt.Errorf("das: failed to ping db after %d attempts: %w", d.retries+1, err)
+			return nil, fmt.Errorf("das: failed to ping db after %d attempts: %w", i, err)
 		}
 		time.Sleep(5*time.Second)
 	}
@@ -119,5 +119,7 @@ func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err err
 func (d *Das) Close() error {
 	d.stmts.getStatusById.Close()
 	d.stmts.getTypeById.Close()
+	d.stmts.insertNewJob.Close()
+	d.stmts.getParamsByType.Close()
 	return d.db.Close()
 }

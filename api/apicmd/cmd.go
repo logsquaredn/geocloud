@@ -14,6 +14,7 @@ import (
 	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/logsquaredn/geocloud/shared/sharedcmd"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/grouper"
 )
@@ -29,6 +30,7 @@ type APICmd struct {
 func (cmd *APICmd) Execute(args []string) error {
 	loglevel, err := zerolog.ParseLevel(cmd.Loglevel)
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to parse --log-level: %w", err)
 	}
 	zerolog.SetGlobalLevel(loglevel)
@@ -39,22 +41,26 @@ func (cmd *APICmd) Execute(args []string) error {
 	cfg := aws.NewConfig().WithHTTPClient(http).WithRegion(cmd.Region).WithCredentials(cmd.getCredentials())
 	sess, err := session.NewSession(cfg)
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create session: %w", err)
 	}
 
 	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries))
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create das: %w", err)
 	}
 	defer da.Close()
 
 	oa, err := oas.New(sess, cmd.AWS.S3.Bucket, oas.WithPrefix(cmd.AWS.S3.Prefix))
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create oas: %w", err)
 	}
 
 	rtr, err := router.New(da, oa)
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create router: %w", err)
 	}
 
@@ -65,6 +71,7 @@ func (cmd *APICmd) Execute(args []string) error {
 
 	jn, err := janitor.New(da)
 	if err != nil {
+		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create janitor: %w", err)
 	}
 
