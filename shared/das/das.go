@@ -12,6 +12,7 @@ import (
 type Das struct {
 	db      *sql.DB
 	retries int
+	delay   time.Duration
 
 	stmts struct {
 		getStatusById   *sql.Stmt
@@ -49,7 +50,7 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		if i >= d.retries {
 			return nil, fmt.Errorf("das: failed to connect to db after %d attempts: %w", i, err)
 		}
-		time.Sleep(5*time.Second)
+		time.Sleep(d.delay)
 	}
 
 	i = 1
@@ -57,7 +58,7 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		if i >= d.retries {
 			return nil, fmt.Errorf("das: failed to ping db after %d attempts: %w", i, err)
 		}
-		time.Sleep(5*time.Second)
+		time.Sleep(d.delay)
 	}
 
 	d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql)

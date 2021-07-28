@@ -45,7 +45,7 @@ func (cmd *APICmd) Execute(args []string) error {
 		return fmt.Errorf("apicmd: failed to create session: %w", err)
 	}
 
-	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries))
+	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries), das.WithRetryDelay(cmd.Postgres.RetryDelay))
 	if err != nil {
 		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create das: %w", err)

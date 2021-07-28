@@ -68,7 +68,7 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 		return fmt.Errorf("workercmd: failed to create session: %w", err)
 	}
 
-	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries))
+	da, err := das.New(cmd.getConnectionString(), das.WithRetries(cmd.Postgres.Retries), das.WithRetryDelay(cmd.Postgres.RetryDelay))
 	if err != nil {
 		log.Err(err).Msg("worker exiting with error")
 		return fmt.Errorf("workercmd: failed to create das: %w", err)

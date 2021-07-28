@@ -10,6 +10,7 @@
 * containerd is *required* - version 1.5.x is tested; earlier versions may also work
 * runc is *required* - version 1.0.0-rc9x is tested; earlier versions may also work
 * docker is recommended - version 20.10.x is tested; earlier versions may also work
+* docker-compose is recommended - version 1.29.x is tested; earlier versions may also work
 * ytt is recommended - version 0.34.x is tested; earlier versions may also work; docker can be used instead
 * terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
 * awscli is recommended - version 1.18.69 is tested; earlier versions may also work
@@ -30,9 +31,9 @@ docker-compose up --build
 #### API
 
 ```sh
-# if you have made changes
-docker-compose build
-docker-compose run --rm --service-ports api
+# running postgres explicitly beforehand may be optional
+docker-compose up -d postgres
+docker-compose up api
 ```
 
 #### Worker
@@ -42,9 +43,9 @@ docker-compose run --rm --service-ports api
 > _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
-# if you have made changes
-docker-compose build
-docker-compose run --rm --service-ports worker
+# running postgres explicitly beforehand may be optional
+docker-compose up -d postgres
+docker-compose up worker
 ```
 
 ### Infrastructure

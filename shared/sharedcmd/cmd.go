@@ -29,10 +29,11 @@ type AWS struct {
 }
 
 type Postgres struct {
-	Host     string `long:"host" description:"Postgres host"`
-	Port     int    `long:"port" default:"5432" description:"Postgres port"`
-	User     string `long:"user" default:"geocloud" description:"Postgres username"`
-	Password string `long:"password" description:"Postgres password"`
-	SSLMode  string `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
-	Retries  int    `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
+	Host       string        `long:"host" description:"Postgres host"`
+	Port       int           `long:"port" default:"5432" description:"Postgres port"`
+	User       string        `long:"user" default:"geocloud" description:"Postgres username"`
+	Password   string        `long:"password" description:"Postgres password"`
+	SSLMode    string        `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
+	Retries    int           `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres"`
+	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
 }
