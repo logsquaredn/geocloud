@@ -24,8 +24,8 @@ type S3 struct {
 }
 
 type SQS struct {
-	QueueNames  []string `long:"queue-name" description:"SQS queue names to listen on"`
-	QueueURLs   []string `long:"queue-url" description:"SQS queue urls to listen on"`
+	QueueNames []string `long:"queue-name" description:"SQS queue names to listen on"`
+	QueueURLs  []string `long:"queue-url" description:"SQS queue urls to listen on"`
 }
 
 type AWS struct {
@@ -49,8 +49,8 @@ type Postgres struct {
 }
 
 type APICmd struct {
-	Version func() `long:"version" short:"v" description:"Print the version"`
-	Loglevel   string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
+	Version  func() `long:"version" short:"v" description:"Print the version"`
+	Loglevel string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
 
 	AWS      `group:"AWS" namespace:"aws"`
 	Postgres `group:"Postgres" namespace:"postgres"`
@@ -71,14 +71,14 @@ func (cmd *APICmd) Execute(args []string) error {
 			[]credentials.Provider{
 				&credentials.StaticProvider{
 					Value: credentials.Value{
-						AccessKeyID: cmd.AccessKeyID,
+						AccessKeyID:     cmd.AccessKeyID,
 						SecretAccessKey: cmd.SecretAccessKey,
 					},
 				},
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{
 					Filename: string(cmd.SharedCreds),
-					Profile: cmd.Profile,
+					Profile:  cmd.Profile,
 				},
 			},
 		),
