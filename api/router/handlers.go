@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -60,6 +61,10 @@ func (r *Router) create(ctx *gin.Context) {
 	}
 
 	// TODO write jsonData to s3
+	_, err = r.oas.PutJobInput(id, bytes.NewReader(jsonData), "geojson")
+	if err != nil {
+		log.Err(err).Msgf("/create failed to write data to s3 for id: %s", id)
+	}
 
 	// TODO send SQS message
 

@@ -3,7 +3,7 @@ version: '3.4'
 services:
   api:
     build: { context: ., target: api }
-    command: --postgres-host=postgres --postgres-password=pwd
+    command: --postgres-host=postgres --postgres-password=pwd --aws-shared-credentials-file=/root/.aws/credentials --aws-s3-bucket=logsquaredn-geocloud
     volumes: [~/.aws/:/root/.aws/:ro]
     ports: [8080:8080]
     networks: [api]
