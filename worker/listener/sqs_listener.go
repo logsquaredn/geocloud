@@ -72,12 +72,14 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	log.Debug().Fields(f{ "runner": runner }).Msgf("received visibility %ds", int64(r.vis.Seconds()))
 	visibility := r.getVisibility()
 	log.Info().Fields(f{ "runner": runner }).Msgf("using visibility %ds", int64(visibility.Seconds()))
-	ticker := time.NewTicker(visibility)
+	vticker := time.NewTicker(visibility)
 	timeout := int64(visibility.Seconds())
+	d, _ := time.ParseDuration(m5)
+	qticker := time.NewTicker(d)
 
 	wait := make(chan error, 1)
 	go func() {
-		defer ticker.Stop()
+		defer vticker.Stop()
 		for i := 0; q > 0; i = (i+1)%q {
 			url := r.queues[i]
 			log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("receiving messages from queue")
@@ -121,7 +123,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 
 			for processing := true; processing; {
 				select {
-				case <-ticker.C:
+				case <-vticker.C:
 					if len(entriesVis) > 0 {
 						log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("changing messages visibility")
 						_, err = r.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
@@ -132,6 +134,13 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 							wait<- err
 						}
 					}
+				case <-qticker.C:
+					log.Info().Fields(f{ "runner": runner }).Msg("updating queue urls")
+					r.queues, err = r.getQueueURLs()
+					if err != nil {
+						wait<- err
+					}
+					q = len(r.queues)
 				case <-done:
 					log.Debug().Fields(f{ "runner": runner }).Msg("done processing")
 					processing = false
@@ -192,9 +201,8 @@ func (l *SQSListener) getQueueURLs() (queues []string, err error) {
 		queues = append(queues, *output.QueueUrl)
 	}
 
-	q := len(queues)
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(q, func(i, j int) {
+	rand.Shuffle(len(queues), func(i, j int) {
 		queues[i], queues[j] = queues[j], queues[i]
 	})
 
