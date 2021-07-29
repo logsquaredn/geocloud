@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/logsquaredn/geocloud/api/janitor"
 	"github.com/logsquaredn/geocloud/api/router"
 	"github.com/logsquaredn/geocloud/shared/das"
@@ -57,7 +58,9 @@ func (cmd *APICmd) Execute(args []string) error {
 		return fmt.Errorf("apicmd: failed to create oas: %w", err)
 	}
 
-	rtr, err := router.New(da, oa)
+	sqs := sqs.New(sess)
+
+	rtr, err := router.New(da, oa, sqs)
 	if err != nil {
 		log.Err(err).Msg("api exiting with error")
 		return fmt.Errorf("apicmd: failed to create router: %w", err)

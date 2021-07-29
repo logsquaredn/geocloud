@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -60,13 +61,39 @@ func (r *Router) create(ctx *gin.Context) {
 		return
 	}
 
-	// TODO write jsonData to s3
 	_, err = r.oas.PutJobInput(id, bytes.NewReader(jsonData), "geojson")
 	if err != nil {
 		log.Err(err).Msgf("/create failed to write data to s3 for id: %s", id)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
 	}
 
 	// TODO send SQS message
+	queueName, err := r.das.GetQueueNameByTaskType(taskType)
+	if err != nil {
+		log.Err(err).Msgf("/create failed to get queue name for task type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
+
+	queueUrlOutput, err := r.sqs.GetQueueUrl(&sqs.GetQueueUrlInput{
+		QueueName: &queueName,
+	})
+	if err != nil {
+		log.Err(err).Msgf("/create failed to get queue url for queue name: %s", queueName)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
+
+	_, err = r.sqs.SendMessage(&sqs.SendMessageInput{
+		QueueUrl:    queueUrlOutput.QueueUrl,
+		MessageBody: &id,
+	})
+	if err != nil {
+		log.Err(err).Msgf("/create failed to get send message to queue url: %s", *queueUrlOutput.QueueUrl)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{"id": id})
 }

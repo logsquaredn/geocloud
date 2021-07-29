@@ -15,10 +15,11 @@ type Das struct {
 	delay   time.Duration
 
 	stmts struct {
-		getStatusById   *sql.Stmt
-		getTypeById     *sql.Stmt
-		insertNewJob    *sql.Stmt
-		getParamsByType *sql.Stmt
+		getStatusById      *sql.Stmt
+		getTypeById        *sql.Stmt
+		insertNewJob       *sql.Stmt
+		getParamsByType    *sql.Stmt
+		getQueueNameByType *sql.Stmt
 	}
 }
 
@@ -35,6 +36,9 @@ var insertNewJobSql string
 
 //go:embed get_task_params_by_task_type.sql
 var getParamsByTypeSql string
+
+//go:embed get_task_queue_name_by_task_type.sql
+var getQueueNameByTypeSql string
 
 func New(conn string, opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -81,6 +85,11 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
+	d.stmts.getQueueNameByType, err = d.db.Prepare(getQueueNameByTypeSql)
+	if err != nil {
+		return nil, err
+	}
+
 	return d, nil
 }
 
@@ -115,6 +124,15 @@ func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err err
 	}
 
 	return params, nil
+}
+
+func (d *Das) GetQueueNameByTaskType(taskType string) (queueName string, err error) {
+	err = d.stmts.getQueueNameByType.QueryRow(taskType).Scan(&queueName)
+	if err != nil {
+		return "", err
+	}
+
+	return queueName, nil
 }
 
 func (d *Das) Close() error {
