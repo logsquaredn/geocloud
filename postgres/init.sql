@@ -6,16 +6,16 @@ CREATE TABLE task (
 );
 
 INSERT INTO task(task_type, task_params, task_queue_name, task_ref) 
-VALUES('buffer', ARRAY['distance'], 'buffer_queue', 'logsquaredn/geocloud@sha256:6e0526e05dfbc9b09e37fbbe1f0f54c50d21dd19f78d549a84b857a6dae1f3bf');
+VALUES('buffer', ARRAY['distance'], 'logsquaredn-geocloud-1', 'logsquaredn/geocloud@sha256:6e0526e05dfbc9b09e37fbbe1f0f54c50d21dd19f78d549a84b857a6dae1f3bf');
 
 INSERT INTO task(task_type, task_params, task_queue_name, task_ref) 
-VALUES('filter', ARRAY['filterColumn', 'filterValue'], 'filter_queue', 'logsquaredn/geocloud@sha256:b512a4292f2882aedffc679cfb8436eaa143d0fdb1bb66d72c40d9813e07d3e5');
+VALUES('filter', ARRAY['filterColumn', 'filterValue'], 'logsquaredn-geocloud-2', 'logsquaredn/geocloud@sha256:b512a4292f2882aedffc679cfb8436eaa143d0fdb1bb66d72c40d9813e07d3e5');
 
 INSERT INTO task(task_type, task_params, task_queue_name, task_ref) 
-VALUES('reproject', ARRAY['targetProjection'], 'reproject_queue', 'logsquaredn/geocloud@sha256:9394ad5f1e6c60c0c2d05c5e034705a08187e8815962bd2dfeb5b9ab00653412');
+VALUES('reproject', ARRAY['targetProjection'], 'logsquaredn-geocloud-1', 'logsquaredn/geocloud@sha256:9394ad5f1e6c60c0c2d05c5e034705a08187e8815962bd2dfeb5b9ab00653412');
 
 INSERT INTO task(task_type, task_queue_name, task_ref) 
-VALUES('removeBadGeometry', 'removeBadGeometry_queue', 'logsquaredn/geocloud@sha256:ac569317103eb0bb44dab3c2a7c9d5a865077c83128d206d3242cf78be6f9290');
+VALUES('removeBadGeometry', 'logsquaredn-geocloud-2', 'logsquaredn/geocloud@sha256:ac569317103eb0bb44dab3c2a7c9d5a865077c83128d206d3242cf78be6f9290');
 
 CREATE TABLE job ( 
     job_id VARCHAR (36) PRIMARY KEY,

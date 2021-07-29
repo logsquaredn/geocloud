@@ -3,6 +3,8 @@ package das
 import (
 	"database/sql"
 	_ "embed"
+	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -10,6 +12,7 @@ import (
 type Das struct {
 	db      *sql.DB
 	retries int
+	delay   time.Duration
 
 	stmts struct {
 		getStatusById      *sql.Stmt
@@ -43,35 +46,43 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		opt(d)
 	}
 
-	var err error
-	d.db, err = sql.Open(driver, conn)
-	if err != nil {
-		return nil, err
+	var (
+		err error
+		i = 1
+	)
+	for d.db, err = sql.Open(driver, conn); err != nil; i++ {
+		if i >= d.retries {
+			return nil, fmt.Errorf("das: failed to connect to db after %d attempts: %w", i, err)
+		}
+		time.Sleep(d.delay)
 	}
 
-	err = d.db.Ping()
-	if err != nil {
-		return nil, err
+	i = 1
+	for err = d.db.Ping(); err != nil; i++ {
+		if i >= d.retries {
+			return nil, fmt.Errorf("das: failed to ping db after %d attempts: %w", i, err)
+		}
+		time.Sleep(d.delay)
 	}
 
 	d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.getTypeById, err = d.db.Prepare(getTypeByIdSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	d.stmts.getQueueNameByType, err = d.db.Prepare(getQueueNameByTypeSql)
@@ -127,5 +138,7 @@ func (d *Das) GetQueueNameByTaskType(taskType string) (queueName string, err err
 func (d *Das) Close() error {
 	d.stmts.getStatusById.Close()
 	d.stmts.getTypeById.Close()
+	d.stmts.insertNewJob.Close()
+	d.stmts.getParamsByType.Close()
 	return d.db.Close()
 }

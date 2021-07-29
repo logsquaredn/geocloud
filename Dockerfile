@@ -2,7 +2,7 @@ ARG base_image=ubuntu:bionic
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND noninteractive
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
@@ -12,6 +12,7 @@ COPY go.sum .
 RUN go mod download
 COPY api/ api/
 COPY cmd/ cmd/
+COPY infrastructure/ infrastructure/
 COPY shared/ shared/
 COPY tools/ tools/
 COPY worker/ worker/
@@ -35,8 +36,8 @@ ENTRYPOINT ["dumb-init", "geocloud"]
 
 FROM base_image AS containerd
 ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
-# when its dest is a remote .tgz, ADD does not unpack the tarball
-# when its dest is a local .tgz, the tarball is unpacked
+# when its src is a remote .tgz, ADD does not unpack the tarball
+# when its src is a local .tgz, ADD unpacks the tarball
 ADD ${containerd_release} /tmp/
 # this conditional handles that difference in ADD's functionality between remote and local
 RUN TGZ=/tmp/$(basename ${containerd_release}); \
@@ -63,8 +64,8 @@ RUN apt-get update \
 COPY --from=build /assets/worker /usr/local/geocloud/bin/geocloud
 COPY --from=containerd /assets/ /usr/local/geocloud/bin/
 COPY --from=runc /assets/ /usr/local/geocloud/bin/
-VOLUME /var/lib/geocloud/containerd
-ENV GEOCLOUD_CONTAINERD_ROOT /var/lib/geocloud/containerd
+VOLUME /var/lib/geocloud/containerd/
+ENV GEOCLOUD_CONTAINERD_ROOT /var/lib/geocloud/containerd/
 ENV GEOCLOUD_CONTAINERD_PROMETHEUS_IP 0.0.0.0
 ENV GEOCLOUD_WORKER_IP 0.0.0.0
 

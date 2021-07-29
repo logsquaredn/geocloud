@@ -2,37 +2,68 @@
 
 ## Developing
 
+> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
+
 ### Prerequisites
 
 * golang is *required* - version 1.11.x or above is required for go mod to work
 * containerd is *required* - version 1.5.x is tested; earlier versions may also work
 * runc is *required* - version 1.0.0-rc9x is tested; earlier versions may also work
 * docker is recommended - version 20.10.x is tested; earlier versions may also work
+* docker-compose is recommended - version 1.29.x is tested; earlier versions may also work
 * ytt is recommended - version 0.34.x is tested; earlier versions may also work; docker can be used instead
+* terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
+* awscli is recommended - version 1.18.69 is tested; earlier versions may also work
 * go mod is used for dependency management of golang packages
 
-> _Note: containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
+> _containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
 
 ### Running
 
-#### Worker
+> `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
 
-> _Note: when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
+#### All
 
 ```sh
-# [recommended] run in container 
-docker build -t geocloud .
-docker run --rm --privileged --tmpfs /run geocloud worker
+docker-compose up --build
 ```
 
-> _Note: when running the worker outside of a container, it is recommended that you target an already-running containerd process by specifying the_ `--containerd-no-run` _and_ `--containerd-address` _flags. See_ `geocloud worker --help` _for more info_
+#### API
 
 ```sh
-# run on host machine
-go run ./cmd/ worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
-# or
-go build -o bin/geocloud ./cmd/
-bin/geocloud worker --containerd-no-run --containerd-address /run/containerd/containerd.sock
+# running postgres explicitly beforehand may be optional
+docker-compose up -d postgres
+docker-compose up api
+```
+
+#### Worker
+
+> _when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
+
+> _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
+
+```sh
+# running postgres explicitly beforehand may be optional
+docker-compose up -d postgres
+docker-compose up worker
+```
+
+### Infrastructure
+
+> `terraform` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or a credentials file configured in_ `~/.aws/`
+
+#### Create Infrastructure
+
+```sh
+# create queue and bucket
+terraform -chdir=infrastructure/ apply
+```
+
+> _the_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
+
+```sh
+# create queue and bucket using hashicorp/terraform 
+docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY hashicorp/terraform -chdir=/src/infrastructure/ apply
 ```
 
 ### CI
@@ -45,7 +76,7 @@ fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
 ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
 ```
 
-> _Note: The_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
+> _the_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
 
 ```sh
 # set pipeline from template using k14s/image
