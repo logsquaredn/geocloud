@@ -10,3 +10,6 @@ assets/*
 
 # vscode
 .vscode/
+
+# terraform
+infrastructure/
