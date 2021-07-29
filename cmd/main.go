@@ -11,16 +11,9 @@ import (
 
 func main() {
 	var cmd GeocloudCmd
-	version := func() {
-		_, err := fmt.Println(geocloud.Version)
-		if err != nil {
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-	cmd.Version = version
-	cmd.API.Version = version
-	cmd.Worker.Version = version
+	cmd.Version = geocloud.V
+	cmd.API.Version = geocloud.V
+	cmd.Worker.Version = geocloud.V
 
 	shared.SetupLogging()
 	parser := flags.NewParser(&cmd, flags.HelpFlag)

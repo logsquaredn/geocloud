@@ -37,8 +37,12 @@ func New(sess *session.Session, bucket string, opts ...OasOpt) (*Oas, error) {
 	}
 
 	o.svc = s3.New(sess)
-	o.upldr = s3manager.NewUploader(sess)
-	o.dwnldr = s3manager.NewDownloader(sess)
+	o.upldr = s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
+		u.S3 = o.svc
+	})
+	o.dwnldr = s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
+		d.S3 = o.svc
+	})
 	o.bucket = bucket
 
 	return o, nil

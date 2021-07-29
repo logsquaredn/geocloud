@@ -3,10 +3,13 @@ bin/
 
 # ci
 assets/*
-!assets/.gitignore
+!assets/.gitkeep
 
 # macOS
 .DS_Store
+
+# terraform
+.terraform/
 
 # vscode
 .vscode/
