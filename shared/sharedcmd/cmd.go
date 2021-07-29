@@ -14,8 +14,6 @@ type S3 struct {
 }
 
 type SQS struct {
-	QueueNames []string `long:"queue-name" description:"SQS queue names to listen on"`
-	QueueURLs  []string `long:"queue-url" description:"SQS queue urls to listen on"`
 	Visibility time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
 }
 

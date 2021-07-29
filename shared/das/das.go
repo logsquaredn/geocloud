@@ -15,11 +15,12 @@ type Das struct {
 	delay   time.Duration
 
 	stmts struct {
-		getStatusById      *sql.Stmt
-		getTypeById        *sql.Stmt
-		insertNewJob       *sql.Stmt
-		getParamsByType    *sql.Stmt
-		getQueueNameByType *sql.Stmt
+		getStatusById        *sql.Stmt
+		getTypeById          *sql.Stmt
+		insertNewJob         *sql.Stmt
+		getParamsByType      *sql.Stmt
+		getQueueNameByType   *sql.Stmt
+		getQueueNamesByTypes *sql.Stmt
 	}
 }
 
@@ -39,6 +40,9 @@ var getParamsByTypeSql string
 
 //go:embed get_task_queue_name_by_task_type.sql
 var getQueueNameByTypeSql string
+
+//go:embed get_task_queue_names_by_task_types.sql
+var getQueueNamesByTypesSql string
 
 func New(conn string, opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -90,49 +94,58 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		return nil, err
 	}
 
+	d.stmts.getQueueNamesByTypes, err = d.db.Prepare(getQueueNamesByTypesSql)
+	if err != nil {
+		return nil, err
+	}
+
 	return d, nil
 }
 
 func (d *Das) GetJobStatusByJobId(id string) (jobStatus string, err error) {
 	err = d.stmts.getStatusById.QueryRow(id).Scan(&jobStatus)
-	if err != nil {
-		return "", err
-	}
-
-	return jobStatus, nil
+	return
 }
 
 func (d *Das) GetJobTypeByJobId(id string) (jobType string, err error) {
 	err = d.stmts.getTypeById.QueryRow(id).Scan(&jobType)
-	if err != nil {
-		return "", err
-	}
-
-	return jobType, nil
+	return
 }
 
 func (d *Das) InsertNewJob(id string, jobType string) (err error) {
 	_, err = d.stmts.insertNewJob.Exec(id, jobType)
-
-	return err
+	return
 }
 
 func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err error) {
 	err = d.stmts.getParamsByType.QueryRow(taskType).Scan(pq.Array(&params))
-	if err != nil {
-		return nil, err
-	}
-
-	return params, nil
+	return
 }
 
 func (d *Das) GetQueueNameByTaskType(taskType string) (queueName string, err error) {
 	err = d.stmts.getQueueNameByType.QueryRow(taskType).Scan(&queueName)
-	if err != nil {
-		return "", err
-	}
+	return
+}
 
-	return queueName, nil
+func (d *Das) GetQueueNamesByTaskTypes(tasks... string) (queues []string, err error) {
+	rows, err := d.stmts.getQueueNamesByTypes.Query(pq.Array(tasks))
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var queue string
+		err = rows.Scan(&queue)
+		if err != nil {
+			return
+		}
+		if queue != "" {
+			queues = append(queues, queue)
+		}
+	}
+	err = rows.Err()
+	return
 }
 
 func (d *Das) Close() error {
@@ -140,5 +153,7 @@ func (d *Das) Close() error {
 	d.stmts.getTypeById.Close()
 	d.stmts.insertNewJob.Close()
 	d.stmts.getParamsByType.Close()
+	d.stmts.getQueueNameByType.Close()
+	d.stmts.getQueueNamesByTypes.Close()
 	return d.db.Close()
 }
