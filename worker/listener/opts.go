@@ -4,21 +4,9 @@ import "time"
 
 type SQSListenerOpt func(l *SQSListener)
 
-func WithCallback(callback SQSListenerCallback) SQSListenerOpt {
+func WithTasks(tasks ...string) SQSListenerOpt {
 	return func(l *SQSListener) {
-		l.callback = callback
-	}
-}
-
-func WithQueueNames(names ...string) SQSListenerOpt {
-	return func(l *SQSListener) {
-		l.names = names
-	}
-}
-
-func WithQueueUrls(urls ...string) SQSListenerOpt {
-	return func(l *SQSListener) {
-		l.queues = urls
+		l.tasks = append(l.tasks, tasks...)
 	}
 }
 

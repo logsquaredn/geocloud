@@ -25,10 +25,11 @@ type Registry struct {
 }
 
 type WorkerCmd struct {
-	Version    func() `long:"version" short:"v" description:"Print the version"`
-	Loglevel   string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
-	IP         string `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_WORKER_IP" description:"IP for the worker to listen on"`
-	Port       int64  `long:"port" default:"7778" description:"Port for the worker to listen on"`
+	Version    func()   `long:"version" short:"v" description:"Print the version"`
+	Loglevel   string   `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
+	IP         string   `long:"ip" default:"127.0.0.1" env:"GEOCLOUD_WORKER_IP" description:"IP for the worker to listen on"`
+	Port       int64    `long:"port" default:"7778" description:"Port for the worker to listen on"`
+	Tasks      []string `long:"task" short:"t" description:"Task types that the worker should execute"`
 
 	sharedcmd.AWS      `group:"AWS" namespace:"aws"`
 	Containerd         `group:"Containerd" namespace:"containerd"`
@@ -93,9 +94,8 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 	}
 
 	ln, err := listener.New(
-		sess, ag.Aggregate,
-		listener.WithQueueUrls(cmd.AWS.SQS.QueueURLs...),
-		listener.WithQueueNames(cmd.AWS.SQS.QueueNames...),
+		sess, ag.Aggregate, da,
+		listener.WithTasks(cmd.Tasks...),
 		listener.WithVisibilityTimeout(cmd.AWS.SQS.Visibility),
 	)
 	if err != nil {
