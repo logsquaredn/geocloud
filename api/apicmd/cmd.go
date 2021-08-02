@@ -12,7 +12,7 @@ import (
 	"github.com/logsquaredn/geocloud/api/router"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
-	"github.com/logsquaredn/geocloud/shared/sharedcmd"
+	"github.com/logsquaredn/geocloud/shared/groups"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
@@ -23,8 +23,8 @@ type APICmd struct {
 	Version  func() `long:"version" short:"v" description:"Print the version"`
 	Loglevel string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
 
-	sharedcmd.AWS      `group:"AWS" namespace:"aws"`
-	sharedcmd.Postgres `group:"Postgres" namespace:"postgres"`
+	groups.AWS      `group:"AWS" namespace:"aws"`
+	groups.Postgres `group:"Postgres" namespace:"postgres"`
 }
 
 func (cmd *APICmd) Execute(args []string) error {
