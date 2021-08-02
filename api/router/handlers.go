@@ -30,6 +30,12 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 
 func (r *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
+	if len(taskType) < 1 {
+		log.Error().Msg("/create query paramter 'type' not passed or empty")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'type' required"})
+		return
+	}
+
 	taskParams, err := r.das.GetTaskParamsByTaskType(taskType)
 	if err == sql.ErrNoRows {
 		log.Error().Msgf("/create invalid task type requested: %s", taskType)
@@ -68,7 +74,6 @@ func (r *Router) create(ctx *gin.Context) {
 		return
 	}
 
-	// TODO send SQS message
 	queueName, err := r.das.GetQueueNameByTaskType(taskType)
 	if err != nil {
 		log.Err(err).Msgf("/create failed to get queue name for task type: %s", taskType)
@@ -118,4 +123,17 @@ func (r *Router) status(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"status": status})
+}
+
+func (r *Router) results(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if len(id) < 1 {
+		log.Error().Msg("/results query paramter 'id' not passed or empty")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
+		return
+	}
+
+	// TODO
+	// 1. verify Job exists and has complete status in DB
+	// 2. stream result file from s3
 }
