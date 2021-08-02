@@ -13,10 +13,10 @@ RUN go mod download
 COPY api/ api/
 COPY cmd/ cmd/
 COPY infrastructure/ infrastructure/
+COPY migrate/ migrate/
 COPY shared/ shared/
-COPY tools/ tools/
 COPY worker/ worker/
-COPY *.go .
+COPY *.go ./
 
 FROM build_image AS build
 ARG ldflags
