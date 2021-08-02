@@ -13,7 +13,6 @@ RUN go mod download
 COPY api/ api/
 COPY cmd/ cmd/
 COPY infrastructure/ infrastructure/
-COPY migrate/ migrate/
 COPY shared/ shared/
 COPY worker/ worker/
 COPY *.go ./
@@ -35,7 +34,7 @@ ENV PATH=/usr/local/geocloud/bin:$PATH
 ENTRYPOINT ["dumb-init", "geocloud"]
 
 FROM base_image AS containerd
-ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.2/containerd-1.5.2-linux-amd64.tar.gz
+ARG containerd_release=https://github.com/containerd/containerd/releases/download/v1.5.5/containerd-1.5.5-linux-amd64.tar.gz
 # when its src is a remote .tgz, ADD does not unpack the tarball
 # when its src is a local .tgz, ADD unpacks the tarball
 ADD ${containerd_release} /tmp/
@@ -52,7 +51,7 @@ RUN TGZ=/tmp/$(basename ${containerd_release}); \
     && mv /tmp/bin/* /assets/
 
 FROM base_image AS runc
-ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.0-rc95/runc.amd64
+ARG runc_release=https://github.com/opencontainers/runc/releases/download/v1.0.1/runc.amd64
 ADD ${runc_release} /assets/runc
 RUN chmod +x /assets/runc
 
