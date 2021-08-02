@@ -1,10 +1,9 @@
 package worker
 
-import "github.com/tedsuo/ifrit"
-
-type Message interface {
-	ID() string
-}
+import (
+	"github.com/logsquaredn/geocloud"
+	"github.com/tedsuo/ifrit"
+)
 
 type Listener interface {
 	ifrit.Runner
@@ -13,5 +12,5 @@ type Listener interface {
 type Aggregator interface {
 	ifrit.Runner
 
-	Aggregate(Message) error
+	Aggregate(geocloud.Message) error
 }

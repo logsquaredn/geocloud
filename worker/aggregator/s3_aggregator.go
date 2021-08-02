@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/containerd/containerd"
+	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/logsquaredn/geocloud/worker"
@@ -72,8 +73,8 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 	return a, nil
 }
 
-func (a *S3Aggregrator) Aggregate(m worker.Message) error {
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/run?id=%s", a.server.Addr, m.ID()), nil)
+func (a *S3Aggregrator) Aggregate(m geocloud.Message) error {
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/api/v1/run?id=%s", a.server.Addr, m.ID()), nil)
 	if err != nil {
 		return err
 	}
