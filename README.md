@@ -72,14 +72,14 @@ docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS
 ```sh
 # login and set pipeline from template
 fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
-ytt -f ci/pipeline | fly -t geocloud set-pipeline -p my-pipline -c - -v branch=my-branch
+ytt -f ci/pipeline | fly -t geocloud set-pipeline -p my-pipeline -c - -v branch=my-branch
 ```
 
 > `k14s/image` _can be used in place of installing ytt on your machine to set a pipeline from a template_
 
 ```sh
 # set pipeline from template using k14s/image
-docker run --rm -v `pwd`:/src/:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p my-pipline -c - -v branch=my-branch
+docker run --rm -v `pwd`:/src/:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p my-pipeline -c - -v branch=my-branch
 ```
 
 ### Migrations
