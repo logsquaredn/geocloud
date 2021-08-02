@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
-	"github.com/logsquaredn/geocloud/shared/sharedcmd"
+	"github.com/logsquaredn/geocloud/shared/groups"
 	"github.com/logsquaredn/geocloud/worker/aggregator"
 	"github.com/logsquaredn/geocloud/worker/listener"
 	"github.com/rs/zerolog"
@@ -31,10 +31,10 @@ type WorkerCmd struct {
 	Port       int64    `long:"port" default:"7778" description:"Port for the worker to listen on"`
 	Tasks      []string `long:"task" short:"t" description:"Task types that the worker should execute"`
 
-	sharedcmd.AWS      `group:"AWS" namespace:"aws"`
-	Containerd         `group:"Containerd" namespace:"containerd"`
-	sharedcmd.Postgres `group:"Postgres" namespace:"postgres"`
-	Registry           `group:"Registry" namespace:"registry"`
+	groups.AWS      `group:"AWS" namespace:"aws"`
+	Containerd      `group:"Containerd" namespace:"containerd"`
+	groups.Postgres `group:"Postgres" namespace:"postgres"`
+	Registry        `group:"Registry" namespace:"registry"`
 }
 
 func (cmd *WorkerCmd) Execute(args []string) error {

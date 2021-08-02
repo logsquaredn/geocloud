@@ -1,4 +1,4 @@
-package sharedcmd
+package groups
 
 import (
 	"fmt"
@@ -39,7 +39,7 @@ type Postgres struct {
 }
 
 func (p *Postgres) ConnectionString() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.Host, p.Port, p.SSLMode)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.Host, p.Port, p.SSLMode)
 }
 
 func (a *AWS) Credentials() *credentials.Credentials {
@@ -54,7 +54,7 @@ func (a *AWS) Credentials() *credentials.Credentials {
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{
 				Filename: string(a.SharedCreds),
-				Profile:a.Profile,
+				Profile: a.Profile,
 			},
 		},
 	)
