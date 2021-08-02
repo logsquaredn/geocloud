@@ -33,7 +33,7 @@ docker-compose up --build
 ```sh
 # running postgres explicitly beforehand may be optional
 docker-compose up -d postgres
-docker-compose up api
+docker-compose up --build api
 ```
 
 #### Worker
@@ -45,7 +45,7 @@ docker-compose up api
 ```sh
 # running postgres explicitly beforehand may be optional
 docker-compose up -d postgres
-docker-compose up worker
+docker-compose up --build worker
 ```
 
 ### Infrastructure
@@ -81,4 +81,24 @@ ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-
 ```sh
 # set pipeline from template using k14s/image
 docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
+```
+
+### Migrations
+
+#### Create Migration
+
+```sh
+# generate a migration version
+version=`date -u +%Y%m%d%T | tr -cd [0-9]`
+touch shared/das/sql/migrations/${version}_my-title.up.sql
+touch shared/das/sql/migrations/${version}_my-title.down.sql
+```
+
+See [migration tutorial](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
+
+#### Migrate
+
+```sh
+# see `geocloud migrate -h` for options
+geocloud migrate
 ```
