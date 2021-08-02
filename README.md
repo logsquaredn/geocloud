@@ -22,17 +22,17 @@
 
 > `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
 
-#### All
+> _if you run into problems connecting to postgres or infrastructure, try running_ `docker-compose up -d postgres` _or_ `docker-compose up -d infrastructure` _respectively before executing the following commands_
 
 ```sh
+# run geocloud
 docker-compose up --build
 ```
 
 #### API
 
 ```sh
-# running postgres explicitly beforehand may be optional
-docker-compose up -d postgres
+# run the api
 docker-compose up --build api
 ```
 
@@ -43,8 +43,7 @@ docker-compose up --build api
 > _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
-# running postgres explicitly beforehand may be optional
-docker-compose up -d postgres
+# run the worker
 docker-compose up --build worker
 ```
 
@@ -59,7 +58,7 @@ docker-compose up --build worker
 terraform -chdir=infrastructure/ apply
 ```
 
-> _the_ `hashicorp/terraform` _image can be used in place of installing terraform on your machine to create infrastructure_
+> `hashicorp/terraform` _can be used in place of installing terraform on your machine to create infrastructure_
 
 ```sh
 # create queue and bucket using hashicorp/terraform 
@@ -73,14 +72,14 @@ docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS
 ```sh
 # login and set pipeline from template
 fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
-ytt -f ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
+ytt -f ci/pipeline | fly -t geocloud set-pipeline -p my-pipline -c - -v branch=my-branch
 ```
 
-> _the_ `k14s/image` _image can be used in place of installing ytt on your machine to set a pipeline from a template_
+> `k14s/image` _can be used in place of installing ytt on your machine to set a pipeline from a template_
 
 ```sh
 # set pipeline from template using k14s/image
-docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p geocloud -c - -v branch=my-branch
+docker run --rm -v `pwd`:/src/:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p my-pipline -c - -v branch=my-branch
 ```
 
 ### Migrations
@@ -90,15 +89,15 @@ docker run --rm -v `pwd`:/src:ro k14s/image ytt -f /src/ci/pipeline | fly -t geo
 ```sh
 # generate a migration version
 version=`date -u +%Y%m%d%T | tr -cd [0-9]`
-touch shared/das/sql/migrations/${version}_my-title.up.sql
-touch shared/das/sql/migrations/${version}_my-title.down.sql
+touch migrate/migratecmd/migrations/${version}_my-title.up.sql
+touch migrate/migratecmd/migrations/${version}_my-title.down.sql
 ```
 
-See [migration tutorial](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
+see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
 
 #### Migrate
 
 ```sh
-# see `geocloud migrate -h` for options
+# run the migrations
 geocloud migrate
 ```

@@ -22,14 +22,13 @@ services:
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
     ports: [5432:5432]
-    volumes: [./postgres/:/docker-entrypoint-initdb.d/:ro]
     networks: [api, migrate, worker]
     environment:
       POSTGRES_DB: geocloud
       POSTGRES_USER: geocloud
       POSTGRES_PASSWORD: pwd
   migrate:
-    build: { context: . }
+    build: .
     command: migrate --postgres-host=postgres --postgres-password=pwd
     networks: [migrate]
     depends_on: [postgres]
