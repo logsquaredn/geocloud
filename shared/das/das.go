@@ -26,25 +26,25 @@ type Das struct {
 
 const driver = "postgres"
 
-//go:embed get_job_status_by_job_id.sql
+//go:embed queries/get_job_status_by_job_id.sql
 var getStatusByIdSql string
 
-//go:embed get_task_type_by_job_id.sql
+//go:embed queries/get_task_type_by_job_id.sql
 var getTypeByIdSql string
 
-//go:embed insert_new_job.sql
+//go:embed execs/insert_new_job.sql
 var insertNewJobSql string
 
-//go:embed get_task_params_by_task_type.sql
+//go:embed queries/get_task_params_by_task_type.sql
 var getParamsByTypeSql string
 
-//go:embed get_task_queue_name_by_task_type.sql
+//go:embed queries/get_task_queue_name_by_task_type.sql
 var getQueueNameByTypeSql string
 
-//go:embed get_task_queue_names_by_task_types.sql
+//go:embed queries/get_task_queue_names_by_task_types.sql
 var getQueueNamesByTypesSql string
 
-func New(conn string, opts ...DasOpt) (*Das, error) {
+func New(conn string, opts... DasOpt) (*Das, error) {
 	d := &Das{}
 	for _, opt := range opts {
 		opt(d)
@@ -69,33 +69,27 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		time.Sleep(d.delay)
 	}
 
-	d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql)
-	if err != nil {
+	if d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	d.stmts.getTypeById, err = d.db.Prepare(getTypeByIdSql)
-	if err != nil {
+	if d.stmts.getTypeById, err = d.db.Prepare(getTypeByIdSql); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql)
-	if err != nil {
+	if d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql)
-	if err != nil {
+	if d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	d.stmts.getQueueNameByType, err = d.db.Prepare(getQueueNameByTypeSql)
-	if err != nil {
+	if d.stmts.getQueueNameByType, err = d.db.Prepare(getQueueNameByTypeSql); err != nil {
 		return nil, err
 	}
 
-	d.stmts.getQueueNamesByTypes, err = d.db.Prepare(getQueueNamesByTypesSql)
-	if err != nil {
+	if d.stmts.getQueueNamesByTypes, err = d.db.Prepare(getQueueNamesByTypesSql); err != nil {
 		return nil, err
 	}
 

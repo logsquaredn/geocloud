@@ -40,7 +40,7 @@ CREATE TABLE status_type (
     job_status VARCHAR (32) PRIMARY KEY
 );
 
-INSERT INTO status_typs(job_status)
+INSERT INTO status_type(job_status)
 VALUES('COMPLETED');
 
 INSERT INTO status_type(job_status)
