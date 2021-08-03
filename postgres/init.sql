@@ -36,18 +36,18 @@ VALUES('7aff60d2-8a7e-4bc8-ae8d-6e9a98c98e0e', 'filter', 'COMPLETED');
 INSERT INTO job(job_id, task_type, job_status, job_error)
 VALUES('7aff60d2-8a7e-4bc8-ae8d-6e9a98c98e0f', 'reproject', 'ERROR', 'invalid geojson');
 
-CREATE TABLE status_types (
+CREATE TABLE status_type (
     job_status VARCHAR (32) PRIMARY KEY
 );
 
-INSERT INTO status_types(job_status)
+INSERT INTO status_typs(job_status)
 VALUES('COMPLETED');
 
-INSERT INTO status_types(job_status)
+INSERT INTO status_type(job_status)
 VALUES('IN PROGRESS');
 
-INSERT INTO status_types(job_status)
+INSERT INTO status_type(job_status)
 VALUES('WAITING');
 
-INSERT INTO status_types(job_status)
+INSERT INTO status_type(job_status)
 VALUES('ERROR');

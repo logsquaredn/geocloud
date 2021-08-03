@@ -30,11 +30,12 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 
 func (r *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
-	if len(taskType) < 1 {
-		log.Error().Msg("/create query paramter 'type' not passed or empty")
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'type' required"})
-		return
-	}
+	// if len(taskType) < 1 {
+	// 	// TODO check what happens when empty path var is passed
+	// 	// log.Error().Msg("/create query paramter 'type' not passed or empty")
+	// 	// ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'type' required"})
+	// 	// return
+	// }
 
 	taskParams, err := r.das.GetTaskParamsByTaskType(taskType)
 	if err == sql.ErrNoRows {
@@ -125,25 +126,25 @@ func (r *Router) status(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"status": status})
 }
 
-func (r *Router) results(ctx *gin.Context) {
+func (r *Router) result(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if len(id) < 1 {
-		log.Error().Msg("/results query paramter 'id' not passed or empty")
+		log.Error().Msg("/result query paramter 'id' not passed or empty")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
 		return
 	}
 
 	jobStatus, err := r.das.GetJobStatusByJobId(id)
 	if err == sql.ErrNoRows {
-		log.Err(err).Msgf("/results got 0 results querying for id: %s", id)
+		log.Err(err).Msgf("/result got 0 results querying for id: %s", id)
 		ctx.Status(http.StatusNotFound)
 		return
 	} else if err != nil {
-		log.Err(err).Msgf("/results failed to query for status for id: %s", id)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to get results for id: %s", id)})
+		log.Err(err).Msgf("/result failed to query for status for id: %s", id)
+		ctx.Status(http.StatusInternalServerError)
 		return
 	} else if jobStatus != "COMPLETED" {
-		log.Error().Msgf("/results results requested but id: %s is of status: %s", id, jobStatus)
+		log.Error().Msgf("/result results requested but id: %s is of status: %s", id, jobStatus)
 		ctx.Status(http.StatusBadRequest)
 		return
 	}

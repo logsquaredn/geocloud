@@ -57,7 +57,7 @@ func (r *Router) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	{
 		v1_job.POST("/create/:type", r.create)
 		v1_job.GET("/status", r.status)
-		v1_job.GET("/results", r.results)
+		v1_job.GET("/result", r.result)
 	}
 
 	wait := make(chan error, 1)
