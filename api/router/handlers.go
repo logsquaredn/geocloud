@@ -118,7 +118,7 @@ func (r *Router) status(ctx *gin.Context) {
 		return
 	} else if err != nil {
 		log.Err(err).Msgf("/status failed to query for status for id: %s", id)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed get get status for id: %s", id)})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to get status for id: %s", id)})
 		return
 	}
 
@@ -133,7 +133,21 @@ func (r *Router) results(ctx *gin.Context) {
 		return
 	}
 
-	// TODO
-	// 1. verify Job exists and has complete status in DB
-	// 2. stream result file from s3
+	jobStatus, err := r.das.GetJobStatusByJobId(id)
+	if err == sql.ErrNoRows {
+		log.Err(err).Msgf("/results got 0 results querying for id: %s", id)
+		ctx.Status(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Err(err).Msgf("/results failed to query for status for id: %s", id)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to get results for id: %s", id)})
+		return
+	} else if jobStatus != "COMPLETED" {
+		log.Error().Msgf("/results results requested but id: %s is of status: %s", id, jobStatus)
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	// TODO steam results from s3
+
 }
