@@ -16,12 +16,11 @@ import (
 type MigrateCmd struct {
 	Version  func() `long:"version" short:"v" description:"Print the version"`
 	Loglevel string `long:"log-level" short:"l" default:"debug" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
-	Down     bool   `long:"down" short:"d" description:"Tear down the database"`
 
 	groups.Postgres `group:"Postgres" namespace:"postgres"`
 }
 
-//go:embed migrations/*
+//go:embed migrations/*.up.sql
 var migrations embed.FS
 
 func (cmd *MigrateCmd) Execute(args []string) error {
@@ -54,11 +53,5 @@ func (cmd *MigrateCmd) Execute(args []string) error {
 	}
 	defer m.Close()
 
-	if cmd.Down {
-		log.Debug().Msg("migrating down")
-		return m.Down()
-	}
-
-	log.Debug().Msg("migrating up")
 	return m.Up()
 }
