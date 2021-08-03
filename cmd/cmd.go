@@ -14,7 +14,7 @@ type GeocloudCmd struct {
 	API    apicmd.APICmd       `command:"api" description:"Run the api"`  
 	Worker workercmd.WorkerCmd `command:"worker" description:"Run the worker"`
 
-	MigrateCmd      migratecmd.MigrateCmd `command:"migrate" description:"Apply database migrations"`
+	MigrateCmd      migratecmd.MigrateCmd               `command:"migrate" description:"Apply database migrations"`
 	Infrastrcuture  infrastructurecmd.InfrastructureCmd `command:"infrastructure" alias:"infra" description:"Set up infrastructure"`
 
 	// Quickstart      QuickstartCmd      `command:"quickstart" alias:"qs" description:"api, worker, and infrastructure commands if infrastructure configuration is not provided`
