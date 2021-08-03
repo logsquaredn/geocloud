@@ -22,7 +22,7 @@
 
 > `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
 
-#### All
+> _if you run into problems connecting to postgres or infrastructure, try running_ `docker-compose up -d postgres` _or_ `docker-compose up -d infrastructure` _respectively before executing the following commands_
 
 ```sh
 docker-compose up --build
@@ -31,9 +31,7 @@ docker-compose up --build
 #### API
 
 ```sh
-# running postgres explicitly beforehand may be optional
-docker-compose up -d postgres
-docker-compose up api
+docker-compose up --build api
 ```
 
 #### Worker
@@ -43,9 +41,7 @@ docker-compose up api
 > _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
 ```sh
-# running postgres explicitly beforehand may be optional
-docker-compose up -d postgres
-docker-compose up worker
+docker-compose up --build worker
 ```
 
 ### Infrastructure

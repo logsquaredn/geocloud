@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/worker"
 	"github.com/rs/zerolog/log"
@@ -15,7 +16,7 @@ import (
 
 type f = map[string]interface{}
 
-type SQSListenerCallback func (worker.Message) error
+type SQSListenerCallback func (geocloud.Message) error
 
 type SQSListener struct {
 	svc      *sqs.SQS
