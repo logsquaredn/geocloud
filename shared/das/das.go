@@ -90,27 +90,27 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 	return d, nil
 }
 
-func (d *Das) InsertJob(taskType string) (j *geocloud.Job, err error) {
+func (d *Das) InsertJob(taskType string) (j geocloud.Job, err error) {
 	jobID := uuid.New().String()
 	var jobErr string
-	err = d.stmts.insertJob.QueryRow(jobID, taskType).Scan(&j.ID, j.TaskType, &j.Status, &jobErr)
+	err = d.stmts.insertJob.QueryRow(jobID, taskType).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
 	j.Error = fmt.Errorf(jobErr)
 	return
 }
 
-func (d *Das) GetJobByJobID(jobID string) (j *geocloud.Job, err error) {
+func (d *Das) GetJobByJobID(jobID string) (j geocloud.Job, err error) {
 	var jobErr string
-	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, j.TaskType, &j.Status, &jobErr)
+	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
 	j.Error = fmt.Errorf(jobErr)
 	return
 }
 
-func (d *Das) GetTaskByTaskType(taskType string) (t *geocloud.Task, err error) {
+func (d *Das) GetTaskByTaskType(taskType string) (t geocloud.Task, err error) {
 	err = d.stmts.getTaskByTaskType.QueryRow(taskType).Scan(&t.Type, pq.Array(&t.Params), &t.QueueName, &t.Ref)
 	return
 }
 
-func (d *Das) GetTaskByJobID(jobID string) (t *geocloud.Task, err error) {
+func (d *Das) GetTaskByJobID(jobID string) (t geocloud.Task, err error) {
 	err = d.stmts.getTaskByJobID.QueryRow(jobID).Scan(&t.Type, pq.Array(&t.Params), &t.QueueName, &t.Ref)
 	return
 }

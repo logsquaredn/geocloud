@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *Router) createJob(taskType string) (*geocloud.Job, error) {
+func (r *Router) createJob(taskType string) (geocloud.Job, error) {
 	return r.das.InsertJob(taskType)
 }
 
