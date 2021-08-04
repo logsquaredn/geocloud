@@ -14,6 +14,7 @@ func main() {
 	cmd.Version = geocloud.V
 	cmd.API.Version = geocloud.V
 	cmd.Worker.Version = geocloud.V
+	cmd.Migrate.Version = geocloud.V
 
 	shared.SetupLogging()
 	parser := flags.NewParser(&cmd, flags.HelpFlag)

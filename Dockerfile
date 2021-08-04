@@ -13,6 +13,7 @@ RUN go mod download
 COPY api/ api/
 COPY cmd/ cmd/
 COPY infrastructure/ infrastructure/
+COPY migrate/ migrate/
 COPY shared/ shared/
 COPY worker/ worker/
 COPY *.go ./
