@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/logsquaredn/geocloud"
 )
 
 type Das struct {
@@ -15,34 +17,30 @@ type Das struct {
 	delay   time.Duration
 
 	stmts struct {
-		getStatusById        *sql.Stmt
-		getTypeById          *sql.Stmt
-		insertNewJob         *sql.Stmt
-		getParamsByType      *sql.Stmt
-		getQueueNameByType   *sql.Stmt
-		getQueueNamesByTypes *sql.Stmt
+		insertJob                    *sql.Stmt
+		getJobByJobID                *sql.Stmt
+		getTaskByJobID               *sql.Stmt
+		getTaskByTaskType            *sql.Stmt
+		getTaskQueueNamesByTaskTypes *sql.Stmt
 	}
 }
 
 const driver = "postgres"
 
-//go:embed queries/get_job_status_by_job_id.sql
-var getStatusByIdSql string
+//go:embed execs/insert_job.sql
+var insertJobSQL string
 
-//go:embed queries/get_task_type_by_job_id.sql
-var getTypeByIdSql string
+//go:embed queries/get_job_by_job_id.sql
+var getJobByJobIDSQL string
 
-//go:embed execs/insert_new_job.sql
-var insertNewJobSql string
+//go:embed queries/get_task_by_job_id.sql
+var getTaskByJobIDSQL string
 
-//go:embed queries/get_task_params_by_task_type.sql
-var getParamsByTypeSql string
-
-//go:embed queries/get_task_queue_name_by_task_type.sql
-var getQueueNameByTypeSql string
+//go:embed queries/get_task_by_task_type.sql
+var getTaskByTaskTypeSQL string
 
 //go:embed queries/get_task_queue_names_by_task_types.sql
-var getQueueNamesByTypesSql string
+var getTaskQueueNamesByTaskTypesSQL string
 
 func New(conn string, opts... DasOpt) (*Das, error) {
 	d := &Das{}
@@ -69,73 +67,69 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 		time.Sleep(d.delay)
 	}
 
-	if d.stmts.getStatusById, err = d.db.Prepare(getStatusByIdSql); err != nil {
+	if d.stmts.insertJob, err = d.db.Prepare(insertJobSQL); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	if d.stmts.getTypeById, err = d.db.Prepare(getTypeByIdSql); err != nil {
+	if d.stmts.getJobByJobID, err = d.db.Prepare(getJobByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	if d.stmts.insertNewJob, err = d.db.Prepare(insertNewJobSql); err != nil {
+	if d.stmts.getTaskByJobID, err = d.db.Prepare(getTaskByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	if d.stmts.getParamsByType, err = d.db.Prepare(getParamsByTypeSql); err != nil {
+	if d.stmts.getTaskByTaskType, err = d.db.Prepare(getTaskByTaskTypeSQL); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
-	if d.stmts.getQueueNameByType, err = d.db.Prepare(getQueueNameByTypeSql); err != nil {
-		return nil, err
-	}
-
-	if d.stmts.getQueueNamesByTypes, err = d.db.Prepare(getQueueNamesByTypesSql); err != nil {
+	if d.stmts.getTaskQueueNamesByTaskTypes, err = d.db.Prepare(getTaskQueueNamesByTaskTypesSQL); err != nil {
 		return nil, err
 	}
 
 	return d, nil
 }
 
-func (d *Das) GetJobStatusByJobId(id string) (jobStatus string, err error) {
-	err = d.stmts.getStatusById.QueryRow(id).Scan(&jobStatus)
+func (d *Das) InsertJob(taskType string) (j *geocloud.Job, err error) {
+	jobID := uuid.New().String()
+	var jobErr string
+	err = d.stmts.insertJob.QueryRow(jobID, taskType).Scan(&j.ID, j.TaskType, &j.Status, &jobErr)
+	j.Error = fmt.Errorf(jobErr)
 	return
 }
 
-func (d *Das) GetJobTypeByJobId(id string) (jobType string, err error) {
-	err = d.stmts.getTypeById.QueryRow(id).Scan(&jobType)
+func (d *Das) GetJobByJobID(jobID string) (j *geocloud.Job, err error) {
+	var jobErr string
+	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, j.TaskType, &j.Status, &jobErr)
+	j.Error = fmt.Errorf(jobErr)
 	return
 }
 
-func (d *Das) InsertNewJob(id string, jobType string) (err error) {
-	_, err = d.stmts.insertNewJob.Exec(id, jobType)
+func (d *Das) GetTaskByTaskType(taskType string) (t *geocloud.Task, err error) {
+	err = d.stmts.getTaskByTaskType.QueryRow(taskType).Scan(&t.Type, pq.Array(&t.Params), &t.QueueName, &t.Ref)
 	return
 }
 
-func (d *Das) GetTaskParamsByTaskType(taskType string) (params []string, err error) {
-	err = d.stmts.getParamsByType.QueryRow(taskType).Scan(pq.Array(&params))
+func (d *Das) GetTaskByJobID(jobID string) (t *geocloud.Task, err error) {
+	err = d.stmts.getTaskByJobID.QueryRow(jobID).Scan(&t.Type, pq.Array(&t.Params), &t.QueueName, &t.Ref)
 	return
 }
 
-func (d *Das) GetQueueNameByTaskType(taskType string) (queueName string, err error) {
-	err = d.stmts.getQueueNameByType.QueryRow(taskType).Scan(&queueName)
-	return
-}
-
-func (d *Das) GetQueueNamesByTaskTypes(tasks... string) (queues []string, err error) {
-	rows, err := d.stmts.getQueueNamesByTypes.Query(pq.Array(tasks))
+func (d *Das) GetQueueNamesByTaskTypes(taskTypes... string) (queueNames []string, err error) {
+	rows, err := d.stmts.getTaskQueueNamesByTaskTypes.Query(pq.Array(taskTypes))
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var queue string
-		err = rows.Scan(&queue)
+		var queueName string
+		err = rows.Scan(&queueName)
 		if err != nil {
 			return
 		}
-		if queue != "" {
-			queues = append(queues, queue)
+		if queueName != "" {
+			queueNames = append(queueNames, queueName)
 		}
 	}
 	err = rows.Err()
@@ -143,11 +137,10 @@ func (d *Das) GetQueueNamesByTaskTypes(tasks... string) (queues []string, err er
 }
 
 func (d *Das) Close() error {
-	d.stmts.getStatusById.Close()
-	d.stmts.getTypeById.Close()
-	d.stmts.insertNewJob.Close()
-	d.stmts.getParamsByType.Close()
-	d.stmts.getQueueNameByType.Close()
-	d.stmts.getQueueNamesByTypes.Close()
+	d.stmts.insertJob.Close()
+	d.stmts.getJobByJobID.Close()
+	d.stmts.getTaskByJobID.Close()
+	d.stmts.getTaskByTaskType.Close()
+	d.stmts.getTaskQueueNamesByTaskTypes.Close()
 	return d.db.Close()
 }

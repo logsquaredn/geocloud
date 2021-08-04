@@ -12,13 +12,13 @@ var _ http.Handler = (*S3Aggregrator)(nil)
 func (h *S3Aggregrator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Fields(f{ "runner": runner }).Msgf("%s %s?%s", r.Method, r.URL.Path, r.URL.RawQuery)
 
-	id := r.URL.Query().Get("id")
-	if id == "" {
+	jobID := r.URL.Query().Get("id")
+	if jobID == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	_, err := h.das.GetJobTypeByJobId(id)
+	_, err := h.das.GetJobByJobID(jobID)
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusNotFound)
 		return
