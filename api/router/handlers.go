@@ -3,10 +3,12 @@ package router
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
@@ -29,13 +31,6 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 
 func (r *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
-	// if len(taskType) < 1 {
-	// 	// TODO check what happens when empty path var is passed
-	// 	// log.Error().Msg("/create query paramter 'type' not passed or empty")
-	// 	// ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'type' required"})
-	// 	// return
-	// }
-
 	task, err := r.das.GetTaskByTaskType(taskType)
 	if err == sql.ErrNoRows {
 		log.Error().Msgf("/create invalid task type requested: %s", taskType)
@@ -115,11 +110,15 @@ func (r *Router) status(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": job.Status})
+	responseBody := gin.H{"status": job.Status}
+	if job.Status == geocloud.Error {
+		responseBody["error"] = job.Error.Error()
+	}
+	ctx.JSON(http.StatusOK, responseBody)
 }
 
 func (r *Router) result(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/result query paramter 'id' not passed or empty")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
@@ -141,6 +140,20 @@ func (r *Router) result(ctx *gin.Context) {
 		return
 	}
 
-	// TODO steam results from s3
+	buf := aws.NewWriteAtBuffer([]byte{})
+	err = r.oas.GetJobOutput(id, buf, "geojson")
+	if err != nil {
+		log.Error().Msgf("/result failed to download result from s3 for id: %s", id)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 
+	var js map[string]interface{}
+	json.Unmarshal(buf.Bytes(), &js)
+	if js == nil {
+		log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+	ctx.JSON(http.StatusOK, js)
 }

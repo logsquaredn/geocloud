@@ -42,7 +42,7 @@ var getTaskByTaskTypeSQL string
 //go:embed queries/get_task_queue_names_by_task_types.sql
 var getTaskQueueNamesByTaskTypesSQL string
 
-func New(conn string, opts... DasOpt) (*Das, error) {
+func New(conn string, opts ...DasOpt) (*Das, error) {
 	d := &Das{}
 	for _, opt := range opts {
 		opt(d)
@@ -50,7 +50,7 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 
 	var (
 		err error
-		i = 1
+		i   = 1
 	)
 	for d.db, err = sql.Open(driver, conn); err != nil; i++ {
 		if i >= d.retries {
@@ -92,16 +92,16 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 
 func (d *Das) InsertJob(taskType string) (j geocloud.Job, err error) {
 	jobID := uuid.New().String()
-	var jobErr string
+	var jobErr sql.NullString
 	err = d.stmts.insertJob.QueryRow(jobID, taskType).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
-	j.Error = fmt.Errorf(jobErr)
+	j.Error = fmt.Errorf(jobErr.String)
 	return
 }
 
 func (d *Das) GetJobByJobID(jobID string) (j geocloud.Job, err error) {
-	var jobErr string
+	var jobErr sql.NullString
 	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
-	j.Error = fmt.Errorf(jobErr)
+	j.Error = fmt.Errorf(jobErr.String)
 	return
 }
 
@@ -115,7 +115,7 @@ func (d *Das) GetTaskByJobID(jobID string) (t geocloud.Task, err error) {
 	return
 }
 
-func (d *Das) GetQueueNamesByTaskTypes(taskTypes... string) (queueNames []string, err error) {
+func (d *Das) GetQueueNamesByTaskTypes(taskTypes ...string) (queueNames []string, err error) {
 	rows, err := d.stmts.getTaskQueueNamesByTaskTypes.Query(pq.Array(taskTypes))
 	if err != nil {
 		return
