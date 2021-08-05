@@ -75,15 +75,14 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	log.Info().Fields(f{ "runner": runner }).Msgf("using visibility %ds", int64(visibility.Seconds()))
 	vticker := time.NewTicker(visibility)
 	timeout := int64(visibility.Seconds())
-	d, _ := time.ParseDuration(m5)
-	qticker := time.NewTicker(d)
+	qticker := time.NewTicker(queueRefresh)
 
 	wait := make(chan error, 1)
 	go func() {
 		defer vticker.Stop()
 		for i := 0; q > 0; i = (i+1)%q {
 			url := r.queues[i]
-			log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("receiving messages from queue")
+			log.Trace().Fields(f{ "runner": runner, "url": url }).Msg("receiving messages from queue")
 			output, err := r.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 				MaxNumberOfMessages: &maxNumberOfMessages,
 				QueueUrl: &url,
@@ -95,27 +94,27 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			messages := output.Messages
 			m := len(messages)
 			entriesVis := make([]*sqs.ChangeMessageVisibilityBatchRequestEntry, m)
-			entriesDel := make([]*sqs.DeleteMessageBatchRequestEntry, m)
 			for i, msg := range messages {
 				entriesVis[i] = &sqs.ChangeMessageVisibilityBatchRequestEntry{
 					Id: msg.MessageId,
 					ReceiptHandle: msg.ReceiptHandle,
 					VisibilityTimeout: &timeout,
 				}
-
-				entriesDel[i] = &sqs.DeleteMessageBatchRequestEntry{
-					Id: msg.MessageId,
-					ReceiptHandle: msg.ReceiptHandle,
-				}
 			}
 
+			entriesDel := make([]*sqs.DeleteMessageBatchRequestEntry, m)
 			done := make(chan struct{}, 1)
 			go func() {
-				log.Debug().Fields(f{ "runner": runner }).Msg("processing messages")
-				for _, msg := range messages {
+				log.Trace().Fields(f{ "runner": runner }).Msg("processing messages")
+				for i, msg := range messages {
 					err = r.callback(&SQSMessage{ msg })
 					if err != nil {
-						wait<- err
+						log.Err(err).Fields(f{ "runner": runner, "id": msg.Body }).Msg("message processing failed")
+					} else {
+						entriesDel[i] = &sqs.DeleteMessageBatchRequestEntry{
+							Id: msg.MessageId,
+							ReceiptHandle: msg.ReceiptHandle,
+						}
 					}
 				}
 
@@ -126,7 +125,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 				select {
 				case <-vticker.C:
 					if len(entriesVis) > 0 {
-						log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("changing messages visibility")
+						log.Trace().Fields(f{ "runner": runner, "url": url }).Msg("changing messages visibility")
 						_, err = r.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
 							Entries: entriesVis,
 							QueueUrl: &url,
@@ -143,10 +142,10 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 					}
 					q = len(r.queues)
 				case <-done:
-					log.Debug().Fields(f{ "runner": runner }).Msg("done processing")
+					log.Trace().Fields(f{ "runner": runner }).Msg("done processing")
 					processing = false
 					if len(entriesDel) > 0 {
-						log.Debug().Fields(f{ "runner": runner, "url": url }).Msg("deleting messages")
+						log.Trace().Fields(f{ "runner": runner, "url": url }).Msg("deleting messages")
 						r.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 							Entries: entriesDel,
 							QueueUrl: &url,
@@ -157,27 +156,37 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 		}
 	}()
 
-	log.Debug().Fields(f{ "runner": runner }).Msg("ready")
+	log.Info().Fields(f{ "runner": runner }).Msg("ready")
 	close(ready)
 	select {
 	case err := <-wait:
 		log.Err(err).Fields(f{ "runner": runner }).Msg("received error")
 		return err
 	case signal := <-signals:
-		log.Debug().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
+		log.Info().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
 		return nil
 	}
 }
 
 const (
 	h12 = "12h"
-	m5 = "5m"
+	m5  = "5m"
+	s5 = "5s"
 )
 
-func (l *SQSListener) getVisibility() time.Duration {
-	max, _ := time.ParseDuration(h12)
-	min, _ := time.ParseDuration(m5)
+var (
+	max          time.Duration
+	min          time.Duration
+	queueRefresh time.Duration
+)
 
+func init() {
+	max, _ = time.ParseDuration(h12)
+	min, _ = time.ParseDuration(s5)
+	queueRefresh, _ = time.ParseDuration(m5)
+}
+
+func (l *SQSListener) getVisibility() time.Duration {
 	if l.vis < min {
 		l.vis = min
 	} else if l.vis > max {

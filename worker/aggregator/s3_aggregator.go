@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/remotes"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
@@ -22,12 +23,16 @@ type S3Aggregrator struct {
 	oas       *oas.Oas
 	addr      string
 	network   string
-	hclient   *http.Client
 	listen    net.Listener
 	server    *http.Server
 	cclient   *containerd.Client
+	resolver  *remotes.Resolver
+	host      string
 	sock      string
 	namespace string
+	prefetch  bool
+	workdir   string
+	tasks     []string
 }
 
 var _ worker.Aggregator = (*S3Aggregrator)(nil)
@@ -59,10 +64,6 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 	a.das = das
 	a.oas = oas
 
-	if a.hclient == nil {
-		a.hclient = http.DefaultClient
-	}
-
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/run", a)
 	a.server = &http.Server{
@@ -74,23 +75,28 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 }
 
 func (a *S3Aggregrator) Aggregate(m geocloud.Message) error {
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/api/v1/run?id=%s", a.server.Addr, m.ID()), nil)
+	task, err := a.das.GetTaskByJobID(m.ID())
 	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task ref")
 		return err
 	}
 
-	resp, err := a.hclient.Do(req)
+	// TODO pull, download, etc. in goroutines for speed
+	log.Trace().Fields(f{ "runner": runner, "ref": task.Ref }).Msg("pulling ref")
+	_, err = a.pull(task.Ref)
 	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner, "ref": task.Ref }).Msg("error pulling ref")
 		return err
 	}
 
-	return resp.Body.Close()
+	return nil
 }
 
 var ctx = context.Background()
 
 func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	if a.cclient == nil {
+		log.Info().Fields(f{ "runner": runner }).Msg("creating containerd client")
 		if a.namespace == "" {
 			a.namespace = "geocloud"
 		}
@@ -98,16 +104,31 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 		var err error
 		a.cclient, err = containerd.New(a.sock, containerd.WithDefaultNamespace(a.namespace))
 		if err != nil {
+			log.Err(err).Fields(f{ "runner": runner }).Msg("error creating containerd client")
 			return fmt.Errorf("aggregator: unable to create containerd client: %w", err)
+		}
+	}
+
+	if a.prefetch {
+		log.Info().Fields(f{ "runner": runner }).Msg("getting task refs")
+		refs, err := a.das.GetTaskRefsByTaskTypes(a.tasks...)
+		if err != nil {
+			log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task refs")
+			return fmt.Errorf("aggregator: unable to get task refs: %w", err)
+		}
+
+		log.Info().Fields(f{ "runner": runner, "refs": refs }).Msg("pulling task images")
+		for _, ref := range refs {
+			go a.pull(ref)
 		}
 	}
 
 	wait := make(chan error, 1)
 	go func() {
-		wait <- a.server.Serve(a.listen)
+		wait<- a.server.Serve(a.listen)
 	}()
 
-	log.Debug().Fields(f{ "runner": runner }).Msg("ready")
+	log.Info().Fields(f{ "runner": runner }).Msg("ready")
 	close(ready)
 	for {
 		select {
@@ -116,7 +137,7 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 			defer a.server.Close()
 			return fmt.Errorf("aggregator: received error: %w", err)
 		case signal := <-signals:
-			log.Debug().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
+			log.Info().Fields(f{ "runner": runner, "signal": signal.String() }).Msg("received signal")
 			return a.server.Shutdown(ctx)
 		}
 	}

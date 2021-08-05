@@ -19,6 +19,7 @@ type Das struct {
 	stmts struct {
 		insertJob                    *sql.Stmt
 		getJobByJobID                *sql.Stmt
+		getTaskRefsByTaskTypes       *sql.Stmt
 		getTaskByJobID               *sql.Stmt
 		getTaskByTaskType            *sql.Stmt
 		getTaskQueueNamesByTaskTypes *sql.Stmt
@@ -32,6 +33,9 @@ var insertJobSQL string
 
 //go:embed queries/get_job_by_job_id.sql
 var getJobByJobIDSQL string
+
+//go:embed queries/get_task_refs_by_task_types.sql
+var getTaskRefsByTaskTypesSQL string
 
 //go:embed queries/get_task_by_job_id.sql
 var getTaskByJobIDSQL string
@@ -75,6 +79,10 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
+	if d.stmts.getTaskRefsByTaskTypes, err = d.db.Prepare(getTaskRefsByTaskTypesSQL); err != nil {
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
+	}
+
 	if d.stmts.getTaskByJobID, err = d.db.Prepare(getTaskByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
@@ -84,7 +92,7 @@ func New(conn string, opts... DasOpt) (*Das, error) {
 	}
 
 	if d.stmts.getTaskQueueNamesByTaskTypes, err = d.db.Prepare(getTaskQueueNamesByTaskTypesSQL); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
 	}
 
 	return d, nil
@@ -102,6 +110,28 @@ func (d *Das) GetJobByJobID(jobID string) (j geocloud.Job, err error) {
 	var jobErr string
 	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
 	j.Error = fmt.Errorf(jobErr)
+	return
+}
+
+func (d *Das) GetTaskRefsByTaskTypes(taskTypes... string) (taskRefs []string, err error) {
+	var rows *sql.Rows
+	rows, err = d.stmts.getTaskRefsByTaskTypes.Query(pq.Array(taskTypes))
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var taskRef string
+		err = rows.Scan(&taskRef)
+		if err != nil {
+			return
+		}
+		if taskRef != "" {
+			taskRefs = append(taskRefs, taskRef)
+		}
+	}
+	err = rows.Err()
 	return
 }
 
@@ -139,6 +169,7 @@ func (d *Das) GetQueueNamesByTaskTypes(taskTypes... string) (queueNames []string
 func (d *Das) Close() error {
 	d.stmts.insertJob.Close()
 	d.stmts.getJobByJobID.Close()
+	d.stmts.getTaskRefsByTaskTypes.Close()
 	d.stmts.getTaskByJobID.Close()
 	d.stmts.getTaskByTaskType.Close()
 	d.stmts.getTaskQueueNamesByTaskTypes.Close()

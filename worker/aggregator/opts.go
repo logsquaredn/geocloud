@@ -1,9 +1,10 @@
 package aggregator
 
 import (
-	"net/http"
+	"strings"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/remotes"
 )
 
 type S3AggregatorOpt func(a *S3Aggregrator)
@@ -32,8 +33,32 @@ func WithContainerdSocket(socket string) S3AggregatorOpt {
 	}
 }
 
-func WithHttpClient(client *http.Client) S3AggregatorOpt {
+func WithPrefetch(prefetch bool) S3AggregatorOpt {
 	return func(a *S3Aggregrator) {
-		a.hclient = client
+		a.prefetch = prefetch
+	}
+}
+
+func WithRegistryHost(host string) S3AggregatorOpt {
+	return func(a *S3Aggregrator) {
+		a.host = strings.Trim(host, "/")
+	}
+}
+
+func WithResolver(resolver *remotes.Resolver) S3AggregatorOpt {
+	return func(a *S3Aggregrator) {
+		a.resolver = resolver
+	}
+}
+
+func WithTasks(tasks... string) S3AggregatorOpt {
+	return func(a *S3Aggregrator) {
+		a.tasks = append(a.tasks, tasks...)
+	}
+}
+
+func WithWorkdir(dir string) S3AggregatorOpt {
+	return func(a *S3Aggregrator) {
+		a.workdir = dir
 	}
 }

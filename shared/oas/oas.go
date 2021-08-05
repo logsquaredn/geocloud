@@ -53,6 +53,28 @@ const (
 	output = "output"
 )
 
+func (o *Oas) DownloadJobInput(id string, w io.WriterAt) error {
+	prefix := path.Join(o.prefix, id, input)
+	output, err := o.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: &o.bucket,
+		Prefix: &prefix,
+	})
+	if err != nil {
+		return fmt.Errorf("oas: error listing objects: %w", err)
+	} else if len(output.Contents) > 1 {
+		return fmt.Errorf("oas: multiple job inputs found")
+	} else if len(output.Contents) == 0 {
+		return fmt.Errorf("oas: zero job inputs found")
+	}
+
+	content := output.Contents[0]
+	_, err = o.dwnldr.Download(w, &s3.GetObjectInput{
+		Bucket: &o.bucket,
+		Key: content.Key,
+	})
+	return fmt.Errorf("oas: error downloading object: %w", err)
+}
+
 func (o *Oas) PutJobInput(id string, body io.Reader, ext string) (*s3manager.UploadOutput, error) {
 	prefix := path.Join(o.prefix, id, input, fmt.Sprintf("%s.%s", input, ext))
 	return o.putObjects(prefix, body)
