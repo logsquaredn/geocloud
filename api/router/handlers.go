@@ -114,6 +114,7 @@ func (r *Router) status(ctx *gin.Context) {
 	if job.Status == geocloud.Error {
 		responseBody["error"] = job.Error.Error()
 	}
+
 	ctx.JSON(http.StatusOK, responseBody)
 }
 
@@ -155,5 +156,6 @@ func (r *Router) result(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
+
 	ctx.JSON(http.StatusOK, js)
 }
