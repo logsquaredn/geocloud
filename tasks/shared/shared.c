@@ -174,3 +174,15 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 
     return 0;
 }
+
+const char *getInputGeoFilePath(const char *inputFilePath) {
+    char *ext = strrchr(inputFilePath, '.');
+    if(ext && !strcmp(ext, ".geojson")) {
+        return inputFilePath;
+    } else if(ext && !strcmp(ext, ".zip")) {
+        // TODO unzip
+        return "zip";
+    } else {
+        return "failure";
+    }
+}

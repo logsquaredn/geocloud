@@ -5,10 +5,13 @@ type Message interface {
 }
 
 type Job struct {
-	ID       string
-	TaskType string
-	Status   string
-	Error    error
+	ID        string
+	TaskType  string
+	Status    string
+	Error     error
+	StartTime string
+	EndTime   string
+	Params    string
 }
 
 type Task struct {
@@ -20,7 +23,7 @@ type Task struct {
 
 const (
 	Completed  = "COMPLETED"
-	InProgress = "IN PROGRES"
+	InProgress = "IN PROGRESS"
 	Waiting    = "WAITING"
 	Error      = "ERROR"
 )

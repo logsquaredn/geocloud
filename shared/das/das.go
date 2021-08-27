@@ -22,6 +22,7 @@ type Das struct {
 		getTaskByJobID               *sql.Stmt
 		getTaskByTaskType            *sql.Stmt
 		getTaskQueueNamesByTaskTypes *sql.Stmt
+		setJobFailed                 *sql.Stmt
 	}
 }
 
@@ -41,6 +42,9 @@ var getTaskByTaskTypeSQL string
 
 //go:embed queries/get_task_queue_names_by_task_types.sql
 var getTaskQueueNamesByTaskTypesSQL string
+
+//go:embed execs/set_job_failed.sql
+var setJobFailedSQL string
 
 func New(conn string, opts ...DasOpt) (*Das, error) {
 	d := &Das{}
@@ -87,21 +91,33 @@ func New(conn string, opts ...DasOpt) (*Das, error) {
 		return nil, err
 	}
 
+	if d.stmts.setJobFailed, err = d.db.Prepare(setJobFailedSQL); err != nil {
+		return nil, fmt.Errorf("das: failed to prepare statement: %w", err)
+	}
+
 	return d, nil
 }
 
-func (d *Das) InsertJob(taskType string) (j geocloud.Job, err error) {
+func (d *Das) InsertJob(taskType string, jobParams []byte) (j geocloud.Job, err error) {
 	jobID := uuid.New().String()
 	var jobErr sql.NullString
-	err = d.stmts.insertJob.QueryRow(jobID, taskType).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
+	var endTime sql.NullString
+	var jobParamsString sql.NullString
+	err = d.stmts.insertJob.QueryRow(jobID, taskType, jobParams).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr, &j.StartTime, &endTime, &jobParamsString)
 	j.Error = fmt.Errorf(jobErr.String)
+	j.EndTime = endTime.String
+	j.Params = jobParamsString.String
 	return
 }
 
 func (d *Das) GetJobByJobID(jobID string) (j geocloud.Job, err error) {
 	var jobErr sql.NullString
-	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr)
+	var endTime sql.NullString
+	var jobParamsString sql.NullString
+	err = d.stmts.getJobByJobID.QueryRow(jobID).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr, &j.StartTime, &endTime, &jobParamsString)
 	j.Error = fmt.Errorf(jobErr.String)
+	j.EndTime = endTime.String
+	j.Params = jobParamsString.String
 	return
 }
 
@@ -112,6 +128,17 @@ func (d *Das) GetTaskByTaskType(taskType string) (t geocloud.Task, err error) {
 
 func (d *Das) GetTaskByJobID(jobID string) (t geocloud.Task, err error) {
 	err = d.stmts.getTaskByJobID.QueryRow(jobID).Scan(&t.Type, pq.Array(&t.Params), &t.QueueName, &t.Ref)
+	return
+}
+
+func (d *Das) SetJobFailed(jobID string, jobError string) (j geocloud.Job, err error) {
+	var jobErr sql.NullString
+	var endTime sql.NullString
+	var jobParamsString sql.NullString
+	err = d.stmts.setJobFailed.QueryRow(jobID, jobError).Scan(&j.ID, &j.TaskType, &j.Status, &jobErr, &j.StartTime, &endTime, &jobParamsString)
+	j.Error = fmt.Errorf(jobErr.String)
+	j.EndTime = endTime.String
+	j.Params = jobParamsString.String
 	return
 }
 
