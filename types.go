@@ -9,9 +9,9 @@ type Job struct {
 	TaskType  string
 	Status    string
 	Error     error
-	StartTime string
-	EndTime   string
-	Params    string
+	StartTime string // TODO switch to timestamp
+	EndTime   string // TODO switch to timestamp
+	Params    string // TODO switch to map[string]string
 }
 
 type Task struct {
