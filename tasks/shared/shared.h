@@ -3,6 +3,8 @@
 
 #include "gdal.h"
 #include <ogr_srs_api.h>
+#include <stdlib.h>
+#include <libgen.h>
 
 struct GDALHandles {
     GDALDatasetH *inputDataset;

@@ -180,7 +180,15 @@ const char *getInputGeoFilePath(const char *inputFilePath) {
     if(ext && !strcmp(ext, ".geojson")) {
         return inputFilePath;
     } else if(ext && !strcmp(ext, ".zip")) {
-        // TODO unzip
+        char *dupeInputFilePath = strdup(inputFilePath);
+        const char *dirName = dirname(dupeInputFilePath);
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip ", inputFilePath, " -d ", dirName);
+    
+        free(dupeInputFilePath);
+        printf("unzip cmd: %s\n", cmd);
+        int unzipResult = system(cmd);
+        printf("unzip result: %d\n", unzipResult);
         return "zip";
     } else {
         return "failure";
