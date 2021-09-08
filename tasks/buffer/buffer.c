@@ -20,9 +20,12 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 	
+	const char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
+	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputFilePath, outputFilePath)) {
+	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputFilePath)) {
 		error("failed to initialize");
 		fatalError();
 	}

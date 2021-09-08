@@ -15,15 +15,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (r *Router) createJob(taskType string) (geocloud.Job, error) {
-	return r.das.InsertJob(taskType)
-}
-
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
 	for _, param := range taskParams {
 		if len(ctx.Query(param)) < 1 {
 			missingParams = append(missingParams, param)
 		}
+	}
+
+	return
+}
+
+func buildJobParams(ctx *gin.Context, taskParams []string) (jobParams map[string]string) {
+	jobParams = make(map[string]string)
+	for _, param := range taskParams {
+		jobParams[param] = ctx.Query(param)
 	}
 
 	return
@@ -55,7 +60,14 @@ func (r *Router) create(ctx *gin.Context) {
 		return
 	}
 
-	job, err := r.createJob(taskType)
+	jobParamsBytes, err := json.Marshal(buildJobParams(ctx, task.Params))
+	if err != nil {
+		log.Err(err).Msgf("/create failed to convert job params to byte array for type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
+
+	job, err := r.das.InsertJob(taskType, jobParamsBytes)
 	if err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
@@ -66,6 +78,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to write data to s3 for id: %s", job.ID)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
@@ -75,6 +88,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to get queue url for queue name: %s", task.QueueName)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
@@ -85,6 +99,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to get send message to queue url: %s", *queueUrlOutput.QueueUrl)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
