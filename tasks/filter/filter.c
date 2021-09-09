@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 5) {
-		error("filter requires four arguments. Input file, output file, filter column, and filter value");
+		error("filter requires four arguments. Input file, output file, filter column, and filter value", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
 	if(vectorInitialize(&gdalHandles, inputFilePath, outputFilePath)) {
-		error("failed to initialize");
+		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();
 	}
 	
@@ -30,13 +30,13 @@ int main(int argc, char *argv[]) {
         char attrFilterQuery[strlen(filterColumn) + strlen(filterValue) + 4];
         int retCode = snprintf(attrFilterQuery, sizeof(attrFilterQuery), "%s='%s'", filterColumn, filterValue);
         if(retCode < 0) {
-            error("failed to build attribute filter query");
+            error("failed to build attribute filter query", __FILE__, __LINE__);
 			fatalError();
         }
         fprintf(stdout, "attribute filter query: %s\n", attrFilterQuery);
 
         if(OGR_L_SetAttributeFilter(gdalHandles.inputLayer, attrFilterQuery) != OGRERR_NONE) {
-			error("failed to set attribute filter on input layer");
+			error("failed to set attribute filter on input layer", __FILE__, __LINE__);
 			fatalError();
 		}
 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 			OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
 			
 			if(buildOutputVectorFeature(&gdalHandles, &inputGeometry, &inputFeature)) {
-				error(" failed to build output vector feature");
+				error(" failed to build output vector feature", __FILE__, __LINE__);
 				fatalError();
 			}
 

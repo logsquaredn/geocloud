@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 4) {
-		error("buffer requires three arguments. input file, output file, and a buffer distance");
+		error("buffer requires three arguments. input file, output file, and a buffer distance", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
@@ -16,17 +16,19 @@ int main(int argc, char *argv[]) {
 	const char *bufferDistance = argv[3];
 	double bufferDistanceDouble = strtod(bufferDistance, NULL);
 	if(bufferDistanceDouble == 0) {
-		error("buffer distance must be a valid double greater than 0");
+		error("buffer distance must be a valid double greater than 0", __FILE__, __LINE__);
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 	
-	const char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
+	char *inputGeoFilePath;
+	int getInputGeoFilePathResult = getInputGeoFilePath(inputFilePath, &inputGeoFilePath);
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	free(inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
 	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputFilePath)) {
-		error("failed to initialize");
+		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();
 	}
 	
@@ -35,18 +37,18 @@ int main(int argc, char *argv[]) {
 		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
 			OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
 			if(inputGeometry == NULL) {
-				error("failed to get input geometry");	
+				error("failed to get input geometry", __FILE__, __LINE__);	
 				fatalError();	
 			}
 
 			OGRGeometryH bufferedGeometry = OGR_G_Buffer(inputGeometry, bufferDistanceDouble, 50);
 			if(bufferedGeometry == NULL) {
-				error("failed to buffer input geometry");
+				error("failed to buffer input geometry", __FILE__, __LINE__);
 				fatalError();
 			}
 
 			if(buildOutputVectorFeature(&gdalHandles, &bufferedGeometry, &inputFeature)) {
-				error(" failed to build output vector feature");
+				error(" failed to build output vector feature", __FILE__, __LINE__);
 				fatalError();
 			}
 

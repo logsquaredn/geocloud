@@ -1,7 +1,7 @@
 #include "shared.h"
 
-void error(const char *message) {
-	fprintf(stderr, "%s\n", message);
+void error(const char *message, const char *file, int line) {
+	fprintf(stderr, "%s:%d: %s\n", file, line, message);
 }
 
 void fatalError() {
@@ -12,12 +12,12 @@ void fatalError() {
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geometry, OGRFeatureH *inputFeature) {
     OGRFeatureH outputFeature =  OGR_F_Create(gdalHandles->outputFeatureDefn);
     if(outputFeature == NULL) {
-        error("failed to create output feature");
+        error("failed to create output feature", __FILE__, __LINE__);
         return 1;
     }
 
     if(OGR_F_SetGeometry(outputFeature, *geometry) != OGRERR_NONE) {
-        error("failed to set geometry on output feature");
+        error("failed to set geometry on output feature", __FILE__, __LINE__);
         return 1;
     }
 
@@ -27,7 +27,7 @@ int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geom
     }
 
     if(OGR_L_CreateFeature(gdalHandles->outputLayer, outputFeature) != OGRERR_NONE) {
-        error("failed to create feature in output layer");
+        error("failed to create feature in output layer", __FILE__, __LINE__);
         return 1;
     }    
 
@@ -40,12 +40,12 @@ int createOutputFields(OGRLayerH inLayer, OGRLayerH *outLayer, OGRFeatureDefnH o
     for(int i = 0; i < inputFieldCount; ++i) {
         OGRFieldDefnH fieldDefn = OGR_FD_GetFieldDefn(inFeatureDef, i);
         if(fieldDefn == NULL) {
-            error("failed to get input feature definition");
+            error("failed to get input feature definition", __FILE__, __LINE__);
             return 1;
         }
 
         if(OGR_L_CreateField(*outLayer, fieldDefn, i) != OGRERR_NONE) {
-            error("failed to create field in output layer");
+            error("failed to create field in output layer", __FILE__, __LINE__);
             return 1;
         }
     }
@@ -57,7 +57,7 @@ int deleteExistingDataset(GDALDriverH driver, const char* filePath) {
     struct stat statBuffer;
     if(stat(filePath, &statBuffer) == 0) {
         if(GDALDeleteDataset(driver, filePath) != CE_None) {
-            error("failed to delete dataset at output location");
+            error("failed to delete dataset at output location", __FILE__, __LINE__);
 			return 1;
         }
     }
@@ -67,6 +67,7 @@ int deleteExistingDataset(GDALDriverH driver, const char* filePath) {
 
 int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *filePath) {
     if(deleteExistingDataset(driver, filePath)) {
+        error("failed to delete existing dataset at output location", __FILE__, __LINE__);
 		return 1;
 	}
 
@@ -76,7 +77,7 @@ int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *f
                           GDT_Unknown, 
                           NULL);
     if(*dataset == NULL) {
-        error("failed to create vector dataset");
+        error("failed to create vector dataset", __FILE__, __LINE__);
         return 1;
     }
     
@@ -100,7 +101,7 @@ int getDriver(GDALDriverH **driver, const char *filePath) {
 
     *driver = (GDALDriverH*) GDALGetDriverByName(driverName);
     if(*driver == NULL) {
-        error("failed to get driver name");
+        error("failed to get driver name", __FILE__, __LINE__);
         return 1;
     }
 
@@ -110,7 +111,7 @@ int getDriver(GDALDriverH **driver, const char *filePath) {
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
 	if(*dataset == NULL) {
-        error("failed to open vector dataset");
+        error("failed to open vector dataset", __FILE__, __LINE__);
 		return 1;
 	}
 	
@@ -122,14 +123,14 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 
 	GDALDatasetH inputDataset;
 	if(openVectorDataset(&inputDataset, inputFilePath)) {
-		error("failed to open input vector dataset");
+		error("failed to open input vector dataset", __FILE__, __LINE__);
 		return 1;
 	}
     gdalHandles->inputDataset = inputDataset;
 
 	GDALDriverH *driver;
 	if(getDriver(&driver, outputFilePath)) {
-		error("failed to create driver");
+		error("failed to create driver", __FILE__, __LINE__);
 		return 1;
 	}
 
@@ -137,7 +138,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 	if(numberOfLayers > 0) {
 		OGRLayerH inputLayer = GDALDatasetGetLayer(inputDataset, 0);
 		if(inputLayer == NULL) {
-			error("failed to get layer from intput dataset");
+			error("failed to get layer from intput dataset", __FILE__, __LINE__);
 			return 1;
 		}  
         gdalHandles->inputLayer = inputLayer;
@@ -146,7 +147,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 
 		GDALDatasetH outputDataset;
 		if(createVectorDataset(&outputDataset, driver, outputFilePath)) {
-			error("failed to create output vector dataset");
+			error("failed to create output vector dataset", __FILE__, __LINE__);
 			return 1;
 		}
         gdalHandles->outputDataset = outputDataset;
@@ -159,14 +160,14 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 													   wkbPolygon, 
 													   NULL);
 		if(outputLayer == NULL) {
-			error("failed to create output layer");
+			error("failed to create output layer", __FILE__, __LINE__);
 			return 1;
 		}
         gdalHandles->outputLayer = outputLayer;
 
 		OGRFeatureDefnH outputFeatureDefn = OGR_L_GetLayerDefn(outputLayer);
 		if(createOutputFields(inputLayer, &outputLayer, outputFeatureDefn)) {
-			error("failed to create fields on output layer");
+			error("failed to create fields on output layer", __FILE__, __LINE__);
 			return 1;
 		}
         gdalHandles->outputFeatureDefn = outputFeatureDefn;
@@ -175,22 +176,43 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
     return 0;
 }
 
-const char *getInputGeoFilePath(const char *inputFilePath) {
+int unzip(const char *inputFilePath, char **unzipDir) {
+    char *dupeInputFilePath = strdup(inputFilePath);
+    *unzipDir = dirname(dupeInputFilePath);
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", inputFilePath, " -d ", *unzipDir);    
+
+    int unzipResult = system(cmd);
+    if(unzipResult != 0) {
+        error("failed to unzip input file", __FILE__, __LINE__);
+        return 1;
+    }
+
+    return 0;
+}
+
+int findShpFilePath(const char *unzipDir) {
+
+}
+
+int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
     char *ext = strrchr(inputFilePath, '.');
     if(ext && !strcmp(ext, ".geojson")) {
-        return inputFilePath;
+        *inputGeoFilePath = strdup(inputFilePath);
     } else if(ext && !strcmp(ext, ".zip")) {
-        char *dupeInputFilePath = strdup(inputFilePath);
-        const char *dirName = dirname(dupeInputFilePath);
-        char cmd[256];
-        snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip ", inputFilePath, " -d ", dirName);
-    
-        free(dupeInputFilePath);
-        printf("unzip cmd: %s\n", cmd);
-        int unzipResult = system(cmd);
-        printf("unzip result: %d\n", unzipResult);
-        return "zip";
+        char *unzipDir;
+        int unzipResult = unzip(inputFilePath, &unzipDir);
+        if(unzipResult != 0) {
+            error("failed to unzip input file", __FILE__, __LINE__);
+            return 1;
+        }
+
+        // TODO
+        *inputGeoFilePath = unzipDir;
     } else {
-        return "failure";
+        error("unrecognized input file", __FILE__, __LINE__);
+        return 1;
     }
+
+    return 0;
 }

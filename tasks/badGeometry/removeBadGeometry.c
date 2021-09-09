@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 3) {
-		error("remove bad geometry requires two arguments. Input file and output file");
+		error("remove bad geometry requires two arguments. Input file and output file", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
 	if(vectorInitialize(&gdalHandles, inputFilePath, outputFilePath)) {
-		error("failed to initialize");
+		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();
 	}
 	
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
             OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
 			if(OGR_G_IsValid(inputGeometry)) {	
 				if(buildOutputVectorFeature(&gdalHandles, &inputGeometry, &inputFeature)) {
-					error(" failed to build output vector feature");
+					error(" failed to build output vector feature", __FILE__, __LINE__);
 					fatalError();
 				}
 			}

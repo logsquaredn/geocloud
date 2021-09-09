@@ -15,10 +15,10 @@ struct GDALHandles {
     OGRFeatureDefnH *outputFeatureDefn;
 };
 
-void error(const char *message);
+void error(const char *message, const char *file, int line);
 void fatalError();
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputFilePath);
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
-const char *getInputGeoFilePath(const char *inputFilePath);
+int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath);
 
 #endif
