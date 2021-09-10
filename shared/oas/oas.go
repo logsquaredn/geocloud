@@ -94,3 +94,13 @@ func (o *Oas) putObjects(key string, body io.Reader) (uploadOutput *s3manager.Up
 
 	return
 }
+
+func (o *Oas) GetJobOutput(id string, body io.WriterAt, ext string) (err error) {
+	prefix := path.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	_, err = o.dwnldr.Download(body, &s3.GetObjectInput{
+		Bucket: &o.bucket,
+		Key:    &prefix,
+	})
+
+	return
+}

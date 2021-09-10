@@ -3,19 +3,17 @@ package router
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
 	"github.com/rs/zerolog/log"
 )
-
-func (r *Router) createJob(taskType string) (geocloud.Job, error) {
-	return r.das.InsertJob(taskType)
-}
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
 	for _, param := range taskParams {
@@ -27,15 +25,17 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 	return
 }
 
+func buildJobParams(ctx *gin.Context, taskParams []string) (jobParams map[string]string) {
+	jobParams = make(map[string]string)
+	for _, param := range taskParams {
+		jobParams[param] = ctx.Query(param)
+	}
+
+	return
+}
+
 func (r *Router) create(ctx *gin.Context) {
 	taskType := ctx.Param("type")
-	// if len(taskType) < 1 {
-	// 	// TODO check what happens when empty path var is passed
-	// 	// log.Error().Msg("/create query paramter 'type' not passed or empty")
-	// 	// ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'type' required"})
-	// 	// return
-	// }
-
 	task, err := r.das.GetTaskByTaskType(taskType)
 	if err == sql.ErrNoRows {
 		log.Error().Msgf("/create invalid task type requested: %s", taskType)
@@ -60,7 +60,14 @@ func (r *Router) create(ctx *gin.Context) {
 		return
 	}
 
-	job, err := r.createJob(taskType)
+	jobParamsBytes, err := json.Marshal(buildJobParams(ctx, task.Params))
+	if err != nil {
+		log.Err(err).Msgf("/create failed to convert job params to byte array for type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		return
+	}
+
+	job, err := r.das.InsertJob(taskType, jobParamsBytes)
 	if err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
@@ -71,6 +78,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to write data to s3 for id: %s", job.ID)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
@@ -80,6 +88,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to get queue url for queue name: %s", task.QueueName)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
@@ -90,6 +99,7 @@ func (r *Router) create(ctx *gin.Context) {
 	if err != nil {
 		log.Err(err).Msgf("/create failed to get send message to queue url: %s", *queueUrlOutput.QueueUrl)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
+		r.das.SetJobFailed(job.ID, err.Error())
 		return
 	}
 
@@ -115,11 +125,16 @@ func (r *Router) status(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": job.Status})
+	responseBody := gin.H{"status": job.Status}
+	if job.Status == geocloud.Error {
+		responseBody["error"] = job.Error.Error()
+	}
+
+	ctx.JSON(http.StatusOK, responseBody)
 }
 
 func (r *Router) result(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/result query paramter 'id' not passed or empty")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' required"})
@@ -141,6 +156,21 @@ func (r *Router) result(ctx *gin.Context) {
 		return
 	}
 
-	// TODO steam results from s3
+	buf := aws.NewWriteAtBuffer([]byte{})
+	err = r.oas.GetJobOutput(id, buf, "geojson")
+	if err != nil {
+		log.Error().Msgf("/result failed to download result from s3 for id: %s", id)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
 
+	var js map[string]interface{}
+	json.Unmarshal(buf.Bytes(), &js)
+	if js == nil {
+		log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, js)
 }
