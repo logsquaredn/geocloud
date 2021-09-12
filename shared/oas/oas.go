@@ -49,13 +49,8 @@ func New(sess *session.Session, bucket string, opts ...OasOpt) (*Oas, error) {
 	return o, nil
 }
 
-const (
-	input  = "input"
-	output = "output"
-)
-
 func (o *Oas) DownloadJobInputToDir(id, dir string) (*os.File, error) {
-	prefix := filepath.Join(o.prefix, id, input)
+	prefix := filepath.Join(o.prefix, id, "input")
 	output, err := o.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &o.bucket,
 		Prefix: &prefix,
@@ -69,7 +64,7 @@ func (o *Oas) DownloadJobInputToDir(id, dir string) (*os.File, error) {
 	}
 
 	content := output.Contents[0]
-	w, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s%s", input, filepath.Ext(*content.Key))))
+	w, err := os.Create(filepath.Join(dir, fmt.Sprintf("input%s", filepath.Ext(*content.Key))))
 	if err != nil {
 		return nil, fmt.Errorf("oas: error creating file: %w", err)
 	}
@@ -86,12 +81,12 @@ func (o *Oas) DownloadJobInputToDir(id, dir string) (*os.File, error) {
 }
 
 func (o *Oas) PutJobInput(id string, body io.Reader, ext string) (*s3manager.UploadOutput, error) {
-	prefix := filepath.Join(o.prefix, id, input, fmt.Sprintf("%s.%s", input, ext))
+	prefix := filepath.Join(o.prefix, id, "input", fmt.Sprintf("%s.%s", "input", ext))
 	return o.putObjects(prefix, body)
 }
 
 func (o *Oas) PutJobOutput(id string, body io.Reader, ext string) (*s3manager.UploadOutput, error) {
-	prefix := filepath.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	prefix := filepath.Join(o.prefix, id, "output", fmt.Sprintf("%s.%s", "output", ext))
 	return o.putObjects(prefix, body)
 }
 
@@ -106,7 +101,7 @@ func (o *Oas) putObjects(key string, body io.Reader) (uploadOutput *s3manager.Up
 }
 
 func (o *Oas) GetJobOutput(id string, body io.WriterAt, ext string) (err error) {
-	prefix := filepath.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	prefix := filepath.Join(o.prefix, id, "output", fmt.Sprintf("output.%s", ext))
 	_, err = o.dwnldr.Download(body, &s3.GetObjectInput{
 		Bucket: &o.bucket,
 		Key:    &prefix,
