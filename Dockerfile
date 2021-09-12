@@ -2,6 +2,7 @@ ARG base_image=ubuntu:bionic
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
+ENV DEBIAN_FRONTEND noninteractive
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0

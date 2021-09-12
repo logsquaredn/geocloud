@@ -79,11 +79,6 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 	return a, nil
 }
 
-const (
-	tmp  = "/"
-	bind = "bind"
-)
-
 func (a *S3Aggregrator) Aggregate(ctx context.Context, m geocloud.Message) error {
 	// j, err := a.das.GetJobByJobID(m.ID())
 	// if err != nil {
@@ -109,42 +104,57 @@ func (a *S3Aggregrator) Aggregate(ctx context.Context, m geocloud.Message) error
 
 	tmpDir, err := os.MkdirTemp(a.workdir, "*")
 	if err != nil {
-		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating tmp dir")
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating temp dir")
 		return err
 	}
 	// defer os.RemoveAll(tmpDir)
 
+	inDir := filepath.Join(tmpDir, "input")
+	err = os.MkdirAll(inDir, 0755)
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating input dir")
+		return err
+	}
+
 	log.Trace().Fields(f{ "runner": runner }).Msg("downloading input")
-	input, err := a.oas.DownloadJobInputToDir(m.ID(), tmpDir)
+	input, err := a.oas.DownloadJobInputToDir(m.ID(), inDir)
 	if err != nil {
 		log.Err(err).Fields(f{ "runner": runner }).Msg("error downloading input")
 		return err
 	}
 
-	indest := filepath.Join(tmp, filepath.Base(input.Name()))
-	outdest := filepath.Join(tmp, filepath.Base(tmpDir))
+	outDir := filepath.Join(tmpDir, "output")
+	err = os.MkdirAll(outDir, 0755)
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating output dir")
+		return err
+	}
+
+	inDest := filepath.Join("/job", "input", filepath.Base(input.Name()))
+	outDest := filepath.Join("/job", "output")
 	mounts := []specs.Mount{
 		{
-			Type: bind,
 			Source: input.Name(),
-			Destination: indest,
+			Destination: inDest,
+			Type: "bind",
+			Options: []string{ "bind", "ro" },
 		},
 		{
-			Type: bind,
-			Source: tmpDir,
-			Destination: outdest,
+			Source: outDir,
+			Destination: outDest,
+			Type: "bind",
+			Options: []string{ "bind", "rw" },
 		},
 	}
-	args := append([]string { indest, outdest }, "2") // TODO append arg(s) from postgres instead of 2
-	spec := containerd.WithNewSpec(
-		oci.WithImageConfigArgs(image, args), 
-		oci.WithMounts(mounts),
-	)
-	log.Debug().Fields(f{ "runner": runner, "spec": spec }).Msg("creating container")
+	args := append([]string { inDest, outDest }, "2") // TODO append arg(s) from postgres instead of 2
+	log.Debug().Fields(f{ "runner": runner }).Msg("creating container")
 	container, err := a.cclient.NewContainer(
 		ctx, m.ID(),
 		containerd.WithNewSnapshot(m.ID(), image),
-		spec,
+		containerd.WithNewSpec(
+			oci.WithImageConfigArgs(image, args), 
+			oci.WithMounts(mounts),
+		),
 	)
 	if err != nil {
 		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating container")
@@ -185,6 +195,8 @@ func (a *S3Aggregrator) Aggregate(ctx context.Context, m geocloud.Message) error
 		log.Err(err).Fields(f{ "runner": runner }).Msg("task exited with nonzero exit code")
 		return err
 	}
+
+	// TODO walk outDir and upload outputs through oas
 
 	return nil
 }
