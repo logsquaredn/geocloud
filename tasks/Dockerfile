@@ -24,5 +24,5 @@ RUN mkdir /assets \
     && gcc ${task_folder}/${task}.c shared/shared.c -l gdal -o /assets/${task}
 
 FROM base_image AS task
-COPY --from=build /assets/ /usr/local/bin/task
+COPY --from=build /assets/* /usr/local/bin/task
 ENTRYPOINT ["task"]
