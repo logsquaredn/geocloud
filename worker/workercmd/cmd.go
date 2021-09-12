@@ -119,7 +119,6 @@ func (cmd *WorkerCmd) Execute(args []string) error {
 		aggregator.WithAddress(fmt.Sprintf("%s:%d", cmd.IP, cmd.Port)),
 		aggregator.WithContainerdNamespace(cmd.Containerd.Namespace),
 		aggregator.WithContainerdSocket(string(cmd.Containerd.Address)),
-		aggregator.WithPrefetch(true),
 		aggregator.WithResolver(&resolver),
 		aggregator.WithRegistryHost(url.Host),
 		aggregator.WithTasks(cmd.Tasks...),

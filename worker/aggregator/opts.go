@@ -33,9 +33,9 @@ func WithContainerdSocket(socket string) S3AggregatorOpt {
 	}
 }
 
-func WithPrefetch(prefetch bool) S3AggregatorOpt {
+func WithPrefetch() S3AggregatorOpt {
 	return func(a *S3Aggregrator) {
-		a.prefetch = prefetch
+		a.prefetch = true
 	}
 }
 

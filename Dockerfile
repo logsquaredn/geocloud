@@ -2,7 +2,6 @@ ARG base_image=ubuntu:bionic
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
-ENV DEBIAN_FRONTEND noninteractive
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
@@ -24,13 +23,18 @@ RUN go build -ldflags "${ldflags}" -o /assets/api ./api/cmd/ \
     && go build -ldflags "${ldflags}" -o /assets/worker ./worker/cmd/ \
     && go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/
 
+FROM base_image AS dumb_init
+ARG dumb_init_release=https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64
+ADD ${dumb_init_release} /assets/dumb-init
+RUN chmod +x /assets/dumb-init
+
 FROM base_image AS api
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
-        dumb-init \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /assets/api /usr/local/geocloud/bin/geocloud
+COPY --from=dumb_init /assets/ /usr/local/geocloud/bin/
 ENV PATH=/usr/local/geocloud/bin:$PATH
 ENTRYPOINT ["dumb-init", "geocloud"]
 

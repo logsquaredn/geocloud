@@ -6,13 +6,18 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/remotes"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/shared/das"
 	"github.com/logsquaredn/geocloud/shared/oas"
 	"github.com/logsquaredn/geocloud/worker"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/rs/zerolog/log"
 )
 
@@ -74,25 +79,115 @@ func New(das *das.Das, oas *oas.Oas, opts ...S3AggregatorOpt) (*S3Aggregrator, e
 	return a, nil
 }
 
-func (a *S3Aggregrator) Aggregate(m geocloud.Message) error {
-	task, err := a.das.GetTaskByJobID(m.ID())
+const (
+	tmp  = "/"
+	bind = "bind"
+)
+
+func (a *S3Aggregrator) Aggregate(ctx context.Context, m geocloud.Message) error {
+	// j, err := a.das.GetJobByJobID(m.ID())
+	// if err != nil {
+	// 	log.Err(err).Fields(f{ "runner": runner }).Msg("error getting job")
+	// 	return err
+	// }
+
+	t, err := a.das.GetTaskByJobID(m.ID())
 	if err != nil {
-		log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task ref")
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task")
 		return err
 	}
 
+	ctx = namespaces.WithNamespace(ctx, a.namespace)
+
 	// TODO pull, download, etc. in goroutines for speed
-	log.Trace().Fields(f{ "runner": runner, "ref": task.Ref }).Msg("pulling ref")
-	_, err = a.pull(task.Ref)
+	log.Trace().Fields(f{ "runner": runner, "ref": t.Ref }).Msg("pulling ref")
+	image, err := a.pull(ctx, t.Ref)
 	if err != nil {
-		log.Err(err).Fields(f{ "runner": runner, "ref": task.Ref }).Msg("error pulling ref")
+		log.Err(err).Fields(f{ "runner": runner, "ref": t.Ref }).Msg("error pulling ref")
+		return err
+	}
+
+	tmpDir, err := os.MkdirTemp(a.workdir, "*")
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating tmp dir")
+		return err
+	}
+	// defer os.RemoveAll(tmpDir)
+
+	log.Trace().Fields(f{ "runner": runner }).Msg("downloading input")
+	input, err := a.oas.DownloadJobInputToDir(m.ID(), tmpDir)
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error downloading input")
+		return err
+	}
+
+	indest := filepath.Join(tmp, filepath.Base(input.Name()))
+	outdest := filepath.Join(tmp, filepath.Base(tmpDir))
+	mounts := []specs.Mount{
+		{
+			Type: bind,
+			Source: input.Name(),
+			Destination: indest,
+		},
+		{
+			Type: bind,
+			Source: tmpDir,
+			Destination: outdest,
+		},
+	}
+	args := append([]string { indest, outdest }, "2") // TODO append arg(s) from postgres instead of 2
+	spec := containerd.WithNewSpec(
+		oci.WithImageConfigArgs(image, args), 
+		oci.WithMounts(mounts),
+	)
+	log.Debug().Fields(f{ "runner": runner, "spec": spec }).Msg("creating container")
+	container, err := a.cclient.NewContainer(
+		ctx, m.ID(),
+		containerd.WithNewSnapshot(m.ID(), image),
+		spec,
+	)
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating container")
+		return err
+	}
+	defer container.Delete(ctx, containerd.WithSnapshotCleanup)
+
+	log.Trace().Fields(f{ "runner": runner }).Msg("creating task")
+	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio)) // TODO stderr to buffer to save for later
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error creating task")
+		return err
+	}
+	defer task.Delete(ctx)
+
+	log.Trace().Fields(f{ "runner": runner }).Msg("waiting on task")
+	exitStatusC, err := task.Wait(ctx)
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error waiting on task")
+		return err
+	}
+
+	log.Trace().Fields(f{ "runner": runner }).Msg("starting task")
+	if err := task.Start(ctx); err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error starting task")
+		return err
+	}
+
+	log.Trace().Fields(f{ "runner": runner }).Msg("waiting on task to exit")
+	exitStatus := <-exitStatusC
+	exitCode, _, err := exitStatus.Result()
+	if err != nil {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task result")
+		return err
+	}
+
+	if exitCode != 0 {
+		log.Err(err).Fields(f{ "runner": runner }).Msg("task exited with nonzero exit code")
 		return err
 	}
 
 	return nil
 }
-
-var ctx = context.Background()
 
 func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	if a.cclient == nil {
@@ -109,6 +204,8 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 		}
 	}
 
+	ctx := namespaces.WithNamespace(context.Background(), a.namespace)
+
 	if a.prefetch {
 		log.Info().Fields(f{ "runner": runner }).Msg("getting task refs")
 		refs, err := a.das.GetTaskRefsByTaskTypes(a.tasks...)
@@ -116,10 +213,10 @@ func (a *S3Aggregrator) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 			log.Err(err).Fields(f{ "runner": runner }).Msg("error getting task refs")
 			return fmt.Errorf("aggregator: unable to get task refs: %w", err)
 		}
-
+	
 		log.Info().Fields(f{ "runner": runner, "refs": refs }).Msg("pulling task images")
 		for _, ref := range refs {
-			go a.pull(ref)
+			go a.pull(ctx, ref)
 		}
 	}
 

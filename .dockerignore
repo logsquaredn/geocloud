@@ -5,3 +5,5 @@
 **/docker-compose.yml
 
 **/.terraform/
+
+**/.env

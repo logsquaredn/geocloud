@@ -1,6 +1,7 @@
 package listener
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -16,7 +17,7 @@ import (
 
 type f = map[string]interface{}
 
-type SQSListenerCallback func (geocloud.Message) error
+type SQSListenerCallback func (context.Context, geocloud.Message) error
 
 type SQSListener struct {
 	svc      *sqs.SQS
@@ -78,6 +79,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 	qticker := time.NewTicker(queueRefresh)
 
 	wait := make(chan error, 1)
+	ctx := context.Background()
 	go func() {
 		defer vticker.Stop()
 		for i := 0; q > 0; i = (i+1)%q {
@@ -107,7 +109,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			go func() {
 				log.Trace().Fields(f{ "runner": runner }).Msg("processing messages")
 				for i, msg := range messages {
-					err = r.callback(&SQSMessage{ msg })
+					err = r.callback(ctx, &SQSMessage{ msg })
 					if err != nil {
 						log.Err(err).Fields(f{ "runner": runner, "id": msg.Body }).Msg("message processing failed")
 					} else {

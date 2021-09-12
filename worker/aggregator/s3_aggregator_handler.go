@@ -1,6 +1,7 @@
 package aggregator
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -30,7 +31,7 @@ func (h *S3Aggregrator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.Aggregate(&message{ id })
+	err := h.Aggregate(context.Background(), &message{ id })
 	if err == sql.ErrNoRows {
 		w.Write([]byte(err.Error()))
 		return

@@ -11,7 +11,7 @@ type Job struct {
 	Error     error
 	StartTime string // TODO switch to timestamp
 	EndTime   string // TODO switch to timestamp
-	Params    string // TODO switch to map[string]string
+	Params    string // TODO switch to map[string]string; rename to Args
 }
 
 type Task struct {

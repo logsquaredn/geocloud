@@ -3,7 +3,8 @@ package oas
 import (
 	"fmt"
 	"io"
-	"path"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -53,35 +54,44 @@ const (
 	output = "output"
 )
 
-func (o *Oas) DownloadJobInput(id string, w io.WriterAt) error {
-	prefix := path.Join(o.prefix, id, input)
+func (o *Oas) DownloadJobInputToDir(id, dir string) (*os.File, error) {
+	prefix := filepath.Join(o.prefix, id, input)
 	output, err := o.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &o.bucket,
 		Prefix: &prefix,
 	})
 	if err != nil {
-		return fmt.Errorf("oas: error listing objects: %w", err)
+		return nil, fmt.Errorf("oas: error listing objects: %w", err)
 	} else if len(output.Contents) > 1 {
-		return fmt.Errorf("oas: multiple job inputs found")
+		return nil, fmt.Errorf("oas: multiple job inputs found")
 	} else if len(output.Contents) == 0 {
-		return fmt.Errorf("oas: zero job inputs found")
+		return nil, fmt.Errorf("oas: zero job inputs found")
 	}
 
 	content := output.Contents[0]
+	w, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s%s", input, filepath.Ext(*content.Key))))
+	if err != nil {
+		return nil, fmt.Errorf("oas: error creating file: %w", err)
+	}
+
 	_, err = o.dwnldr.Download(w, &s3.GetObjectInput{
 		Bucket: &o.bucket,
 		Key: content.Key,
 	})
-	return fmt.Errorf("oas: error downloading object: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("oas: error downloading object: %w", err)
+	}
+
+	return w, nil
 }
 
 func (o *Oas) PutJobInput(id string, body io.Reader, ext string) (*s3manager.UploadOutput, error) {
-	prefix := path.Join(o.prefix, id, input, fmt.Sprintf("%s.%s", input, ext))
+	prefix := filepath.Join(o.prefix, id, input, fmt.Sprintf("%s.%s", input, ext))
 	return o.putObjects(prefix, body)
 }
 
 func (o *Oas) PutJobOutput(id string, body io.Reader, ext string) (*s3manager.UploadOutput, error) {
-	prefix := path.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	prefix := filepath.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
 	return o.putObjects(prefix, body)
 }
 
@@ -96,7 +106,7 @@ func (o *Oas) putObjects(key string, body io.Reader) (uploadOutput *s3manager.Up
 }
 
 func (o *Oas) GetJobOutput(id string, body io.WriterAt, ext string) (err error) {
-	prefix := path.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
+	prefix := filepath.Join(o.prefix, id, output, fmt.Sprintf("%s.%s", output, ext))
 	_, err = o.dwnldr.Download(body, &s3.GetObjectInput{
 		Bucket: &o.bucket,
 		Key:    &prefix,

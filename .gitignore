@@ -13,3 +13,6 @@ assets/*
 
 # vscode
 .vscode/
+
+# env
+.env
