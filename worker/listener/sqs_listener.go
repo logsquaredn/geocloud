@@ -105,7 +105,7 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 			}
 
 			entriesDel := make([]*sqs.DeleteMessageBatchRequestEntry, m)
-			done := make(chan struct{}, 1)
+			done := make(chan interface{}, 1)
 			go func() {
 				log.Trace().Fields(f{ "runner": runner }).Msg("processing messages")
 				for i, msg := range messages {
@@ -119,7 +119,6 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 						}
 					}
 				}
-
 				close(done)
 			}()
 
@@ -148,10 +147,14 @@ func (r *SQSListener) Run(signals <-chan os.Signal, ready chan<- struct{}) error
 					processing = false
 					if len(entriesDel) > 0 {
 						log.Trace().Fields(f{ "runner": runner, "url": url }).Msg("deleting messages")
-						r.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
+						req, _ := r.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 							Entries: entriesDel,
 							QueueUrl: &url,
 						})
+						err = req.Send()
+						if err != nil {
+							wait<- err
+						}
 					}
 				}
 			}

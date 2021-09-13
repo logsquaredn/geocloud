@@ -20,7 +20,7 @@ ARG task
 ARG task_folder=${task}
 COPY ${task_folder}/ ${task_folder}/
 COPY shared/ shared/
-RUN mkdir /assets \
+RUN mkdir /assets/ \
     && gcc ${task_folder}/${task}.c shared/shared.c -l gdal -o /assets/${task}
 
 FROM base_image AS task

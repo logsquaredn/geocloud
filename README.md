@@ -2,7 +2,7 @@
 
 ## Developing
 
-> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
+> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials_
 
 ### Prerequisites
 
