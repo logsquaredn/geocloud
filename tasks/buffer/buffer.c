@@ -21,12 +21,16 @@ int main(int argc, char *argv[]) {
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 	
 	char *inputGeoFilePath;
-	int getInputGeoFilePathResult = getInputGeoFilePath(inputFilePath, &inputGeoFilePath);
+	if(getInputGeoFilePath(inputFilePath, &inputGeoFilePath)) {
+		error("failed to find input geo file path", __FILE__, __LINE__);
+	}
+	printf("debug: %s\n", inputGeoFilePath);
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
-	free(inputGeoFilePath);
+	printf("debug: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
+	printf("debug: %s\n", inputGeoFilePath);
 	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputFilePath)) {
 		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();

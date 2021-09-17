@@ -5,6 +5,7 @@
 #include <ogr_srs_api.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <dirent.h>
 
 struct GDALHandles {
     GDALDatasetH *inputDataset;

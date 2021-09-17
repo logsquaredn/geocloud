@@ -111,6 +111,10 @@ int getDriver(GDALDriverH **driver, const char *filePath) {
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
 	if(*dataset == NULL) {
+        // TODO improve all error messaging
+        // printf("%d\n", CPLGetErrorCounter());
+        // printf("%d\n", CPLGetLastErrorNo());
+        // printf("%s\n", CPLGetLastErrorMsg());
         error("failed to open vector dataset", __FILE__, __LINE__);
 		return 1;
 	}
@@ -121,6 +125,7 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputFilePath) {
     GDALAllRegister();
 
+    printf("debug: %s\n", inputFilePath);
 	GDALDatasetH inputDataset;
 	if(openVectorDataset(&inputDataset, inputFilePath)) {
 		error("failed to open input vector dataset", __FILE__, __LINE__);
@@ -191,8 +196,43 @@ int unzip(const char *inputFilePath, char **unzipDir) {
     return 0;
 }
 
-int findShpFilePath(const char *unzipDir) {
+int isShpFile(const char *filename) {
+    const char *suffix = ".shp";
 
+    size_t filenameLength = strlen(filename);
+    size_t suffixLength = strlen(suffix);
+
+    return strncmp(filename + filenameLength - suffixLength, suffix, suffixLength) == 0;
+}
+
+int getShpFilePath(const char *unzipDir, char **shpFilePath) {
+    DIR *d = opendir(unzipDir);
+    struct dirent *dir;
+    if(d) {
+        int shpFileFound = 0;
+        while((dir = readdir(d)) != NULL) {
+            if(isShpFile(dir->d_name)) {
+                shpFileFound = 1;
+                char tmpShpFilePath[256];
+                snprintf(tmpShpFilePath, sizeof(tmpShpFilePath), "%s/%s", unzipDir, dir->d_name);
+                printf("debug1: %s\n", tmpShpFilePath);
+                *shpFilePath = &tmpShpFilePath[0];
+                printf("debug2: %s\n", *shpFilePath);
+                break;
+            }
+        }
+
+        if(!shpFileFound) {
+            error("shp file not found in input", __FILE__, __LINE__);
+            return 1;
+        }
+        closedir(d);
+    } else {
+        error("unable to open unzip directory", __FILE__, __LINE__);
+        return 1;
+    }
+
+    return 0;
 }
 
 int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
@@ -207,8 +247,13 @@ int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
             return 1;
         }
 
-        // TODO
-        *inputGeoFilePath = unzipDir;
+        char *shpFilePath;
+        if(getShpFilePath(unzipDir, &shpFilePath)) {
+            error("failed to get shp file path", __FILE__, __LINE__);
+            return 1;
+        }
+        printf("debug3: %s\n", shpFilePath);
+        *inputGeoFilePath = shpFilePath;
     } else {
         error("unrecognized input file", __FILE__, __LINE__);
         return 1;
