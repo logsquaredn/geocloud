@@ -84,29 +84,38 @@ int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *f
     return 0;
 }
 
-const char *getDriverName(const char *filePath) {
-    char *driverName;
-	const char *ext = strrchr(filePath, '.');
-	if(ext != NULL && !strcmp(ext, ".shp")) {
-		driverName = "ESRI Shapefile";
-	} else {
-		driverName = "GeoJSON";
-	}
+// const char *getDriverName(const char *filePath) {
+//     char *driverName;
+// 	const char *ext = strrchr(filePath, '.');
+// 	if(ext != NULL && !strcmp(ext, ".shp")) {
+// 		driverName = "ESRI Shapefile";
+// 	} else {
+// 		driverName = "GeoJSON";
+// 	}
 
-    return driverName;
-}
+//     return driverName;
+// }
 
-int getDriver(GDALDriverH **driver, const char *filePath) {
-    const char *driverName = getDriverName(filePath);
-
-    *driver = (GDALDriverH*) GDALGetDriverByName(driverName);
+int getShpDriver(GDALDriverH **driver) {
+    *driver = (GDALDriverH*) GDALGetDriverByName("ESRI Shapefile");
     if(*driver == NULL) {
-        error("failed to get driver name", __FILE__, __LINE__);
+        error("failed to get shp driver", __FILE__, __LINE__);
         return 1;
     }
 
     return 0;
 }
+
+int getGeojsonDriver(GDALDriverH **driver) {
+    *driver = (GDALDriverH*) GDALGetDriverByName("GeoJSON");
+    if(*driver == NULL) {
+        error("failed to get geojson driver", __FILE__, __LINE__);
+        return 1;
+    }
+
+    return 0;
+}
+
 
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
@@ -125,7 +134,6 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputFilePath) {
     GDALAllRegister();
 
-    printf("debug: %s\n", inputFilePath);
 	GDALDatasetH inputDataset;
 	if(openVectorDataset(&inputDataset, inputFilePath)) {
 		error("failed to open input vector dataset", __FILE__, __LINE__);
@@ -134,7 +142,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
     gdalHandles->inputDataset = inputDataset;
 
 	GDALDriverH *driver;
-	if(getDriver(&driver, outputFilePath)) {
+	if(getShpDriver(&driver)) {
 		error("failed to create driver", __FILE__, __LINE__);
 		return 1;
 	}
@@ -213,11 +221,9 @@ int getShpFilePath(const char *unzipDir, char **shpFilePath) {
         while((dir = readdir(d)) != NULL) {
             if(isShpFile(dir->d_name)) {
                 shpFileFound = 1;
-                char tmpShpFilePath[256];
-                snprintf(tmpShpFilePath, sizeof(tmpShpFilePath), "%s/%s", unzipDir, dir->d_name);
-                printf("debug1: %s\n", tmpShpFilePath);
-                *shpFilePath = &tmpShpFilePath[0];
-                printf("debug2: %s\n", *shpFilePath);
+                char *tmpShpFilePath = (char*) malloc(256);
+                snprintf(tmpShpFilePath, 256, "%s/%s", unzipDir, dir->d_name);
+                *shpFilePath = tmpShpFilePath;
                 break;
             }
         }
@@ -252,7 +258,6 @@ int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
             error("failed to get shp file path", __FILE__, __LINE__);
             return 1;
         }
-        printf("debug3: %s\n", shpFilePath);
         *inputGeoFilePath = shpFilePath;
     } else {
         error("unrecognized input file", __FILE__, __LINE__);
@@ -260,4 +265,8 @@ int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
     }
 
     return 0;
+}
+
+int dumpToGeojson(struct GDALHandles *gdalHandles) {
+
 }
