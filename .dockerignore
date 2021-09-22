@@ -1,9 +1,1 @@
-**/.*
-**/*.md
-
-**/Dockerfile
-**/docker-compose.yml
-
-**/.terraform/
-
-**/.env
+*.md

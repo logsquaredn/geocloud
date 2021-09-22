@@ -2,20 +2,12 @@ version: '3.4'
 
 services:
   api:
-    build: { context: ., target: api }
-    command: --postgres-host=postgres --postgres-password=pwd --aws-shared-credentials-file=/root/.aws/credentials --aws-s3-bucket=logsquaredn-geocloud
-    volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/:ro]
+    build: .
+    command: api --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud
+    volumes: [~/.aws/:/root/.aws/:ro]
     ports: [8080:8080]
     networks: [api]
-    depends_on: [postgres, migrate, infrastructure]
-    environment:
-      GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-  infrastructure:
-    image: hashicorp/terraform:${TERRAFORM_TAG:-light}
-    working_dir: /src/infrastructure
-    entrypoint: sh -c 'terraform init && terraform apply -auto-approve -input=false && terraform output -json > /tmp/geocloud/config.json'
-    volumes: [~/.aws/:/root/.aws/:ro, ./infrastructure/:/src/infrastructure, config:/tmp/geocloud/]
+    depends_on: [postgres, migrate]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -33,23 +25,19 @@ services:
     networks: [migrate]
     depends_on: [postgres]
   worker:
-    build: { context: ., target: worker }
+    build: .
     privileged: true
-    command: --postgres-host=postgres --postgres-password=pwd --aws-shared-credentials-file=/root/.aws/credentials --aws-s3-bucket=logsquaredn-geocloud -t=buffer -t=filter -t=reproject -t=removeBadGeometry --containerd-log-level=error
-    volumes: [~/.aws/:/root/.aws/:ro, config:/etc/geocloud/]
-    ports: [7778:7778, 1338:1338]
+    command: worker --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud -t buffer -t filter -t removebadgeometry -t reproject
+    volumes: [~/.aws/:/root/.aws/:ro]
     networks: [worker]
-    depends_on: [postgres, migrate, infrastructure]
+    depends_on: [postgres, migrate]
     environment:
-      GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      GEOCLOUD_REGISTRY_USERNAME: ${GEOCLOUD_REGISTRY_USERNAME}
-      GEOCLOUD_REGISTRY_PASSWORD: ${GEOCLOUD_REGISTRY_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
 
 networks:
   api:
   migrate:
   worker:
 
-volumes:
-  config:
+volumes: {}
