@@ -3,7 +3,7 @@ version: '3.4'
 services:
   api:
     build: .
-    command: api --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud
+    command: a --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud
     volumes: [~/.aws/:/root/.aws/:ro]
     ports: [8080:8080]
     networks: [api]
@@ -21,23 +21,27 @@ services:
       POSTGRES_PASSWORD: pwd
   migrate:
     build: .
-    command: migrate --postgres-host=postgres --postgres-password=pwd
+    command: m --postgres-host=postgres --postgres-password=pwd
     networks: [migrate]
     depends_on: [postgres]
   worker:
     build: .
     privileged: true
-    command: worker --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud -t buffer -t filter -t removebadgeometry -t reproject
-    volumes: [~/.aws/:/root/.aws/:ro]
+    command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=logsquaredn-geocloud -t buffer -t filter -t removebadgeometry -t reproject
+    volumes: [~/.aws/:/root/.aws/:ro, geocloud:/var/lib/geocloud/]
     networks: [worker]
     depends_on: [postgres, migrate]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      GEOCLOUD_REGISTRY_USERNAME: ${GEOCLOUD_REGISTRY_USERNAME}
+      GEOCLOUD_REGISTRY_PASSWORD: ${GEOCLOUD_REGISTRY_PASSWORD}
 
 networks:
   api:
   migrate:
   worker:
 
-volumes: {}
+volumes:
+  geocloud:
+  # postgresql:

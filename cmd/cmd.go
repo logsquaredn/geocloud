@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/jessevdk/go-flags"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/api"
@@ -21,13 +23,13 @@ import (
 
 type Geocloud struct {
 	Version  func() `long:"version" short:"v" description:"Print the version"`
-	Loglevel string `long:"log-level" short:"l" default:"info" choice:"info" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
+	Loglevel string `long:"log-level" short:"l" default:"trace" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
 
 	AWSGroup AWSGroup `group:"AWS" namespace:"aws"`
 
-	API     APIComponent     `command:"api" description:"Run the api component"`
-	Migrate MigrateComponent `command:"migrate" alias:"mgrt" description:"Apply database migrations"`
-	Worker  WorkerComponent  `command:"worker" alias:"wrkr" description:"Run the worker component"`
+	API     APIComponent     `command:"api" alias:"a" description:"Run the api component"`
+	Migrate MigrateComponent `command:"migrate" alias:"m" description:"Apply database migrations"`
+	Worker  WorkerComponent  `command:"worker" alias:"w" description:"Run the worker component"`
 	// Infrastructure InfrastructureComponent `command:"infrastructure" alias:"infra" description:"Apply infrastructure changes"`
 	// Quickstart QuickstartComponent `command:"quickstart" alias:"qs" description:"Run all geocloud components"`
 }
@@ -68,6 +70,27 @@ func (a *AWSGroup) Session() (*session.Session, error) {
 	)
 	cfg := aws.NewConfig().WithRegion(a.Region).WithCredentials(creds)
 	return session.NewSession(cfg)
+}
+
+type RegistryGroup struct {
+	Username string `long:"username" env:"GEOCLOUD_REGISTRY_USERNAME" description:"Registry username"`
+	Password string `long:"password" env:"GEOCLOUD_REGISTRY_PASSWORD" description:"Regsitry password"`
+}
+
+func (r *RegistryGroup) Resolver() (*remotes.Resolver, error) {
+	authorizer := docker.NewDockerAuthorizer(
+		docker.WithAuthCreds(func(string) (string, string, error) {
+			return r.Username, r.Password, nil
+		}),
+	)
+	opts := []docker.RegistryOpt{
+		docker.WithAuthorizer(authorizer),
+		docker.WithPlainHTTP(docker.MatchLocalhost),
+	}
+	resolver := docker.NewResolver(docker.ResolverOptions{
+		Hosts: docker.ConfigureDefaultRegistries(opts...),
+	})
+	return &resolver, nil
 }
 
 type APIComponent struct {
@@ -117,10 +140,9 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 		return fmt.Errorf("no api configured")
 	}
 
-	cs := component.Group(ds, mq, os, api)
+	cs := component.NewGroup(ds, mq, os, api)
 
-	close(ready)
-	return <-ifrit.Invoke(cs).Wait()
+	return cs.Run(signals, ready)
 }
 
 func (a *APIComponent) Execute(_ []string) error {
@@ -138,7 +160,10 @@ func (a *APIComponent) IsConfigured() bool {
 }
 
 type WorkerComponent struct {
-	Tasks []string `long:"task" short:"t" description:"Task types that this worker should execute"`
+	Tasks   []string       `long:"task" short:"t" description:"Task types that this worker should execute"`
+	Workdir flags.Filename `long:"workdir" short:"w" default:"/var/lib/geocloud" descirption:"Directory for geocloud to store working data in"`
+
+	RegistryGroup *RegistryGroup `group:"Registry" namespace:"registry"`
 
 	ContainerdRuntime *runtime.ContainerdRuntime `group:"Containerd" namespace:"containerd"`
 
@@ -152,6 +177,8 @@ type WorkerComponent struct {
 var _ geocloud.Component = (*WorkerComponent)(nil)
 
 func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	workdir := string(w.Workdir)
+
 	err := GeocloudCmd.SetLogLevel()
 	if err != nil {
 		return fmt.Errorf("unable to set log level")
@@ -172,7 +199,8 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		return fmt.Errorf("no objectstore configured")
 	}
 
-	rt := w.ContainerdRuntime.WithDatastore(ds).WithObjectstore(os)
+	resolver, _ := w.RegistryGroup.Resolver()
+	rt := w.ContainerdRuntime.WithResolver(resolver).WithWorkdir(workdir).WithDatastore(ds).WithObjectstore(os)
 	if !rt.IsConfigured() {
 		return fmt.Errorf("no runtime configured")
 	}
@@ -191,10 +219,9 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		return fmt.Errorf("no message queue configured")
 	}
 
-	cs := component.Group(ds, os, rt, mq)
+	cs := component.NewGroup(ds, os, rt, mq)
 
-	close(ready)
-	return <-ifrit.Invoke(cs).Wait()
+	return cs.Run(signals, ready)
 }
 
 func (w *WorkerComponent) Execute(_ []string) error {

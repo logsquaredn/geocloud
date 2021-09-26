@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/logsquaredn/geocloud"
+	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 )
 
@@ -51,8 +52,8 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 	if len(q.tasks) > 0 && q.ds.IsConfigured() {
 		var err error
 		tasks, err := q.ds.GetTasks(q.tasks...)
-		if err != nil {
-			// warn
+		if err != nil && len(q.QueueNames) == 0 {
+			return err
 		}
 
 		q.QueueNames = make([]string, len(tasks))
@@ -116,7 +117,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 					for _, msg := range messages {
 						err = q.rt.Send(&message{ id: *msg.Body })
 						if err != nil {
-							// err
+							log.Err(err).Msgf("runtime failed to process message %s", *msg.Body)
 						} else {
 							entriesDel = append(entriesDel, &sqs.DeleteMessageBatchRequestEntry{
 								Id:            msg.MessageId,
@@ -145,7 +146,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 							var err error
 							tasks, err := q.ds.GetTasks(q.tasks...)
 							if err != nil {
-								// warn
+								log.Err(err).Msg("unable to update task queue urls")
 							}
 					
 							q.QueueNames = make([]string, len(tasks))
@@ -157,7 +158,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 							for _, name := range q.QueueNames {
 								output, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{ QueueName: &name })
 								if err != nil {
-									// warn
+									log.Err(err).Msgf("unable to get %s queue url", name)
 								} else {
 									newQueueURLs = append(queueURLs, *output.QueueUrl)
 								}
