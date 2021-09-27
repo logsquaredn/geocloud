@@ -2,7 +2,7 @@
 
 ## Developing
 
-> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials to do so_
+> _many commands in this README communicate with AWS, and so rely on access key ID and secret access key credentials_
 
 ### Prerequisites
 
@@ -38,7 +38,7 @@ docker-compose up --build api
 
 #### Worker
 
-> _when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/geocloud/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
+> _when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
 
 > _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
 
@@ -55,7 +55,8 @@ docker-compose up --build worker
 
 ```sh
 # create queue and bucket
-terraform -chdir=infrastructure/ apply
+terraform -chdir=infrastructure/tf/ init
+terraform -chdir=infrastructure/tf/ apply
 ```
 
 > `hashicorp/terraform` _can be used in place of installing terraform on your machine to create infrastructure_
@@ -89,7 +90,7 @@ docker run --rm -v `pwd`:/src/:ro k14s/image ytt -f /src/ci/pipeline | fly -t ge
 ```sh
 # generate a migration version
 version=`date -u +%Y%m%d%T | tr -cd [0-9]`
-touch migrate/migratecmd/migrations/${version}_my-title.up.sql
+touch datastore/psql/migrations/${version}_my-title.up.sql
 touch migrate/migratecmd/migrations/${version}_my-title.down.sql
 ```
 
