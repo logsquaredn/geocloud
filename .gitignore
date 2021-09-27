@@ -5,6 +5,7 @@ assets/*
 # bin
 bin/*
 !bin/if_tar_exists_xzf_rm_mv_assets
+tasks/bin/
 
 # env
 .env
