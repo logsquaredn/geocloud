@@ -23,7 +23,7 @@ import (
 
 type Geocloud struct {
 	Version  func() `long:"version" short:"v" description:"Print the version"`
-	Loglevel string `long:"log-level" short:"l" default:"trace" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
+	Loglevel string `long:"log-level" short:"l" default:"info" choice:"trace" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal" choice:"panic" description:"Geocloud log level"`
 
 	AWSGroup AWSGroup `group:"AWS" namespace:"aws"`
 
