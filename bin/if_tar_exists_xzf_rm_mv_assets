@@ -1,0 +1,12 @@
+#!/bin/sh
+
+TGZ=${1}
+MV="/tmp/${2:-*}"
+
+if [ -f $TGZ ]; then
+    tar -C /tmp/ -xzf $TGZ
+    rm $TGZ
+fi
+
+mkdir -p /assets/
+mv $MV /assets/

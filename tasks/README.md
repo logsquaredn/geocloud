@@ -1,4 +1,4 @@
-# tasks
+# task
 
 ## Developing
 

@@ -1,9 +1,13 @@
-# build
-bin/
-
-# ci
+# assets
 assets/*
-!assets/.gitkeep
+!assets/pigz_2.4_x86_64.tgz
+
+# bin
+bin/*
+!bin/if_tar_exists_xzf_rm_mv_assets
+
+# env
+.env
 
 # macOS
 .DS_Store
