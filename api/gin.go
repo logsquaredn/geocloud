@@ -87,13 +87,12 @@ func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams 
 	return
 }
 
-func buildJobParams(ctx *gin.Context, taskParams []string) (jobParams map[string]string) {
-	jobParams = make(map[string]string)
-	for _, param := range taskParams {
-		jobParams[param] = ctx.Query(param)
+func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
+	jobArgs := make([]string, len(taskParams))
+	for i, param := range taskParams {
+		jobArgs[i] = ctx.Query(param)
 	}
-
-	return
+	return jobArgs
 }
 
 func (a *GinAPI) create(ctx *gin.Context) {
@@ -128,16 +127,9 @@ func (a *GinAPI) create(ctx *gin.Context) {
 		return
 	}
 
-	_, err = json.Marshal(buildJobParams(ctx, task.Params))
-	if err != nil {
-		log.Err(err).Msgf("/create failed to convert job params to byte array for type: %s", taskType)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create job of type %s", taskType)})
-		return
-	}
-
 	job := &geocloud.Job{
 		TaskType: task.Type,
-		// TODO Args: job args here
+		Args: buildJobArgs(ctx, task.Params),
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
@@ -226,13 +218,16 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return
 	}
 
-	buf := []byte{}
+	var buf []byte
 	err = vol.Walk(func(_ string, f geocloud.File, e error) error {
-		if filepath.Ext(f.Name()) == ".geojson" {
-			_, err = f.Read(buf)
-			return err
+		if e != nil {
+			return e
 		}
-
+		if filepath.Ext(f.Name()) == ".geojson" {
+			buf = make([]byte, f.Size())
+			_, e = f.Read(buf)
+			return e
+		}
 		return nil
 	})
 	if err != nil {

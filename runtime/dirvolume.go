@@ -25,6 +25,11 @@ func (f *dirFile) Read(p []byte) (int, error) {
 	return f.file.Read(p)
 }
 
+func (f *dirFile) Size() int {
+	i, _ := f.file.Stat()
+	return int(i.Size())
+}
+
 type dirVolume struct {
 	path string
 }
@@ -35,6 +40,8 @@ func (v *dirVolume) Walk(fn geocloud.WalkVolFunc) error {
 	return filepath.WalkDir(v.path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		} else if d.IsDir() {
+			return nil
 		}
 
 		file, err := os.Open(filepath.Join(v.path, d.Name()))

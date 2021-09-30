@@ -144,6 +144,11 @@ func (p *PostgresDatastore) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		taskType  string
 	)
 
+	// avoid nil pointer dereference on j.Err.Error()
+	if j.Err == nil {
+		j.Err = fmt.Errorf("")
+	}
+
 	err := p.stmt.updateJob.QueryRow(
 		j.ID(), j.TaskType.String(),
 		j.Status.String(), j.Err.Error(),

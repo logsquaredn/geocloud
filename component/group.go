@@ -9,7 +9,8 @@ import (
 )
 
 type group struct {
-	cs []geocloud.Component	
+	cs   []geocloud.Component
+	name string
 }
 
 var _ geocloud.Component = (*group)(nil)
@@ -24,7 +25,7 @@ func (g *group) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 		}
 	}
 
-	return <-ifrit.Invoke(grouper.NewOrdered(os.Interrupt, ms)).Wait()
+	return grouper.NewOrdered(os.Interrupt, ms).Run(signals, ready)
 }
 
 func (g *group) Execute(_ []string) error {
@@ -32,7 +33,7 @@ func (g *group) Execute(_ []string) error {
 }
 
 func (g *group) Name() string {
-	return "_group" // do not Group a group
+	return g.name
 }
 
 func (g *group) IsConfigured() bool {
@@ -44,8 +45,15 @@ func (g *group) IsConfigured() bool {
 	return true
 }
 
+
+// NamedGroup returns a geocloud.Component that is a group
+// of the components passed to it with the given name
+func NewNamedGroup(name string, cs ...geocloud.Component) geocloud.Component {
+	return &group{ cs: cs, name: name }
+}
+
 // Group returns a geocloud.Component that is a group
 // of the components passed to it
-func Group(cs ...geocloud.Component) geocloud.Component {
-	return &group{ cs: cs }
+func NewGroup(cs ...geocloud.Component) geocloud.Component {
+	return NewNamedGroup("__group", cs...) // do not group an unnamed group
 }
