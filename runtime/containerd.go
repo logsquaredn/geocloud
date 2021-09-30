@@ -1,15 +1,25 @@
 package runtime
 
 import (
+	"bytes"
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/remotes"
 	"github.com/jessevdk/go-flags"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/component"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/rs/zerolog/log"
 	"github.com/tedsuo/ifrit"
 )
 
@@ -26,7 +36,10 @@ type ContainerdRuntime struct {
 	ds geocloud.Datastore
 	os geocloud.Objectstore
 
-	workdir string
+	ctx 	 context.Context
+	workdir  string
+	client   *containerd.Client
+	resolver *remotes.Resolver
 }
 
 var _ geocloud.Runtime = (*ContainerdRuntime)(nil)
@@ -36,19 +49,22 @@ var toml []byte
 
 func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	var (
-		bin      = string(c.Bin)
-		address  = string(c.Address)
-		root     = string(c.Root)
-		state    = string(c.State)
-		config   = string(c.Config)
-		loglevel = c.Loglevel
+		bin       = string(c.Bin)
+		address   = string(c.Address)
+		root      = string(c.Root)
+		state     = string(c.State)
+		config    = string(c.Config)
+		loglevel  = c.Loglevel
+		namespace = c.Namespace
 	)
+
+	c.ctx = namespaces.WithNamespace(context.Background(), namespace)
 
 	if c.workdir == "" {
 		c.workdir = os.TempDir()
 	}
 
-	if err := os.MkdirAll(filepath.Dir(c.workdir), 0755); err != nil {
+	if err := os.MkdirAll(c.jobsdir(), 0755); err != nil {
 		return err
 	}
 
@@ -82,11 +98,30 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 		args = append(args, "--state="+state)
 	}
 
-	containerd := exec.Command(bin, args...)
-	containerd.Stdout = os.Stdout
-	containerd.Stderr = os.Stderr
+	cmd := exec.Command(bin, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	return component.NewCmdComponent(containerd).Run(signals, ready)
+	return component.NewNamedGroup(
+		c.Name(),
+		component.NewCmdComponent(cmd),
+		component.NewComponentFunc(
+			func(sgnls <-chan os.Signal, rdy chan<- struct{}) error {
+				var err error
+				c.client, err = containerd.New(
+					address,
+					containerd.WithDefaultNamespace(namespace),
+				)
+				if err != nil {
+					return err
+				}
+
+				close(rdy)
+				<-sgnls
+				return nil
+			},
+		),
+	).Run(signals, ready)
 }
 
 func (c *ContainerdRuntime) Execute(_ []string) error {
@@ -102,7 +137,148 @@ func (c *ContainerdRuntime) IsConfigured() bool {
 }
 
 func (c *ContainerdRuntime) Send(m geocloud.Message) error {
-	return fmt.Errorf("not implemented")
+	log.Info().Msgf("processing message %s", m.ID())
+
+	log.Trace().Msgf("getting job %s from datastore", m.ID())
+	j, err := c.ds.GetJob(m)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		j.EndTime = time.Now()
+		j.Err = err
+		if j.Err != nil && j.Err.Error() != "" {
+			j.Status = geocloud.Error
+		} else {
+			j.Status = geocloud.Complete
+			log.Info().Msgf("job %s finished with status %s", m.ID(), j.Status.Status())
+		}
+		c.ds.UpdateJob(j)
+	}()
+
+	log.Trace().Msgf("getting task for job %s from datastore", m.ID())
+	t, err := c.ds.GetTaskByJobID(m)
+	if err != nil {
+		return err
+	}
+
+	var (
+		image containerd.Image
+		imgrdy = make(chan error, 1)
+		volrdy = make(chan error, 1)
+	)
+	go func() {
+		log.Debug().Msgf("pulling image %s", t.Ref)
+		if image, err = c.pull(t.Ref); err != nil {
+			imgrdy<- err
+		} else {
+			close(imgrdy)
+		}
+	}()
+
+	log.Trace().Msg("creating input volume")
+	invol, err := c.involume(m)
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(c.jobdir(m))
+
+	log.Trace().Msgf("getting input for job %s", m.ID())
+	input, err := c.os.GetInput(m)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		log.Debug().Msgf("downloading input for job %s", m.ID())
+		if err = input.Download(invol.path); err != nil {
+			volrdy<- err
+		} else {
+			close(volrdy)
+		}
+	}()
+
+	log.Trace().Msg("creating output volume")
+	outvol, err := c.outvolume(m)
+	if err != nil {
+		return err
+	}
+
+	if err = <-imgrdy; err != nil {
+		return err
+	}
+	log.Debug().Msgf("finished pulling image %s", t.Ref)
+	if err = <-volrdy; err != nil {
+		return err
+	}
+	log.Debug().Msgf("finished downloading input for job %s", m.ID())
+
+	// TODO walk the invol looking for filename
+	// instead of assuming input.geojson and therefore output.geojson
+	// (assumed from github.com/logsquaredn/geocloud/api.bytesVolume)
+	//
+	// or pass task input and output dirs instead of files
+	args := append([]string { "/job/input/input.geojson", "/job/output/output.geojson" }, j.Args...)
+	mounts := []specs.Mount{
+		c.mount(invol.path, filepath.Dir(args[0]), "ro"),
+		c.mount(outvol.path, filepath.Dir(args[1]), "rw"),
+	}
+
+	var v, a string
+	for _, m := range mounts {
+		v += fmt.Sprintf(" -v %s:%s", m.Source, m.Destination)
+	}
+	for _, r := range args {
+		a += fmt.Sprintf(" %s", r)
+	}
+
+	log.Debug().Msgf("running%s %s%s", v, t.Ref, a)
+	container, err := c.run(m, image, args, mounts)
+	if err != nil {
+		return err
+	}
+	defer container.Delete(c.ctx, containerd.WithSnapshotCleanup)
+
+	log.Trace().Msg("creating task")
+	jobErr := []byte{}
+	stderr := bytes.NewBuffer(jobErr)
+	task, err := container.NewTask(c.ctx, cio.NewCreator(cio.WithStreams(os.Stdin, os.Stdout, stderr)))
+ 	if err != nil {
+ 		return err
+ 	}
+ 	defer task.Delete(c.ctx)
+
+	log.Trace().Msg("waiting on task to set up")
+	exitStatusC, err := task.Wait(c.ctx)
+ 	if err != nil {
+ 		return err
+ 	}
+
+	log.Trace().Msg("starting task")
+	if err := task.Start(c.ctx); err != nil {
+		return err
+	}
+
+	log.Trace().Msg("waiting on task to complete")
+	exitStatus := <-exitStatusC
+ 	if exitCode, _, err := exitStatus.Result(); err != nil {
+ 		return err
+ 	} else if exitCode != 0 {
+		err = fmt.Errorf("job exited with code %d", exitCode)
+		return err
+	}
+
+	log.Debug().Msg("uploading output")
+	if err = c.os.PutOutput(m, outvol); err != nil {
+		return err
+	}
+
+	if len(jobErr) > 0 {
+		err = fmt.Errorf("%s", jobErr)
+	}
+
+	return err
 }
 
 func (c *ContainerdRuntime) WithMessageRecipient(_ geocloud.Runtime) geocloud.Runtime {
@@ -118,4 +294,63 @@ func (c *ContainerdRuntime) WithDatastore(ds geocloud.Datastore) geocloud.Runtim
 func (c *ContainerdRuntime) WithObjectstore(os geocloud.Objectstore) geocloud.Runtime {
 	c.os = os
 	return c
+}
+
+func (c *ContainerdRuntime) WithResolver(r *remotes.Resolver) *ContainerdRuntime {
+	c.resolver = r
+	return c
+}
+
+func (c *ContainerdRuntime) WithWorkdir(w string) geocloud.Runtime {
+	c.workdir = w
+	return c
+}
+
+func (c *ContainerdRuntime) pull(ref string) (containerd.Image, error) {
+	return c.client.Pull(
+		c.ctx, ref,
+		containerd.WithPullUnpack,
+		containerd.WithResolver(*c.resolver),
+	)
+}
+
+func volume(path string) (*dirVolume, error) {
+	return &dirVolume{ path: path }, os.MkdirAll(path, 0755)
+}
+
+
+func (c *ContainerdRuntime) involume(m geocloud.Message) (*dirVolume, error) {
+	return volume(filepath.Join(c.jobdir(m), "input"))
+}
+
+func (c *ContainerdRuntime) outvolume(m geocloud.Message) (*dirVolume, error) {
+	return volume(filepath.Join(c.jobdir(m), "output"))
+}
+
+func (c *ContainerdRuntime) jobdir(m geocloud.Message) string {
+	return filepath.Join(c.jobsdir(), m.ID())
+}
+
+func (c *ContainerdRuntime) jobsdir() string {
+	return filepath.Join(c.workdir, "jobs")
+}
+
+func (c *ContainerdRuntime) mount(src, dst string, opts ...string) specs.Mount {
+	return specs.Mount{
+		Source: src,
+		Destination: dst,
+		Type: "bind",
+		Options: append([]string{ "bind" }, opts...),
+	}
+}
+
+func (c *ContainerdRuntime) run(m geocloud.Message, image containerd.Image, args []string, mounts []specs.Mount) (containerd.Container, error) {
+	return c.client.NewContainer(
+		c.ctx, m.ID(),
+		containerd.WithNewSnapshot(m.ID(), image),
+		containerd.WithNewSpec(
+			oci.WithImageConfigArgs(image, args), 
+			oci.WithMounts(mounts),
+		),
+	)
 }

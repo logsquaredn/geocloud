@@ -121,6 +121,7 @@ type File interface {
 	// Name returns the path to the file relative to the
 	// File's Volume
 	Name() string
+	Size() int
 }
 
 // WalkVolFunc ...
@@ -239,8 +240,8 @@ type API interface {
 	Component
 
 	// Create(TaskType, []string) (Job, error)
-	// Status() (Job, error)
-	// Result() (map[string]string, error)
+	// Status(Message) (Job, error)
+	// Result(Message) (map[string]string, error)
 
 	WithDatastore(Datastore) API
 	WithObjectstore(Objectstore) API
@@ -263,4 +264,5 @@ type Runtime interface {
 
 	WithDatastore(Datastore) Runtime
 	WithObjectstore(Objectstore) Runtime
+	WithWorkdir(string) Runtime
 }

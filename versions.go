@@ -26,7 +26,7 @@ var (
 
 // V prints the version of geocloud embedded within the binary at linking time and exits
 func V() {
-	v := fmt.Sprintf("%s %s %s", Name, Version, GoVersion)
+	v := fmt.Sprintf("%s%s %s", Name, Version, GoVersion)
 	if Revision != "" {
 		v = fmt.Sprintf("%s %s", v, Revision)
 	}

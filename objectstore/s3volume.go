@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,6 +33,10 @@ func (f *s3File) Read(p []byte) (int, error) {
 	return int(n), err
 }
 
+func (f *s3File) Size() int {
+	return int(*f.obj.Size)
+} 
+
 type s3Volume struct {
 	objs   []*s3.Object
 	bucket string
@@ -58,7 +63,7 @@ func (v *s3Volume) Walk(fn geocloud.WalkVolFunc) (err error) {
 func (v *s3Volume) Download(path string) error {
 	objs := make([]s3manager.BatchDownloadObject, len(v.objs))
 	for i, obj := range v.objs {
-		name := strings.TrimPrefix(*obj.Key, v.prefix)
+		name := filepath.Join(path, strings.TrimPrefix(*obj.Key, v.prefix))
 		w, err := os.Create(name)
 		if err != nil {
 			return err
