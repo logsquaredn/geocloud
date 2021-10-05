@@ -215,7 +215,10 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	log.Debug().Msgf("finished downloading input for job %s", m.ID())
 
 	var filename string
-	invol.Walk(func(_ string, f geocloud.File, _ error) error {
+	invol.Walk(func(_ string, f geocloud.File, e error) error {
+		if e != nil {
+			return e
+		}
 		filename = f.Name()
 		return fmt.Errorf("found")
 	})
