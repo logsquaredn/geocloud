@@ -299,6 +299,7 @@ func (p *PostgresDatastore) close() error {
 	defer p.stmt.updateJob.Close()
 	defer p.stmt.getJobByID.Close()
 	defer p.stmt.getTaskByJobID.Close()
+	defer p.stmt.getTaskByType.Close()
 	defer p.stmt.getTasksByTypes.Close()
 	return p.db.Close()
 }
