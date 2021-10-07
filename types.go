@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/jessevdk/go-flags"
 	"github.com/tedsuo/ifrit"
 )
@@ -36,14 +36,14 @@ type Component interface {
 }
 
 // AWSComponent is a Component that takes advantage of an
-// *github.com/aws/aws-sdk-go/aws/session.Session
-// so that such a Session can be shared by multiple AWSComponents
+// *github.com/aws/aws-sdk-go/aws.Config
+// so that such a Config can be shared by multiple AWSComponents
 type AWSComponent interface {
 	Component
 
-	// WithSession sets the AWSComponents' Session to the provided Session
-	// and returns the Component for chaining
-	WithSession(*session.Session) Component
+	// WithConfig sets the AWSComponents' Config to the provided Config
+	// and returns the AWSComponent for chaining
+	WithConfig(*aws.Config) AWSComponent
 }
 
 // Message is the primary object that is passed between geocloud Components

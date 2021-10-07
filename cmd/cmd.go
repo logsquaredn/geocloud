@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/jessevdk/go-flags"
@@ -52,7 +51,7 @@ type AWSGroup struct {
 	SharedCreds     flags.Filename `long:"shared-credentials-file" default:"~/.aws/credentials" description:"Path to AWS shared credentials file"`
 }
 
-func (a *AWSGroup) Session() (*session.Session, error) {
+func (a *AWSGroup) Config() (*aws.Config, error) {
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.StaticProvider{
@@ -68,8 +67,7 @@ func (a *AWSGroup) Session() (*session.Session, error) {
 			},
 		},
 	)
-	cfg := aws.NewConfig().WithRegion(a.Region).WithCredentials(creds)
-	return session.NewSession(cfg)
+	return aws.NewConfig().WithRegion(a.Region).WithCredentials(creds), nil
 }
 
 type RegistryGroup struct {
@@ -117,20 +115,15 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 		return fmt.Errorf("no datastore configured")
 	}
 	
-	// TODO handle this potential error
-	// We don't want to crash necessarily as we may utilize only
-	// non-AWS components
-	sess, _ := GeocloudCmd.AWSGroup.Session()
+	cfg, _ := GeocloudCmd.AWSGroup.Config()
 	a.SQSMessageQueue = &messagequeue.SQSMessageQueue{}
-	a.SQSMessageQueue.WithSession(sess)
-	mq := a.SQSMessageQueue.WithDatastore(ds)
-	if !mq.IsConfigured() {
+	mq, ok := a.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
+	if !ok || !mq.WithDatastore(ds).IsConfigured() {
 		return fmt.Errorf("no messagequeue configured")
 	}
 
-	a.S3Objectstore.WithSession(sess)
-	os := a.S3Objectstore
-	if !os.IsConfigured() {
+	os, ok := a.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
+	if !ok || !os.IsConfigured() {
 		return fmt.Errorf("no objectstore configured")
 	}
 
@@ -189,13 +182,9 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		return fmt.Errorf("no datastore configured")
 	}
 
-	// TODO handle this potential error
-	// We don't want to crash necessarily as we may utilize only
-	// non-AWS components
-	sess, _ := GeocloudCmd.AWSGroup.Session()
-	w.S3Objectstore.WithSession(sess)
-	os := w.S3Objectstore
-	if !os.IsConfigured() {
+	cfg, _ := GeocloudCmd.AWSGroup.Config()
+	os, ok := w.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
+	if !ok || !os.IsConfigured() {
 		return fmt.Errorf("no objectstore configured")
 	}
 
@@ -213,9 +202,9 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		}
 	}
 
-	w.SQSMessageQueue.WithSession(sess)
-	mq := w.SQSMessageQueue.WithMessageRecipient(rt).WithDatastore(ds).WithTasks(tasks...)
-	if !mq.IsConfigured() {
+	
+	mq, ok := w.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
+	if !ok || !mq.WithMessageRecipient(rt).WithDatastore(ds).WithTasks(tasks...).IsConfigured() {
 		return fmt.Errorf("no message queue configured")
 	}
 

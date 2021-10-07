@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/logsquaredn/geocloud"
@@ -16,7 +17,7 @@ type SQSMessageQueue struct {
 	VisibilityTimeout time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
 	QueueNames        []string      `long:"queue-name" description:"SQS queue name"`
 
-	sess  *session.Session
+	cfg   *aws.Config
 	svc   *sqs.SQS
 	rt    geocloud.Runtime
 	ds    geocloud.Datastore
@@ -46,7 +47,11 @@ func init() {
 }
 
 func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	q.svc = sqs.New(q.sess)
+	sess, err := session.NewSession(q.cfg)
+	if err != nil {
+		return err
+	}
+	q.svc = sqs.New(sess)
 
 	wait := make(chan error, 1)
 	if len(q.tasks) > 0 && q.ds.IsConfigured() {
@@ -207,7 +212,7 @@ func (q *SQSMessageQueue) Name() string {
 }
 
 func (q *SQSMessageQueue) IsConfigured() bool {
-	return q != nil && q.sess != nil && q.ds.IsConfigured()
+	return q != nil && q.cfg != nil && q.ds.IsConfigured()
 }
 
 func (q *SQSMessageQueue) Send(m geocloud.Message) error {
@@ -246,8 +251,8 @@ func (q *SQSMessageQueue) WithTasks(ts ...geocloud.TaskType) geocloud.MessageQue
 	return q
 }
 
-func (q *SQSMessageQueue) WithSession(sess *session.Session) geocloud.Component {
-	q.sess = sess
+func (q *SQSMessageQueue) WithConfig(cfg *aws.Config) geocloud.AWSComponent {
+	q.cfg = cfg
 	return q
 }
 
