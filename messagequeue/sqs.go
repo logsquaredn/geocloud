@@ -115,9 +115,10 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 				done := make(chan struct{}, 1)
 				go func() {
 					for _, msg := range messages {
-						err = q.rt.Send(&message{ id: *msg.Body })
+						k, v := "id", *msg.Body
+						err = q.rt.Send(&message{ id: v })
 						if err != nil {
-							log.Err(err).Msgf("runtime failed to process message %s", *msg.Body)
+							log.Err(err).Str(k, v).Msgf("runtime failed to process message")
 						} else {
 							entriesDel = append(entriesDel, &sqs.DeleteMessageBatchRequestEntry{
 								Id:            msg.MessageId,
