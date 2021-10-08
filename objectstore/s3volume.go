@@ -21,7 +21,9 @@ type s3File struct {
 var _ geocloud.File = (*s3File)(nil)
 
 func (f *s3File) Name() string {
-	return strings.TrimPrefix(*f.obj.Key, f.prefix)
+	// prefix/s3/key -> s3/key
+	name, _ := filepath.Rel(f.prefix, *f.obj.Key)
+	return name
 }
 
 func (f *s3File) Read(p []byte) (int, error) {

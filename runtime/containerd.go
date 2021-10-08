@@ -68,7 +68,7 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return err
 	}
 
-	if _, err := os.Stat(config); err != nil {
+	if _, err := os.Stat(config); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(config), 0755); err != nil {
 			return err
 		}
@@ -137,9 +137,10 @@ func (c *ContainerdRuntime) IsConfigured() bool {
 }
 
 func (c *ContainerdRuntime) Send(m geocloud.Message) error {
-	log.Info().Msgf("processing message %s", m.ID())
+	f := map[string]string{ "id": m.ID() }
+	log.Info().Fields(f).Msgf("processing message")
 
-	log.Trace().Msgf("getting job %s from datastore", m.ID())
+	log.Trace().Fields(f).Msgf("getting job from datastore")
 	j, err := c.ds.GetJob(m)
 	if err != nil {
 		return err
@@ -152,12 +153,19 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 			j.Status = geocloud.Error
 		} else {
 			j.Status = geocloud.Complete
-			log.Info().Msgf("job %s finished with status %s", m.ID(), j.Status.Status())
 		}
+		log.Info().Fields(f).Msgf("job finished with status %s", j.Status.Status())
 		c.ds.UpdateJob(j)
 	}()
 
-	log.Trace().Msgf("getting task for job %s from datastore", m.ID())
+	j.Status = geocloud.InProgress
+	log.Trace().Fields(f).Msgf("settings job to %s", j.Status.Status())
+	j, err = c.ds.UpdateJob(j)
+	if err != nil {
+		return err
+	}
+
+	log.Trace().Fields(f).Msgf("getting task for job from datastore")
 	t, err := c.ds.GetTaskByJobID(m)
 	if err != nil {
 		return err
@@ -169,7 +177,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		volrdy = make(chan error, 1)
 	)
 	go func() {
-		log.Debug().Msgf("pulling image %s", t.Ref)
+		log.Debug().Fields(f).Msgf("pulling image %s", t.Ref)
 		if image, err = c.pull(t.Ref); err != nil {
 			imgrdy<- err
 		} else {
@@ -177,21 +185,21 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		}
 	}()
 
-	log.Trace().Msg("creating input volume")
+	log.Trace().Fields(f).Msg("creating input volume")
 	invol, err := c.involume(m)
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(c.jobdir(m))
 
-	log.Trace().Msgf("getting input for job %s", m.ID())
+	log.Trace().Fields(f).Msgf("getting input")
 	input, err := c.os.GetInput(m)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		log.Debug().Msgf("downloading input for job %s", m.ID())
+		log.Debug().Fields(f).Msgf("downloading input")
 		if err = input.Download(invol.path); err != nil {
 			volrdy<- err
 		} else {
@@ -199,7 +207,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		}
 	}()
 
-	log.Trace().Msg("creating output volume")
+	log.Trace().Fields(f).Msg("creating output volume")
 	outvol, err := c.outvolume(m)
 	if err != nil {
 		return err
@@ -208,11 +216,11 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	if err = <-imgrdy; err != nil {
 		return err
 	}
-	log.Debug().Msgf("finished pulling image %s", t.Ref)
+	log.Debug().Fields(f).Msgf("finished pulling image %s", t.Ref)
 	if err = <-volrdy; err != nil {
 		return err
 	}
-	log.Debug().Msgf("finished downloading input for job %s", m.ID())
+	log.Debug().Fields(f).Msgf("finished downloading input")
 
 	var filename string
 	invol.Walk(func(_ string, f geocloud.File, e error) error {
@@ -220,10 +228,14 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 			return e
 		}
 		filename = f.Name()
-		return fmt.Errorf("found")
+		return fmt.Errorf("found") // we only expect 1 input, so use the first one we find
 	})
 
-	args := append([]string { fmt.Sprintf("/job/input/%s", filename), "/job/output" }, j.Args...)
+	if filename == "" {
+		return fmt.Errorf("no input found")
+	}
+
+	args := append([]string { filepath.Join("/job/input", filename), "/job/output" }, j.Args...)
 	mounts := []specs.Mount{
 		c.mount(invol.path, filepath.Dir(args[0]), "ro"),
 		c.mount(outvol.path, args[1], "rw"),
@@ -237,14 +249,14 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		a += fmt.Sprintf(" %s", r)
 	}
 
-	log.Info().Msgf("running%s %s%s", v, t.Ref, a)
+	log.Info().Fields(f).Msgf("running%s %s%s", v, t.Ref, a)
 	container, err := c.run(m, image, args, mounts)
 	if err != nil {
 		return err
 	}
 	defer container.Delete(c.ctx, containerd.WithSnapshotCleanup)
 
-	log.Trace().Msg("creating task")
+	log.Trace().Fields(f).Msg("creating task")
 	jobErr := []byte{}
 	stderr := bytes.NewBuffer(jobErr)
 	task, err := container.NewTask(c.ctx, cio.NewCreator(cio.WithStreams(os.Stdin, os.Stdout, stderr)))
@@ -253,18 +265,18 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
  	}
  	defer task.Delete(c.ctx)
 
-	log.Trace().Msg("waiting on task to set up")
+	log.Trace().Fields(f).Msg("waiting on task to set up")
 	exitStatusC, err := task.Wait(c.ctx)
  	if err != nil {
  		return err
  	}
 
-	log.Trace().Msg("starting task")
+	log.Trace().Fields(f).Msg("starting task")
 	if err := task.Start(c.ctx); err != nil {
 		return err
 	}
 
-	log.Trace().Msg("waiting on task to complete")
+	log.Trace().Fields(f).Msg("waiting on task to complete")
 	exitStatus := <-exitStatusC
  	if exitCode, _, err := exitStatus.Result(); err != nil {
  		return err
@@ -273,7 +285,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		return err
 	}
 
-	log.Debug().Msg("uploading output")
+	log.Debug().Fields(f).Msg("uploading output")
 	if err = c.os.PutOutput(m, outvol); err != nil {
 		return err
 	}

@@ -115,6 +115,10 @@ func (s *S3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 		return err
 	}
 
+	if len(objs) == 0 {
+		return fmt.Errorf("no inputs found")
+	}
+
 	return s.upldr.UploadWithIterator(aws.BackgroundContext(), &s3manager.UploadObjectsIterator{
 		Objects: objs,
 	})
@@ -135,6 +139,10 @@ func (s *S3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	if len(objs) == 0 {
+		return fmt.Errorf("no outputs found")
 	}
 
 	return s.upldr.UploadWithIterator(aws.BackgroundContext(), &s3manager.UploadObjectsIterator{
