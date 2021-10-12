@@ -5,20 +5,12 @@ services:
     build: .
     command: a --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style
     volumes: [~/.aws/:/root/.aws/:ro]
-    ports: [8080:8080]
     networks: [api]
-    depends_on: [postgres, migrate, minio]
+    ports: [8080:8080]
+    depends_on: [migrate, minio, postgres]
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-  postgres:
-    image: postgres:${POSTGRES_TAG:-alpine}
-    ports: [5432:5432]
-    networks: [api, migrate, worker]
-    environment:
-      POSTGRES_DB: geocloud
-      POSTGRES_USER: geocloud
-      POSTGRES_PASSWORD: pwd
   migrate:
     build: .
     command: m --postgres-host=postgres --postgres-password=pwd
@@ -26,13 +18,20 @@ services:
     depends_on: [postgres]
   minio:
     image: minio/minio:${MINIO_TAG:-latest}
-    entrypoint: sh
-    command: -c "mkdir -p /var/lib/minio/geocloud && docker-entrypoint.sh server /var/lib/minio --console-address :9001"
+    entrypoint: sh -c "mkdir -p /var/lib/minio/geocloud && docker-entrypoint.sh server /var/lib/minio"
     networks: [api, worker]
-    ports: [9000:9000, 9001:9001]
+    ports: [9000:9000]
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+  postgres:
+    image: postgres:${POSTGRES_TAG:-alpine}
+    networks: [api, migrate, worker]
+    ports: [5432:5432]
+    environment:
+      POSTGRES_DB: geocloud
+      POSTGRES_USER: geocloud
+      POSTGRES_PASSWORD: pwd
   worker:
     build: .
     privileged: true
