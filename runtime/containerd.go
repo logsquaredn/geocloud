@@ -240,10 +240,11 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		return fmt.Errorf("no input found")
 	}
 
-	args := append([]string { filepath.Join("/job/input", filename), "/job/output" }, j.Args...)
+	inmountdest, outmountdest := "/job/input", "/job/output"
+	args := append([]string { filepath.Join(inmountdest, filename), outmountdest }, j.Args...)
 	mounts := []specs.Mount{
-		c.mount(invol.path, filepath.Dir(args[0]), "ro"),
-		c.mount(outvol.path, args[1], "rw"),
+		c.mount(invol.path, inmountdest, "ro"),
+		c.mount(outvol.path, outmountdest, "rw"),
 	}
 
 	var f, a string
