@@ -4,14 +4,14 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 4) {
-		error("buffer requires three arguments. input file, output file, and a buffer distance", __FILE__, __LINE__);
+		error("buffer requires three arguments. input file, output directory, and a buffer distance", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
 	fprintf(stdout, "input file path: %s\n", inputFilePath);
 	
-	const char *outputFilePath = argv[2];
-	fprintf(stdout, "output file path: %s\n", outputFilePath);
+	const char *outputDir = argv[2];
+	fprintf(stdout, "output directory: %s\n", outputDir);
 
 	const char *bufferDistance = argv[3];
 	double bufferDistanceDouble = strtod(bufferDistance, NULL);
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputFilePath)) {
+	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
 		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();
 	}
@@ -66,6 +66,21 @@ int main(int argc, char *argv[]) {
 	}
 
 	GDALClose(gdalHandles.inputDataset);
+
+	if(zipShp(outputDir)) {
+		error("failed to zip up shp", __FILE__, __LINE__);
+		fatalError();
+	}
+
+	if(dumpToGeojson(outputDir)) {
+		error("failed to convert shp to geojson", __FILE__, __LINE__);
+		fatalError();
+	}
+
+	if(cleanup(outputDir)) {
+		error("failed to cleanup output", __FILE__, __LINE__);
+		fatalError();
+	}
 
 	fprintf(stdout, "buffer complete successfully\n");
 	return 0;

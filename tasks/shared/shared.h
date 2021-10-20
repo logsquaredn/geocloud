@@ -18,10 +18,12 @@ struct GDALHandles {
 
 void error(const char *message, const char *file, int line);
 void fatalError();
-int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputFilePath);
+int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
 // inputGeoFilePath needs free()'d
 int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath);
-int dumpToGeojson(struct GDALHandles *gdalHandles);
+int dumpToGeojson(const char *outputDir);
+int zipShp(const char *outputDir);
+int cleanup(const char *outputDir);
 
 #endif
