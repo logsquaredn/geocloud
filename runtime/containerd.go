@@ -214,15 +214,19 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	}
 	log.Debug().Msgf("finished downloading input for job %s", m.ID())
 
-	// TODO walk the invol looking for filename
-	// instead of assuming input.geojson and therefore output.geojson
-	// (assumed from github.com/logsquaredn/geocloud/api.bytesVolume)
-	//
-	// or pass task input and output dirs instead of files
-	args := append([]string { "/job/input/input.geojson", "/job/output/output.geojson" }, j.Args...)
+	var filename string
+	invol.Walk(func(_ string, f geocloud.File, e error) error {
+		if e != nil {
+			return e
+		}
+		filename = f.Name()
+		return fmt.Errorf("found")
+	})
+
+	args := append([]string { fmt.Sprintf("/job/input/%s", filename), "/job/output" }, j.Args...)
 	mounts := []specs.Mount{
 		c.mount(invol.path, filepath.Dir(args[0]), "ro"),
-		c.mount(outvol.path, filepath.Dir(args[1]), "rw"),
+		c.mount(outvol.path, args[1], "rw"),
 	}
 
 	var v, a string
@@ -233,7 +237,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 		a += fmt.Sprintf(" %s", r)
 	}
 
-	log.Debug().Msgf("running%s %s%s", v, t.Ref, a)
+	log.Info().Msgf("running%s %s%s", v, t.Ref, a)
 	container, err := c.run(m, image, args, mounts)
 	if err != nil {
 		return err
