@@ -4,14 +4,14 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 5) {
-		error("filter requires four arguments. Input file, output file, filter column, and filter value", __FILE__, __LINE__);
+		error("filter requires four arguments. Input file, output directory, filter column, and filter value", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
 	fprintf(stdout, "input file path: %s\n", inputFilePath);
 	
-	const char *outputFilePath = argv[2];
-	fprintf(stdout, "output file path: %s\n", outputFilePath);
+	const char *outputDir = argv[2];
+	fprintf(stdout, "output directory: %s\n", outputDir);
 
 	const char *filterColumn = argv[3];
 	fprintf(stdout, "filter column: %s\n", filterColumn);
@@ -19,12 +19,19 @@ int main(int argc, char *argv[]) {
 	const char *filterValue = argv[4];
 	fprintf(stdout, "filter value: %s\n", filterValue);
 
+	char *inputGeoFilePath;
+	if(getInputGeoFilePath(inputFilePath, &inputGeoFilePath)) {
+		error("failed to find input geo file path", __FILE__, __LINE__);
+	}
+	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputFilePath, outputFilePath)) {
+	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
 		error("failed to initialize", __FILE__, __LINE__);
 		fatalError();
 	}
+	free(inputGeoFilePath);
 	
 	if(gdalHandles.inputLayer != NULL) {	
         char attrFilterQuery[strlen(filterColumn) + strlen(filterValue) + 4];
@@ -60,6 +67,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	GDALClose(gdalHandles.inputDataset);
+
+
+	if(zipShp(outputDir)) {
+		error("failed to zip up shp", __FILE__, __LINE__);
+		fatalError();
+	}
+
+	if(dumpToGeojson(outputDir)) {
+		error("failed to convert shp to geojson", __FILE__, __LINE__);
+		fatalError();
+	}
+
+	if(cleanup(outputDir)) {
+		error("failed to cleanup output", __FILE__, __LINE__);
+		fatalError();
+	}
 
 	fprintf(stdout, "filter complete successfully\n");
 	return 0;
