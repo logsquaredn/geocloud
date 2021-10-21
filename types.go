@@ -88,7 +88,7 @@ func JobStatusFrom(jobStatus string) (JobStatus, error) {
 	case strings.EqualFold(Error.Status(), jobStatus):
 		return Error, nil
 	}
-	return 0, fmt.Errorf("unknown job status %s", jobStatus)
+	return -1, fmt.Errorf("unknown job status %s", jobStatus)
 }
 
 // String returns the string representation of a geocloud Job's status
@@ -185,7 +185,7 @@ func TaskTypeFrom(taskType string) (TaskType, error) {
 	case strings.EqualFold(Reproject.Name(), taskType):
 		return Reproject, nil
 	}
-	return 0, fmt.Errorf("unknown task type %s", taskType)
+	return -1, fmt.Errorf("unknown task type %s", taskType)
 }
 
 // Task ...

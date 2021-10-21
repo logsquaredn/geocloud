@@ -215,7 +215,7 @@ func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 		return j, err
 	}
 
-	return j, err
+	return j, nil
 }
 
 //go:embed psql/queries/get_task_by_job_id.sql
@@ -299,6 +299,7 @@ func (p *PostgresDatastore) close() error {
 	defer p.stmt.updateJob.Close()
 	defer p.stmt.getJobByID.Close()
 	defer p.stmt.getTaskByJobID.Close()
+	defer p.stmt.getTaskByType.Close()
 	defer p.stmt.getTasksByTypes.Close()
 	return p.db.Close()
 }
