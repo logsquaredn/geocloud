@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -42,7 +43,7 @@ func (g *Geocloud) SetLogLevel() error {
 	return err
 }
 
-var GeocloudCmd = &Geocloud{ Version: geocloud.V }
+var GeocloudCmd = &Geocloud{Version: geocloud.V}
 
 type AWSGroup struct {
 	AccessKeyID     string         `long:"access-key-id" env:"GEOCLOUD_ACCESS_KEY_ID" description:"AWS access key ID"`
@@ -50,6 +51,12 @@ type AWSGroup struct {
 	Region          string         `long:"region" default:"us-east-1" description:"AWS region"`
 	Profile         string         `long:"profile" default:"default" description:"AWS profile"`
 	SharedCreds     flags.Filename `long:"shared-credentials-file" default:"~/.aws/credentials" description:"Path to AWS shared credentials file"`
+}
+
+var home string
+
+func init() {
+	home = os.Getenv("HOME")
 }
 
 func (a *AWSGroup) Session() (*session.Session, error) {
@@ -63,7 +70,7 @@ func (a *AWSGroup) Session() (*session.Session, error) {
 			},
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{
-				Filename: string(a.SharedCreds),
+				Filename: strings.Replace(string(a.SharedCreds), "~", home, -1),
 				Profile:  a.Profile,
 			},
 		},
@@ -116,7 +123,7 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 	if !ds.IsConfigured() {
 		return fmt.Errorf("no datastore configured")
 	}
-	
+
 	// TODO handle this potential error
 	// We don't want to crash necessarily as we may utilize only
 	// non-AWS components

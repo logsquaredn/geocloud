@@ -36,7 +36,7 @@ type ContainerdRuntime struct {
 	ds geocloud.Datastore
 	os geocloud.Objectstore
 
-	ctx 	 context.Context
+	ctx      context.Context
 	workdir  string
 	client   *containerd.Client
 	resolver *remotes.Resolver
@@ -177,14 +177,14 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	}
 
 	var (
-		image containerd.Image
+		image  containerd.Image
 		imgrdy = make(chan error, 1)
 		volrdy = make(chan error, 1)
 	)
 	go func() {
 		log.Debug().Str(k, v).Msgf("pulling image %s", t.Ref)
 		if image, err = c.pull(t.Ref); err != nil {
-			imgrdy<- err
+			imgrdy <- err
 		} else {
 			close(imgrdy)
 		}
@@ -206,7 +206,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	go func() {
 		log.Debug().Str(k, v).Msg("downloading input")
 		if err = input.Download(invol.path); err != nil {
-			volrdy<- err
+			volrdy <- err
 		} else {
 			close(volrdy)
 		}
@@ -241,7 +241,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	}
 
 	inmountdest, outmountdest := "/job/input", "/job/output"
-	args := append([]string { filepath.Join(inmountdest, filename), outmountdest }, j.Args...)
+	args := append([]string{filepath.Join(inmountdest, filename), outmountdest}, j.Args...)
 	mounts := []specs.Mount{
 		c.mount(invol.path, inmountdest, "ro"),
 		c.mount(outvol.path, outmountdest, "rw"),
@@ -264,16 +264,16 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 
 	log.Trace().Str(k, v).Msg("creating task")
 	task, err := container.NewTask(c.ctx, cio.NewCreator(cio.WithStreams(os.Stdin, os.Stdout, stderr)))
- 	if err != nil {
- 		return err
- 	}
- 	defer task.Delete(c.ctx)
+	if err != nil {
+		return err
+	}
+	defer task.Delete(c.ctx)
 
 	log.Trace().Str(k, v).Msg("waiting on task to set up")
 	exitStatusC, err := task.Wait(c.ctx)
- 	if err != nil {
- 		return err
- 	}
+	if err != nil {
+		return err
+	}
 
 	log.Trace().Str(k, v).Msg("starting task")
 	if err := task.Start(c.ctx); err != nil {
@@ -282,9 +282,9 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 
 	log.Trace().Str(k, v).Msg("waiting on task to complete")
 	exitStatus := <-exitStatusC
- 	if exitCode, _, err := exitStatus.Result(); err != nil {
- 		return err
- 	} else if exitCode != 0 {
+	if exitCode, _, err := exitStatus.Result(); err != nil {
+		return err
+	} else if exitCode != 0 {
 		err = fmt.Errorf("job exited with code %d", exitCode)
 		return err
 	}
@@ -331,9 +331,8 @@ func (c *ContainerdRuntime) pull(ref string) (containerd.Image, error) {
 }
 
 func volume(path string) (*dirVolume, error) {
-	return &dirVolume{ path: path }, os.MkdirAll(path, 0755)
+	return &dirVolume{path: path}, os.MkdirAll(path, 0755)
 }
-
 
 func (c *ContainerdRuntime) involume(m geocloud.Message) (*dirVolume, error) {
 	return volume(filepath.Join(c.jobdir(m), "input"))
@@ -353,10 +352,10 @@ func (c *ContainerdRuntime) jobsdir() string {
 
 func (c *ContainerdRuntime) mount(src, dst string, opts ...string) specs.Mount {
 	return specs.Mount{
-		Source: src,
+		Source:      src,
 		Destination: dst,
-		Type: "bind",
-		Options: append([]string{ "bind" }, opts...),
+		Type:        "bind",
+		Options:     append([]string{"bind"}, opts...),
 	}
 }
 
@@ -365,7 +364,7 @@ func (c *ContainerdRuntime) run(m geocloud.Message, image containerd.Image, args
 		c.ctx, m.ID(),
 		containerd.WithNewSnapshot(m.ID(), image),
 		containerd.WithNewSpec(
-			oci.WithImageConfigArgs(image, args), 
+			oci.WithImageConfigArgs(image, args),
 			oci.WithMounts(mounts),
 		),
 	)

@@ -25,7 +25,7 @@ type PostgresDatastore struct {
 	Retries    int64         `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres. 0 is infinity"`
 	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
 
-	db *sql.DB
+	db   *sql.DB
 	stmt struct {
 		createJob       *sql.Stmt
 		updateJob       *sql.Stmt
@@ -41,7 +41,7 @@ var _ geocloud.Datastore = (*PostgresDatastore)(nil)
 func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	var (
 		err error
-		i int64 = 1
+		i   int64 = 1
 	)
 	for p.db, err = sql.Open("postgres", p.connectionString()); err != nil; i++ {
 		if i >= p.Retries && p.Retries > 0 {
@@ -97,7 +97,7 @@ var createJobSQL string
 
 func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
-		id = uuid.New().String()
+		id        = uuid.New().String()
 		jobErr    sql.NullString
 		jobStatus string
 		endTime   sql.NullTime
@@ -185,7 +185,7 @@ var getJobByIDSQL string
 
 func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	var (
-		j = &geocloud.Job{}
+		j         = &geocloud.Job{}
 		jobErr    sql.NullString
 		jobStatus string
 		endTime   sql.NullTime
@@ -223,7 +223,7 @@ var getTaskByJobIDSQL string
 
 func (p *PostgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 	var (
-		t = &geocloud.Task{}
+		t        = &geocloud.Task{}
 		taskType string
 	)
 
@@ -241,7 +241,7 @@ var getTaskByTypeSQL string
 
 func (p *PostgresDatastore) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	var (
-		t = &geocloud.Task{}
+		t        = &geocloud.Task{}
 		taskType string
 	)
 	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &t.QueueID, &t.Ref)
@@ -270,7 +270,7 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 
 	for rows.Next() {
 		var (
-			task = &geocloud.Task{}
+			task     = &geocloud.Task{}
 			taskType string
 		)
 

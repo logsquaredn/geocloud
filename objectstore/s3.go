@@ -72,7 +72,7 @@ func (s *S3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
 	}
 
 	return &s3Volume{
-		objs: o.Contents,
+		objs:   o.Contents,
 		bucket: s.Bucket,
 		prefix: prefix,
 		dwnldr: s.dwnldr,
@@ -92,7 +92,7 @@ func (s *S3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
 	}
 
 	return &s3Volume{
-		objs: o.Contents,
+		objs:   o.Contents,
 		bucket: s.Bucket,
 		prefix: prefix,
 		dwnldr: s.dwnldr,
@@ -106,8 +106,8 @@ func (s *S3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
 				Bucket: &s.Bucket,
-				Key: &key,
-				Body: f,
+				Key:    &key,
+				Body:   f,
 			},
 		})
 		return err
@@ -131,8 +131,8 @@ func (s *S3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
 				Bucket: &s.Bucket,
-				Key: &key,
-				Body: f,
+				Key:    &key,
+				Body:   f,
 			},
 		})
 		return err

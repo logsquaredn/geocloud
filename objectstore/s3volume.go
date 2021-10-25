@@ -30,14 +30,14 @@ func (f *s3File) Read(p []byte) (int, error) {
 	w := aws.NewWriteAtBuffer(p)
 	n, err := f.dwnldr.Download(w, &s3.GetObjectInput{
 		Bucket: &f.bucket,
-		Key: f.obj.Key,
+		Key:    f.obj.Key,
 	})
 	return int(n), err
 }
 
 func (f *s3File) Size() int {
 	return int(*f.obj.Size)
-} 
+}
 
 type s3Volume struct {
 	objs   []*s3.Object
@@ -51,7 +51,7 @@ var _ geocloud.Volume = (*s3Volume)(nil)
 func (v *s3Volume) Walk(fn geocloud.WalkVolFunc) (err error) {
 	for _, obj := range v.objs {
 		file := &s3File{
-			obj: obj,
+			obj:    obj,
 			bucket: v.bucket,
 			prefix: v.prefix,
 			dwnldr: v.dwnldr,
@@ -70,11 +70,11 @@ func (v *s3Volume) Download(path string) error {
 		if err != nil {
 			return err
 		}
-		
+
 		objs[i] = s3manager.BatchDownloadObject{
-			Object: &s3.GetObjectInput {
+			Object: &s3.GetObjectInput{
 				Bucket: &v.bucket,
-				Key: obj.Key,
+				Key:    obj.Key,
 			},
 			Writer: w,
 		}
