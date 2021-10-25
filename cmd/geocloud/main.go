@@ -14,7 +14,7 @@ import (
 
 func init() {
 	o := zerolog.ConsoleWriter{
-		Out: os.Stdout,
+		Out:        os.Stdout,
 		TimeFormat: time.RFC3339Nano,
 	}
 

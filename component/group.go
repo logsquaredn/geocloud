@@ -20,7 +20,7 @@ func (g *group) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	for i := range ms {
 		c := g.cs[i]
 		ms[i] = grouper.Member{
-			Name: c.Name(),
+			Name:   c.Name(),
 			Runner: c,
 		}
 	}
@@ -45,11 +45,10 @@ func (g *group) IsConfigured() bool {
 	return true
 }
 
-
 // NamedGroup returns a geocloud.Component that is a group
 // of the components passed to it with the given name
 func NewNamedGroup(name string, cs ...geocloud.Component) geocloud.Component {
-	return &group{ cs: cs, name: name }
+	return &group{cs: cs, name: name}
 }
 
 // Group returns a geocloud.Component that is a group

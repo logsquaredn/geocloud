@@ -1,4 +1,4 @@
-ARG base_image=ubuntu:bionic
+ARG base_image=ubuntu:focal
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
@@ -19,7 +19,7 @@ FROM base_image AS install
 COPY bin/ /usr/local/bin/
 
 FROM install AS containerd
-ARG containerd=https://github.com/containerd/containerd/releases/download/v1.5.5/containerd-1.5.5-linux-amd64.tar.gz
+ARG containerd=https://github.com/containerd/containerd/releases/download/v1.5.7/containerd-1.5.7-linux-amd64.tar.gz
 ADD ${containerd} /tmp/
 RUN if_tar_exists_xzf_rm_mv_assets /tmp/$(basename ${containerd})
 RUN rm /assets/bin/ctr

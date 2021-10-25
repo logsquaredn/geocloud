@@ -172,7 +172,6 @@ func (t TaskType) String() string {
 	return t.Type()
 }
 
-
 // TaskTypeFrom creates a TaskType from that TaskType's string representation
 func TaskTypeFrom(taskType string) (TaskType, error) {
 	switch {

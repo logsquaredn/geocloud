@@ -9,7 +9,7 @@ import (
 
 func NewNamedComponentFunc(name string, fn ifrit.RunFunc) geocloud.Component {
 	return &componentFunc{
-		fn: fn,
+		fn:   fn,
 		name: name,
 	}
 }
