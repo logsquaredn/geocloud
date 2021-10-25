@@ -36,7 +36,7 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	wait := make(chan error, 1)
 	go func() {
-		wait<- router.Run()
+		wait <- router.Run()
 	}()
 
 	close(ready)
@@ -129,7 +129,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 
 	job := &geocloud.Job{
 		TaskType: task.Type,
-		Args: buildJobArgs(ctx, task.Params),
+		Args:     buildJobArgs(ctx, task.Params),
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
@@ -139,7 +139,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 
 	vol := &bytesVolume{
 		reader: bytes.NewReader(jsonData),
-		name: "input.geojson",
+		name:   "input.geojson",
 	}
 	if err = a.os.PutInput(job, vol); err != nil {
 		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.ID())
@@ -167,7 +167,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 		return
 	}
 
-	m := &message{ id: id }
+	m := &message{id: id}
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/status got 0 results querying for id: %s", id)
@@ -195,7 +195,7 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return
 	}
 
-	m := &message{ id: id }
+	m := &message{id: id}
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/result got 0 results querying for id: %s", id)

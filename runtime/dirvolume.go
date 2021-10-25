@@ -52,7 +52,7 @@ func (v *dirVolume) Walk(fn geocloud.WalkVolFunc) error {
 		return fn(
 			v.path,
 			&dirFile{
-				file: file,
+				file:    file,
 				volPath: v.path,
 			},
 			err,
