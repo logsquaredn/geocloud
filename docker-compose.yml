@@ -18,9 +18,10 @@ services:
     depends_on: [postgres]
   minio:
     image: minio/minio:${MINIO_TAG:-latest}
-    entrypoint: sh -c "mkdir -p /var/lib/minio/geocloud && docker-entrypoint.sh server /var/lib/minio"
+    command: server /var/lib/minio --console-address ":9001"
+    volumes: [./dev/minio:/var/lib/minio]
     networks: [api, worker]
-    ports: [9000:9000]
+    ports: [9000:9000, 9001:9001]
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
@@ -36,7 +37,7 @@ services:
     build: .
     privileged: true
     command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style -t buffer -t filter -t removebadgeometry -t reproject
-    volumes: [~/.aws/:/root/.aws/:ro, workdir:/var/lib/geocloud/]
+    volumes: [~/.aws/:/root/.aws/:ro, ./dev/geocloud:/var/lib/geocloud/]
     networks: [worker]
     depends_on: [postgres, migrate, minio]
     environment:
@@ -50,6 +51,4 @@ networks:
   migrate:
   worker:
 
-volumes:
-  workdir:
-  # postgresql:
+volumes: {}
