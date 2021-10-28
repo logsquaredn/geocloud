@@ -35,6 +35,10 @@ RUN chmod +x /assets/runc
 
 FROM base_image AS geocloud
 ENV PATH=/usr/local/geocloud/bin:$PATH
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends ca-certificates
+RUN update-ca-certificates
+RUN apt-get remove -y ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=build /assets/ /usr/local/geocloud/bin/
 COPY --from=containerd /assets/bin/ /usr/local/geocloud/bin/
 COPY --from=pigz /assets/ /usr/local/geocloud/bin/
