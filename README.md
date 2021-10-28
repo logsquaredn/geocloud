@@ -37,10 +37,6 @@ docker-compose up --build api
 
 #### Worker
 
-> _when running the worker inside of a container, the_ `--containerd-root` _flag always falls back to_ `/var/lib/containerd` _as it is the only non-overlayfs volume in the container, making it the only volume in the container suitable to be containerd's root directory_
-
-> _when running the worker inside of a container,_ `*-ip` _flags always fall back to_ `0.0.0.0`
-
 ```sh
 # run the worker
 docker-compose up --build worker
