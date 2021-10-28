@@ -14,10 +14,13 @@ import (
 )
 
 type S3Objectstore struct {
-	Bucket string `long:"bucket" description:"S3 bucket"`
-	Prefix string `long:"prefix" default:"jobs" description:"Prefix to apply to keys"`
+	Bucket         string `long:"bucket" description:"S3 bucket"`
+	Prefix         string `long:"prefix" default:"jobs" description:"Prefix to apply to keys"`
+	Endpoint       string `long:"endpoint" description:"Endpoint to target"`
+	DisableSSL     bool   `long:"disable-ssl" description:"Disable SSL"`
+	ForcePathStyle bool   `long:"force-path-style" description:"Force S3 path style"`
 
-	sess   *session.Session
+	cfg    *aws.Config
 	svc    *s3.S3
 	upldr  *s3manager.Uploader
 	dwnldr *s3manager.Downloader
@@ -27,11 +30,19 @@ var _ geocloud.Objectstore = (*S3Objectstore)(nil)
 var _ geocloud.AWSComponent = (*S3Objectstore)(nil)
 
 func (s *S3Objectstore) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	s.svc = s3.New(s.sess)
-	s.upldr = s3manager.NewUploader(s.sess, func(u *s3manager.Uploader) {
+	cfg := aws.NewConfig().WithDisableSSL(s.DisableSSL).WithS3ForcePathStyle(s.ForcePathStyle)
+	if s.Endpoint != "" {
+		cfg.WithEndpoint(s.Endpoint)
+	}
+	sess, err := session.NewSession(s.cfg, cfg)
+	if err != nil {
+		return err
+	}
+	s.svc = s3.New(sess)
+	s.upldr = s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 		u.S3 = s.svc
 	})
-	s.dwnldr = s3manager.NewDownloader(s.sess, func(d *s3manager.Downloader) {
+	s.dwnldr = s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
 		d.S3 = s.svc
 	})
 
@@ -49,11 +60,11 @@ func (s *S3Objectstore) Name() string {
 }
 
 func (s *S3Objectstore) IsConfigured() bool {
-	return s != nil && s.sess != nil && s.Bucket != ""
+	return s != nil && s.cfg != nil && s.Bucket != ""
 }
 
-func (s *S3Objectstore) WithSession(sess *session.Session) geocloud.Component {
-	s.sess = sess
+func (s *S3Objectstore) WithConfig(cfg *aws.Config) geocloud.AWSComponent {
+	s.cfg = cfg
 	return s
 }
 
