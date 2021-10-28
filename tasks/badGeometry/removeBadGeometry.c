@@ -48,7 +48,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stdout, "no layers found in input file\n");
 	}
 
-	GDALClose(gdalHandles.inputDataset);
+	// TODO this seg faults on some geojson input
+	// GDALClose(gdalHandles.inputDataset);
 
 	if(zipShp(outputDir)) {
 		error("failed to zip up shp", __FILE__, __LINE__);

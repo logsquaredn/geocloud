@@ -182,7 +182,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 		OGRLayerH outputLayer = GDALDatasetCreateLayer(outputDataset, 
 													   OGR_L_GetName(inputLayer),  
 													   inputSpatialRef, 
-													   wkbPolygon, 
+													   wkbUnknown, 
 													   NULL);
 		if(outputLayer == NULL) {
 			error("failed to create output layer", __FILE__, __LINE__);
