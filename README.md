@@ -11,7 +11,6 @@
 * runc is *required* - version 1.0.0-rc9x is tested; earlier versions may also work
 * docker is recommended - version 20.10.x is tested; earlier versions may also work
 * docker-compose is recommended - version 1.29.x is tested; earlier versions may also work
-* ytt is recommended - version 0.34.x is tested; earlier versions may also work; docker can be used instead
 * terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
 * awscli is recommended - version 1.18.69 is tested; earlier versions may also work
 * go mod is used for dependency management of golang packages
@@ -20,9 +19,9 @@
 
 ### Running
 
-> `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY`
+> `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or an environment file_ `.env` _in the root of the repository_
 
-> _if you run into problems connecting to postgres or infrastructure, try running_ `docker-compose up -d postgres` _or_ `docker-compose up -d infrastructure` _respectively before executing the following commands_
+> _if you run into problems connecting to postgres, try running_ `docker-compose up -d postgres` _before executing the following commands_
 
 ```sh
 # run geocloud
@@ -66,23 +65,6 @@ terraform -chdir=infrastructure/tf/ apply
 docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY hashicorp/terraform -chdir=/src/infrastructure/ apply
 ```
 
-### CI
-
-#### Set Pipeline
-
-```sh
-# login and set pipeline from template
-fly -t geocloud login -c https://ci.logsquaredn.io --team-name geocloud
-ytt -f ci/pipeline | fly -t geocloud set-pipeline -p my-pipeline -c - -v branch=my-branch
-```
-
-> `k14s/image` _can be used in place of installing ytt on your machine to set a pipeline from a template_
-
-```sh
-# set pipeline from template using k14s/image
-docker run --rm -v `pwd`:/src/:ro k14s/image ytt -f /src/ci/pipeline | fly -t geocloud set-pipeline -p my-pipeline -c - -v branch=my-branch
-```
-
 ### Migrations
 
 #### Create Migration
@@ -101,4 +83,14 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 ```sh
 # run the migrations
 geocloud migrate
+```
+
+### Tasks
+
+#### Build Tasks
+
+```sh
+cd tasks/
+docker-compose build
+docker-compose push
 ```
