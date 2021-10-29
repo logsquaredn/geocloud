@@ -5,7 +5,7 @@ FROM ${base_image} AS base_image
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
-WORKDIR /src/
+WORKDIR $GOPATH/src/github.com/logsquaredn/geocloud
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
@@ -26,8 +26,7 @@ RUN rm /assets/bin/ctr
 
 FROM install AS pigz
 ARG pigz=assets/pigz_2.4_x86_64.tgz
-ADD ${pigz} /tmp/
-RUN if_tar_exists_xzf_rm_mv_assets /tmp/$(basename ${pigz})
+ADD ${pigz} /assets/
 
 FROM install AS runc
 ARG runc=https://github.com/opencontainers/runc/releases/download/v1.0.2/runc.amd64
@@ -36,7 +35,8 @@ RUN chmod +x /assets/runc
 
 FROM base_image AS geocloud
 ENV PATH=/usr/local/geocloud/bin:$PATH
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends ca-certificates
 RUN update-ca-certificates
 RUN apt-get remove -y ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=build /assets/ /usr/local/geocloud/bin/
