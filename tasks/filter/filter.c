@@ -19,8 +19,8 @@ int main(int argc, char *argv[]) {
 	const char *filterValue = argv[4];
 	fprintf(stdout, "filter value: %s\n", filterValue);
 
-	char *inputGeoFilePath;
-	if(getInputGeoFilePath(inputFilePath, &inputGeoFilePath)) {
+	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
+	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
