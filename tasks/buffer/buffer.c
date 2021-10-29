@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 	
-	char *inputGeoFilePath;
-	if(getInputGeoFilePath(inputFilePath, &inputGeoFilePath)) {
+	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
+	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
