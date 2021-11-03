@@ -32,6 +32,8 @@ int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geom
     }    
 
     OGR_F_Destroy(outputFeature);
+
+    return 0;
 }
 
 int createOutputFields(OGRLayerH inLayer, OGRLayerH *outLayer, OGRFeatureDefnH outFeatureDefn) {
@@ -84,18 +86,6 @@ int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *f
     return 0;
 }
 
-// const char *getDriverName(const char *filePath) {
-//     char *driverName;
-// 	const char *ext = strrchr(filePath, '.');
-// 	if(ext != NULL && !strcmp(ext, ".shp")) {
-// 		driverName = "ESRI Shapefile";
-// 	} else {
-// 		driverName = "GeoJSON";
-// 	}
-
-//     return driverName;
-// }
-
 int getShpDriver(GDALDriverH **driver) {
     *driver = (GDALDriverH*) GDALGetDriverByName("ESRI Shapefile");
     if(*driver == NULL) {
@@ -105,17 +95,6 @@ int getShpDriver(GDALDriverH **driver) {
 
     return 0;
 }
-
-int getGeojsonDriver(GDALDriverH **driver) {
-    *driver = (GDALDriverH*) GDALGetDriverByName("GeoJSON");
-    if(*driver == NULL) {
-        error("failed to get geojson driver", __FILE__, __LINE__);
-        return 1;
-    }
-
-    return 0;
-}
-
 
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
@@ -131,19 +110,21 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     return 0;
 }
 
-int getOutputFilePath(char **outputFilePath, const char *outputDir) {
-    char *tmpOutputFilePath = (char*) malloc(256);
-    snprintf(tmpOutputFilePath, 256, "%s/output.shp", outputDir);
+char *getOutputFilePath(const char *outputDir) {
+    int size = 0;
+    while(outputDir[size] != '\0') ++size;
+    char filename[11] = "/output.shp";
+    size += strlen(filename);
+    char *outputFilePath = (char*) malloc(size + 1);
+    snprintf(outputFilePath, size + 1, "%s%s", outputDir, filename);
 
-    *outputFilePath = tmpOutputFilePath;
-    return 0;
+    return outputFilePath;
 }
 
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir) {
     GDALAllRegister();
 
-    char *outputFilePath; 
-    getOutputFilePath(&outputFilePath, outputDir);
+    char *outputFilePath = getOutputFilePath(outputDir);
     fprintf(stdout, "output file path: %s\n", outputFilePath);
 
 	GDALDatasetH inputDataset;
@@ -201,22 +182,6 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
     return 0;
 }
 
-int unzip(const char *inputFilePath, char **unzipDir) {
-    char *dupInputFilePath = strdup(inputFilePath);
-    *unzipDir = dirname(dupInputFilePath);
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", inputFilePath, " -d ", *unzipDir);    
-
-    int unzipResult = system(cmd);
-    if(unzipResult != 0) {
-        error("failed to unzip input file", __FILE__, __LINE__);
-        return 1;
-    }
-
-    free(dupInputFilePath);
-    return 0;
-}
-
 
 int isExt(const char *filename, const char *suffix) {
     size_t filenameLength = strlen(filename);
@@ -225,7 +190,8 @@ int isExt(const char *filename, const char *suffix) {
     return strncmp(filename + filenameLength - suffixLength, suffix, suffixLength) == 0;
 }
 
-int getShpFilePath(const char *unzipDir, char **shpFilePath) {
+char *getShpFilePath(const char *unzipDir) {
+    char *shpFilePath;
     DIR *d = opendir(unzipDir);
     struct dirent *dir;
     if(d) {
@@ -233,50 +199,76 @@ int getShpFilePath(const char *unzipDir, char **shpFilePath) {
         while((dir = readdir(d)) != NULL) {
             if(isExt(dir->d_name, ".shp")) {
                 shpFileFound = 1;
-                char *tmpShpFilePath = (char*) malloc(256);
-                snprintf(tmpShpFilePath, 256, "%s/%s", unzipDir, dir->d_name);
-                *shpFilePath = tmpShpFilePath;
+                int size = 0;
+                while(unzipDir[size] != '\0') ++size;
+                size += strlen(dir->d_name);
+                shpFilePath = (char*) malloc(size + 2);
+                snprintf(shpFilePath, size + 2, "%s/%s", unzipDir, dir->d_name);
                 break;
             }
         }
 
         if(!shpFileFound) {
             error("shp file not found in input", __FILE__, __LINE__);
-            return 1;
+            return NULL;
         }
         closedir(d);
     } else {
         error("unable to open unzip directory", __FILE__, __LINE__);
-        return 1;
+        return NULL;
     }
 
-    return 0;
+    return shpFilePath;
 }
 
-int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath) {
-    char *ext = strrchr(inputFilePath, '.');
-    if(ext && !strcmp(ext, ".geojson")) {
-        *inputGeoFilePath = strdup(inputFilePath);
-    } else if(ext && !strcmp(ext, ".zip")) {
-        char *unzipDir;
-        int unzipResult = unzip(inputFilePath, &unzipDir);
-        if(unzipResult != 0) {
-            error("failed to unzip input file", __FILE__, __LINE__);
-            return 1;
-        }
-
-        char *shpFilePath;
-        if(getShpFilePath(unzipDir, &shpFilePath)) {
-            error("failed to get shp file path", __FILE__, __LINE__);
-            return 1;
-        }
-        *inputGeoFilePath = shpFilePath;
-    } else {
-        error("unrecognized input file", __FILE__, __LINE__);
-        return 1;
+char *unzip(const char *inputFilePath) {
+    char *dupInputFilePath = strdup(inputFilePath);
+    if(dupInputFilePath == NULL) {
+        error("failed to dup input file path", __FILE__, __LINE__);
+        return NULL;
     }
 
-    return 0;
+    char* unzipDir = dirname(dupInputFilePath);
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", inputFilePath, " -d ", unzipDir);    
+
+    int unzipResult = system(cmd);
+    if(unzipResult != 0) {
+        error("failed to unzip input file", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    return unzipDir;
+}
+
+char *getInputGeoFilePath(const char *inputFilePath) {
+    char *inputGeoFilePath;
+    char *ext = strrchr(inputFilePath, '.');
+    if(ext && !strcmp(ext, ".geojson")) {
+        inputGeoFilePath = strdup(inputFilePath);
+        if(inputGeoFilePath == NULL) {
+            return NULL;
+        }
+    } else if(ext && !strcmp(ext, ".zip")) {
+        char *unzipDir = unzip(inputFilePath);
+        if(unzipDir == 0) {
+            error("failed to unzip input file", __FILE__, __LINE__);
+            return NULL;
+        }
+
+        inputGeoFilePath = getShpFilePath(unzipDir);
+        if(inputGeoFilePath == NULL) {
+            error("failed to get shp file path", __FILE__, __LINE__);
+            return NULL;
+        }
+
+        free(unzipDir);
+    } else {
+        error("unrecognized input file", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    return inputGeoFilePath;
 }
 
 int zipShp(const char *outputDir) {
@@ -311,8 +303,11 @@ int cleanup(const char *outputDir) {
     if(d) {
         while((dir = readdir(d)) != NULL) {
             if(!isExt(dir->d_name, ".zip") && !isExt(dir->d_name, ".geojson")) {
-                char absolutePath[256];
-                snprintf(absolutePath, sizeof(absolutePath), "%s/%s", outputDir, dir->d_name);
+                int size = 0;
+                while(outputDir[size] != '\0') ++size;
+                size += strlen(dir->d_name);
+                char absolutePath[size + 2];
+                snprintf(absolutePath, size + 2, "%s/%s", outputDir, dir->d_name);
                 
                 struct stat path_stat;
                 stat(absolutePath, &path_stat);

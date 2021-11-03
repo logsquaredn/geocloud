@@ -21,7 +21,7 @@ void fatalError();
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
 // inputGeoFilePath needs free()'d
-int getInputGeoFilePath(const char *inputFilePath, char **inputGeoFilePath);
+char *getInputGeoFilePath(const char *inputFilePath);
 int dumpToGeojson(const char *outputDir);
 int zipShp(const char *outputDir);
 int cleanup(const char *outputDir);
