@@ -7,7 +7,7 @@ INSERT INTO task (
     task_ref
 ) VALUES (
     'buffer',
-    ARRAY['distance'],
+    ARRAY['distance', 'quadSegCount'],
     'logsquaredn-geocloud-1',
     'registry-1.docker.io/logsquaredn/geocloud:task-buffer'
 ) ON CONFLICT DO NOTHING;
