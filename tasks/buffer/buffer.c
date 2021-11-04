@@ -3,8 +3,8 @@
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
-	if(argc != 4) {
-		error("buffer requires three arguments. input file, output directory, and a buffer distance", __FILE__, __LINE__);
+	if(argc != 5) {
+		error("buffer requires three arguments. input file, output directory, buffer distance, and quadrant segment count", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
@@ -19,6 +19,12 @@ int main(int argc, char *argv[]) {
 		error("buffer distance must be a valid double greater than 0", __FILE__, __LINE__);
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
+
+	const char *quadSegCount = argv[4];
+	int quadSegCountInt = atoi(quadSegCount);
+	if(quadSegCountInt == 0) {
+		error("quadrant segment count must be a valid integer greater than 0", __FILE__, __LINE__);
+	}
 	
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
@@ -43,7 +49,7 @@ int main(int argc, char *argv[]) {
 				fatalError();	
 			}
 
-			OGRGeometryH bufferedGeometry = OGR_G_Buffer(inputGeometry, bufferDistanceDouble, 50);
+			OGRGeometryH bufferedGeometry = OGR_G_Buffer(inputGeometry, bufferDistanceDouble, quadSegCountInt);
 			if(bufferedGeometry == NULL) {
 				error("failed to buffer input geometry", __FILE__, __LINE__);
 				fatalError();
