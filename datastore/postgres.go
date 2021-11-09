@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
+	// postgres must be imported to inject the postgres driver
+	// into the database/sql module
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"

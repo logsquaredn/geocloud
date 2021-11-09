@@ -147,7 +147,7 @@ const (
 	Reproject
 )
 
-// Name returns the string representation of a geocloud Task's type
+// Type returns the string representation of a geocloud Task's type
 func (t TaskType) Type() string {
 	switch t {
 	case Buffer:

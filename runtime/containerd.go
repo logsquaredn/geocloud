@@ -3,6 +3,7 @@ package runtime
 import (
 	"bytes"
 	"context"
+	// embed must be imported to use go:embed
 	_ "embed"
 	"errors"
 	"fmt"

@@ -27,11 +27,11 @@ var _ geocloud.API = (*GinAPI)(nil)
 func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	router := gin.Default()
 
-	v1_job := router.Group("/api/v1/job")
+	v1Job := router.Group("/api/v1/job")
 	{
-		v1_job.POST("/create/:type", a.create)
-		v1_job.GET("/status", a.status)
-		v1_job.GET("/result", a.result)
+		v1Job.POST("/create/:type", a.create)
+		v1Job.GET("/status", a.status)
+		v1Job.GET("/result", a.result)
 	}
 
 	wait := make(chan error, 1)

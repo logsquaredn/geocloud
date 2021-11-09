@@ -81,9 +81,14 @@ clean: down
 prune: clean
 	$(DOCKER) system prune -a
 
-.PHONY: fmt
-fmt:
+.PHONY: test
+test: save-tasks
+	$(GO) test -test.v -race ./...
+
+.PHONY: vet
+vet: save-tasks
 	$(GO) fmt ./...
+	$(GO) vet ./...
 
 .PHONY: terraform
 terraform:
