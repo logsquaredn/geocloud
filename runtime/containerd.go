@@ -48,6 +48,8 @@ var _ geocloud.Runtime = (*ContainerdRuntime)(nil)
 //go:embed "config.toml"
 var toml []byte
 
+// tasks.tar is generated at build time from tasks/ directory
+// run `make save-tasks` to suppress this warning locally
 //go:embed "tasks.tar"
 var tar []byte
 
