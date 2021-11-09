@@ -9,8 +9,8 @@ services:
     ports: [8080:8080]
     depends_on: [migrate, minio, postgres]
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   migrate:
     build: .
     command: m --postgres-host=postgres --postgres-password=pwd
@@ -19,12 +19,12 @@ services:
   minio:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
-    volumes: [./dev/minio:/var/lib/minio]
+    volumes: [./hack/minio:/var/lib/minio]
     networks: [api, worker]
     ports: [9000:9000, 9001:9001]
     environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-geocloud}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
     networks: [api, migrate, worker]
@@ -35,14 +35,15 @@ services:
       POSTGRES_PASSWORD: pwd
   worker:
     build: .
+    image: logsquaredn/geocloud:latest
     privileged: true
-    command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style -t buffer -t filter -t removebadgeometry -t reproject
-    volumes: [~/.aws/:/root/.aws/:ro, ./dev/geocloud:/var/lib/geocloud/]
+    command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style -t=buffer -t=filter -t=removebadgeometry -t=reproject
+    volumes: [~/.aws/:/root/.aws/:ro, ./hack/geocloud:/var/lib/geocloud/]
     networks: [worker]
     depends_on: [postgres, migrate, minio]
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
       GEOCLOUD_REGISTRY_USERNAME: ${GEOCLOUD_REGISTRY_USERNAME}
       GEOCLOUD_REGISTRY_PASSWORD: ${GEOCLOUD_REGISTRY_PASSWORD}
 

@@ -9,7 +9,7 @@ INSERT INTO task (
     'buffer',
     ARRAY['distance'],
     'logsquaredn-geocloud-1',
-    'registry-1.docker.io/logsquaredn/geocloud:task-buffer'
+    'docker.io/logsquaredn/geocloud:task-buffer'
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
@@ -21,7 +21,7 @@ INSERT INTO task (
     'filter',
     ARRAY['filterColumn', 'filterValue'],
     'logsquaredn-geocloud-2',
-    'registry-1.docker.io/logsquaredn/geocloud:task-filter'
+    'docker.io/logsquaredn/geocloud:task-filter'
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
@@ -33,7 +33,7 @@ INSERT INTO task (
     'reproject', 
     ARRAY['targetProjection'],
     'logsquaredn-geocloud-1',
-    'registry-1.docker.io/logsquaredn/geocloud:task-reproject'
+    'docker.io/logsquaredn/geocloud:task-reproject'
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
@@ -43,7 +43,7 @@ INSERT INTO task (
 ) VALUES (
     'removebadgeometry',
     'logsquaredn-geocloud-2',
-    'registry-1.docker.io/logsquaredn/geocloud:task-remove-bad-geometry'
+    'docker.io/logsquaredn/geocloud:task-remove-bad-geometry'
 ) ON CONFLICT DO NOTHING;
 
 COMMIT;

@@ -5,14 +5,15 @@ assets/*
 # bin
 bin/*
 !bin/if_tar_exists_xzf_rm_mv_assets
+runtime/*.tar
 
-# dev
-dev/minio/*
-!dev/minio/geocloud/
-dev/minio/geocloud/*
-!dev/minio/geocloud/.gitkeep
-dev/geocloud/*
-!dev/geocloud/.gitkeep
+# hack
+hack/minio/*
+!hack/minio/geocloud/
+hack/minio/geocloud/*
+!hack/minio/geocloud/.gitkeep
+hack/geocloud/*
+!hack/geocloud/.gitkeep
 
 # env
 .env

@@ -20,10 +20,10 @@ RUN rm -rf /var/lib/apt/lists/*
 FROM build_image AS build
 COPY . .
 RUN mkdir /assets/ \
-    && gcc badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry \
-    && gcc buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer \
-    && gcc filter/filter.c shared/shared.c -l gdal -o /assets/filter \
-    && gcc reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
+    && gcc -Wall badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry \
+    && gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer \
+    && gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter \
+    && gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
 
 FROM base_image AS removebadgeometry
 COPY --from=build /assets/removebadgeometry /usr/local/bin/
