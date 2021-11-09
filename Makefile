@@ -1,6 +1,8 @@
 DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
 GCC ?= gcc
+GO ?= go
+TERRAFORM ?= terraform
 
 BIN ?= bin
 ASSETS ?= assets
@@ -78,3 +80,15 @@ clean: down
 .PHONY: prune
 prune: clean
 	$(DOCKER) system prune -a
+
+.PHONY: fmt
+fmt:
+	$(GO) fmt ./...
+
+.PHONY: terraform
+terraform:
+	$(TERRAFORM) -chdir=infrastructure/tf/ init
+
+.PHONY: infrastructure
+infrastructure: terraform
+	$(TERRAFORM) -chdir=infrastructure/tf/ apply
