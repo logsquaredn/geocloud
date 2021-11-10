@@ -121,7 +121,7 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 	if !ds.IsConfigured() {
 		return fmt.Errorf("no datastore configured")
 	}
-	
+
 	cfg, _ := GeocloudCmd.AWSGroup.Config()
 	a.SQSMessageQueue = &messagequeue.SQSMessageQueue{}
 	mq, ok := a.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
@@ -209,7 +209,6 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		}
 	}
 
-	
 	mq, ok := w.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
 	if !ok || !mq.WithMessageRecipient(rt).WithDatastore(ds).WithTasks(tasks...).IsConfigured() {
 		return fmt.Errorf("no message queue configured")

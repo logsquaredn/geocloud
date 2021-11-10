@@ -1,6 +1,0 @@
-#!/bin/sh
-
-gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o ../bin/buffer
-gcc -Wall filter/filter.c shared/shared.c -l gdal -o ../bin/filter
-gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o ../bin/reproject
-gcc -Wall badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o ../bin/removeBadGeometry

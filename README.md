@@ -7,13 +7,14 @@
 ### Prerequisites
 
 * golang is *required* - version 1.11.x or above is required for go mod to work
-* containerd is *required* - version 1.5.x is tested; earlier versions may also work
-* runc is *required* - version 1.0.0-rc9x is tested; earlier versions may also work
-* docker is recommended - version 20.10.x is tested; earlier versions may also work
-* docker-compose is recommended - version 1.29.x is tested; earlier versions may also work
+* docker is *required* - version 20.10.x is tested; earlier versions may also work
+* docker-compose is *required* - version 1.29.x is tested; earlier versions may also work
+* go mod is *required* for dependency management of golang packages
+* make is *required* - version 3.81 is tested; earlier versions may also work
+* containerd is recommended - version 1.5.x is tested; earlier versions may also work
+* runc is recommended - version 1.0.0-rc9x is tested; earlier versions may also work
 * terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
 * awscli is recommended - version 1.18.69 is tested; earlier versions may also work
-* go mod is used for dependency management of golang packages
 
 > _containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
 
@@ -21,25 +22,9 @@
 
 > `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or an environment file_ `.env` _in the root of the repository_
 
-> _if you run into problems connecting to postgres, try running_ `docker-compose up -d postgres` _before executing the following commands_
-
 ```sh
 # run geocloud
-docker-compose up --build
-```
-
-#### API
-
-```sh
-# run the api
-docker-compose up --build api
-```
-
-#### Worker
-
-```sh
-# run the worker
-docker-compose up --build worker
+make up
 ```
 
 ### Infrastructure
@@ -50,15 +35,22 @@ docker-compose up --build worker
 
 ```sh
 # create queue and bucket
-terraform -chdir=infrastructure/tf/ init
-terraform -chdir=infrastructure/tf/ apply
+make infrastructure
 ```
 
-> `hashicorp/terraform` _can be used in place of installing terraform on your machine to create infrastructure_
+### Tasks
+
+#### Build Tasks
 
 ```sh
-# create queue and bucket using hashicorp/terraform 
-docker run --rm -v `pwd`:/src/:ro -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY hashicorp/terraform -chdir=/src/infrastructure/ apply
+# build tasks to bin/
+make build-tasks-c
+# build task images
+make build-tasks
+# build and save tasks tarball to runtime/tasks.tar
+make save-tasks
+# build and push tasks
+make push-tasks
 ```
 
 ### Migrations
@@ -79,14 +71,4 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 ```sh
 # run the migrations
 geocloud migrate
-```
-
-### Tasks
-
-#### Build Tasks
-
-```sh
-cd tasks/
-docker-compose build
-docker-compose push
 ```

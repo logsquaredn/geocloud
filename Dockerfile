@@ -1,4 +1,4 @@
-ARG base_image=ubuntu:focal
+ARG base_image=ubuntu:jammy
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
@@ -12,8 +12,9 @@ RUN go mod download
 COPY . .
 
 FROM build_image AS build
-ARG ldflags
-RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/geocloud/
+ARG version=0.0.0
+ARG revision=
+RUN go build -ldflags "-X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Revision=${revision}" -o /assets/geocloud ./cmd/geocloud/
 
 FROM base_image AS install
 COPY bin/ /usr/local/bin/
