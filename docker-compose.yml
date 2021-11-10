@@ -3,7 +3,7 @@ version: '3.4'
 services:
   api:
     build: .
-    command: a --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style
+    command: a --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style -t=buffer:logsquaredn-geocloud-1 -t=filter:logsquaredn-geocloud-1 -t=reproject:logsquaredn-geocloud-2 -t=removebadgeometry:logsquaredn-geocloud-2
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
     ports: [8080:8080]
@@ -37,7 +37,7 @@ services:
     build: .
     image: logsquaredn/geocloud:latest
     privileged: true
-    command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style -t=buffer -t=filter -t=removebadgeometry -t=reproject
+    command: w --postgres-host=postgres --postgres-password=pwd --s3-bucket=geocloud --s3-endpoint=http://minio:9000 --s3-disable-ssl --s3-force-path-style --sqs-queue-name=logsquaredn-geocloud-1 --sqs-queue-name=logsquaredn-geocloud-2
     volumes: [~/.aws/:/root/.aws/:ro, ./hack/geocloud:/var/lib/geocloud/]
     networks: [worker]
     depends_on: [postgres, migrate, minio]

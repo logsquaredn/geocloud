@@ -226,14 +226,16 @@ var getTaskByJobIDSQL string
 func (p *PostgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 	var (
 		t        = &geocloud.Task{}
+		queueID  sql.NullString
 		taskType string
 	)
 
-	err := p.stmt.getTaskByJobID.QueryRow(m.ID()).Scan(&taskType, pq.Array(&t.Params), &t.QueueID, &t.Ref)
+	err := p.stmt.getTaskByJobID.QueryRow(m.ID()).Scan(&taskType, pq.Array(&t.Params), &queueID, &t.Ref)
 	if err != nil {
 		return t, err
 	}
 
+	t.QueueID = queueID.String
 	t.Type, err = geocloud.TaskTypeFrom(taskType)
 	return t, err
 }
@@ -244,13 +246,15 @@ var getTaskByTypeSQL string
 func (p *PostgresDatastore) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	var (
 		t        = &geocloud.Task{}
+		queueID  sql.NullString
 		taskType string
 	)
-	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &t.QueueID, &t.Ref)
+	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &queueID, &t.Ref)
 	if err != nil {
 		return t, err
 	}
 
+	t.QueueID = queueID.String
 	t.Type, err = geocloud.TaskTypeFrom(taskType)
 	return t, err
 }
@@ -273,14 +277,16 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 	for rows.Next() {
 		var (
 			task     = &geocloud.Task{}
+			queueID  sql.NullString
 			taskType string
 		)
 
-		err = rows.Scan(&taskType, pq.Array(&task.Params), &task.QueueID, &task.Ref)
+		err = rows.Scan(&taskType, pq.Array(&task.Params), &queueID, &task.Ref)
 		if err != nil {
 			return
 		}
 
+		task.QueueID = queueID.String
 		task.Type, err = geocloud.TaskTypeFrom(taskType)
 		if err != nil {
 			return

@@ -22,6 +22,7 @@ type SQSMessageQueue struct {
 	rt    geocloud.Runtime
 	ds    geocloud.Datastore
 	tasks []geocloud.TaskType
+	taskmap map[geocloud.TaskType]string
 }
 
 var _ geocloud.AWSComponent = (*SQSMessageQueue)(nil)
@@ -53,23 +54,27 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 	}
 	q.svc = sqs.New(sess)
 
+	var queueNames = q.QueueNames
 	wait := make(chan error, 1)
 	if len(q.tasks) > 0 && q.ds.IsConfigured() {
+		log.Trace().Msg("getting tasks from datastore")
 		var err error
 		tasks, err := q.ds.GetTasks(q.tasks...)
-		if err != nil && len(q.QueueNames) == 0 {
+		if err != nil && len(queueNames) == 0 {
 			return err
 		}
 
-		q.QueueNames = make([]string, len(tasks))
-		for i, task := range tasks {
-			q.QueueNames[i] = task.QueueID
+		for _, task := range tasks {
+			if task.QueueID != "" {
+				queueNames = append(queueNames, task.QueueID)
+			}
 		}
 	}
 
-	if len(q.QueueNames) > 0 {
+	if len(queueNames) > 0 {
+		log.Trace().Msg("getting queue URLs from queue names")
 		queueURLs := []string{}
-		for _, name := range q.QueueNames {
+		for _, name := range queueNames {
 			output, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{QueueName: &name})
 			if err != nil {
 				return err
@@ -77,6 +82,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 			queueURLs = append(queueURLs, *output.QueueUrl)
 		}
 
+		log.Trace().Msg("shuffling queue URLs")
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(queueURLs), func(i, j int) {
 			queueURLs[i], queueURLs[j] = queueURLs[j], queueURLs[i]
@@ -87,6 +93,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		} else if q.VisibilityTimeout > maxVisibilityTimeout {
 			q.VisibilityTimeout = maxVisibilityTimeout
 		}
+		log.Trace().Msgf("using visibility timeout %d", q.VisibilityTimeout)
 
 		visticker := time.NewTicker(q.VisibilityTimeout)
 		vistimeout := int64(q.VisibilityTimeout.Seconds())
@@ -97,6 +104,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 			defer qticker.Stop()
 			for i := 0; len(queueURLs) > 0; i = (i + 1) % len(queueURLs) {
 				url := queueURLs[i]
+				log.Trace().Msgf("polling %s", url)
 				output, err := q.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 					MaxNumberOfMessages: &maxNumberOfMessages,
 					QueueUrl:            &url,
@@ -107,6 +115,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 
 				messages := output.Messages
 				m := len(messages)
+				log.Trace().Msgf("got %d messages", m)
 				entriesVis := make([]*sqs.ChangeMessageVisibilityBatchRequestEntry, m)
 				for i, msg := range messages {
 					entriesVis[i] = &sqs.ChangeMessageVisibilityBatchRequestEntry{
@@ -121,6 +130,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 				go func() {
 					for _, msg := range messages {
 						k, v := "id", *msg.Body
+						log.Trace().Str(k, v).Msg("sending message to runtime")
 						err = q.rt.Send(&message{id: v})
 						if err != nil {
 							log.Err(err).Str(k, v).Msgf("runtime failed to process message")
@@ -139,6 +149,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 					select {
 					case <-visticker.C:
 						if len(entriesVis) > 0 {
+							log.Trace().Msg("changing message visibility")
 							_, err = q.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
 								Entries:  entriesVis,
 								QueueUrl: &url,
@@ -149,15 +160,18 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 						}
 					case <-qticker.C:
 						if q.ds.IsConfigured() && len(q.tasks) > 0 {
+							log.Trace().Msg("refreshing queue names from datastore")
 							var err error
 							tasks, err := q.ds.GetTasks(q.tasks...)
 							if err != nil {
 								log.Err(err).Msg("unable to update task queue urls")
 							}
 
-							q.QueueNames = make([]string, len(tasks))
-							for i, task := range tasks {
-								q.QueueNames[i] = task.QueueID
+							queueNames = q.QueueNames
+							for _, task := range tasks {
+								if task.QueueID != "" {
+									queueNames = append(queueNames, task.QueueID)
+								}
 							}
 
 							newQueueURLs := []string{}
@@ -180,6 +194,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 					case <-done:
 						processing = false
 						if len(entriesDel) > 0 {
+							log.Trace().Msg("deleting messages")
 							req, _ := q.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 								Entries:  entriesDel,
 								QueueUrl: &url,
@@ -222,8 +237,13 @@ func (q *SQSMessageQueue) Send(m geocloud.Message) error {
 		return err
 	}
 
+	var queueName = task.QueueID
+	if queueName == "" {
+		queueName = q.taskmap[task.Type]
+	}
+
 	o, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &task.QueueID,
+		QueueName: &queueName,
 	})
 	if err != nil {
 		return err
@@ -249,6 +269,11 @@ func (q *SQSMessageQueue) WithMessageRecipient(rt geocloud.Runtime) geocloud.Mes
 
 func (q *SQSMessageQueue) WithTasks(ts ...geocloud.TaskType) geocloud.MessageQueue {
 	q.tasks = ts
+	return q
+}
+
+func (q *SQSMessageQueue) WithTaskmap(tm map[geocloud.TaskType]string) geocloud.MessageQueue {
+	q.taskmap = tm
 	return q
 }
 

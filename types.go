@@ -232,6 +232,7 @@ type MessageQueue interface {
 	WithDatastore(Datastore) MessageQueue
 	WithMessageRecipient(Runtime) MessageQueue
 	WithTasks(...TaskType) MessageQueue
+	WithTaskmap(map[TaskType]string) MessageQueue
 }
 
 // API ...

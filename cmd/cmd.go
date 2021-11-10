@@ -99,6 +99,8 @@ func (r *RegistryGroup) Resolver() (*remotes.Resolver, error) {
 }
 
 type APIComponent struct {
+	Tasks map[string]string `long:"task" short:"t" description:"Map of task types to queue IDs"`
+
 	RestAPI *api.GinAPI
 
 	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
@@ -122,10 +124,18 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 		return fmt.Errorf("no datastore configured")
 	}
 
+	tm := map[geocloud.TaskType]string{}
+	for taskType, id := range a.Tasks {
+		task, err := geocloud.TaskTypeFrom(taskType)
+		if err != nil {
+			return err
+		}
+		tm[task] = id
+	}
 	cfg, _ := GeocloudCmd.AWSGroup.Config()
 	a.SQSMessageQueue = &messagequeue.SQSMessageQueue{}
 	mq, ok := a.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
-	if !ok || !mq.WithDatastore(ds).IsConfigured() {
+	if !ok || !mq.WithDatastore(ds).WithTaskmap(tm).IsConfigured() {
 		return fmt.Errorf("no messagequeue configured")
 	}
 
