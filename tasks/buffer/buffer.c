@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 5) {
-		error("buffer requires three arguments. input file, output directory, buffer distance, and quadrant segment count", __FILE__, __LINE__);
+		error("buffer requires four arguments. input file, output directory, buffer distance, and quadrant segment count", __FILE__, __LINE__);
 	}
 
 	const char *inputFilePath = argv[1];
