@@ -29,7 +29,7 @@ type Component interface {
 
 	// Name returns the name of the Component (e.g. "containerd")
 	Name() string
-	// IsEnabled returns whether or not the Component was enabled via arguments
+	// IsEnabled returns whether or not the Component is enabled
 	IsEnabled() bool
 }
 
