@@ -44,7 +44,7 @@ objectstore:
 	$(DOCKER-COMPOSE) up -d objectstore
 
 .PHONY: messagequeue
-rabbitmq:
+messagequeue:
 	$(DOCKER-COMPOSE) up -d messagequeue
 
 .PHONY: services
