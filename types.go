@@ -22,7 +22,7 @@ import (
 // geocloud, therefore, is an orchestration of Components that are ran in parallel
 // and use one another's APIs to talk amongst themselves
 // This makes each Component (datastore, objectstore, runtime, etc) pluggable
-// (e.g. the messagequeue component could have an SQS and a RabbitMQ implementation)
+// (e.g. the messagequeue component could have an SQS and an AMQP implementation)
 type Component interface {
 	flags.Commander
 	ifrit.Runner
