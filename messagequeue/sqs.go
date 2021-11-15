@@ -14,14 +14,15 @@ import (
 )
 
 type SQSMessageQueue struct {
+	Enabled           bool          `long:"enabled" description:"Whether or not the SQS messagequeue is enabled"`
 	VisibilityTimeout time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
 	QueueNames        []string      `long:"queue-name" description:"SQS queue name"`
 
-	cfg   *aws.Config
-	svc   *sqs.SQS
-	rt    geocloud.Runtime
-	ds    geocloud.Datastore
-	tasks []geocloud.TaskType
+	cfg     *aws.Config
+	svc     *sqs.SQS
+	rt      geocloud.Runtime
+	ds      geocloud.Datastore
+	tasks   []geocloud.TaskType
 	taskmap map[geocloud.TaskType]string
 }
 
@@ -30,7 +31,6 @@ var _ geocloud.MessageQueue = (*SQSMessageQueue)(nil)
 
 const (
 	t12h = "12h"
-	tm5  = "5m"
 	t5s  = "5s"
 )
 
@@ -38,13 +38,11 @@ var (
 	maxNumberOfMessages  int64 = 10
 	maxVisibilityTimeout time.Duration
 	minVisibilityTimeout time.Duration
-	queueRefreshInterval time.Duration
 )
 
 func init() {
 	maxVisibilityTimeout, _ = time.ParseDuration(t12h)
 	minVisibilityTimeout, _ = time.ParseDuration(t5s)
-	queueRefreshInterval, _ = time.ParseDuration(tm5)
 }
 
 func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
@@ -56,7 +54,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 
 	var queueNames = q.QueueNames
 	wait := make(chan error, 1)
-	if len(q.tasks) > 0 && q.ds.IsConfigured() {
+	if len(q.tasks) > 0 {
 		log.Trace().Msg("getting tasks from datastore")
 		var err error
 		tasks, err := q.ds.GetTasks(q.tasks...)
@@ -159,7 +157,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 							}
 						}
 					case <-qticker.C:
-						if q.ds.IsConfigured() && len(q.tasks) > 0 {
+						if len(q.tasks) > 0 {
 							log.Trace().Msg("refreshing queue names from datastore")
 							var err error
 							tasks, err := q.ds.GetTasks(q.tasks...)
@@ -227,8 +225,8 @@ func (q *SQSMessageQueue) Name() string {
 	return "sqs"
 }
 
-func (q *SQSMessageQueue) IsConfigured() bool {
-	return q != nil && q.cfg != nil && q.ds.IsConfigured()
+func (q *SQSMessageQueue) IsEnabled() bool {
+	return q.Enabled
 }
 
 func (q *SQSMessageQueue) Send(m geocloud.Message) error {
@@ -240,6 +238,9 @@ func (q *SQSMessageQueue) Send(m geocloud.Message) error {
 	var queueName = task.QueueID
 	if queueName == "" {
 		queueName = q.taskmap[task.Type]
+		if queueName == "" && len(q.QueueNames) == 1 {
+			queueName = q.QueueNames[0]
+		}
 	}
 
 	o, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{
@@ -281,6 +282,3 @@ func (q *SQSMessageQueue) WithConfig(cfg *aws.Config) geocloud.AWSComponent {
 	q.cfg = cfg
 	return q
 }
-
-// TODO refactor polling logic in Run here
-// func (q *SQSMessageQueue) poll() error {}

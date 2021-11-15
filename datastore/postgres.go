@@ -5,6 +5,8 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -19,10 +21,10 @@ import (
 )
 
 type PostgresDatastore struct {
-	Host       string        `long:"host" description:"Postgres host"`
-	Port       int64         `long:"port" default:"5432" description:"Postgres port"`
-	User       string        `long:"user" default:"geocloud" description:"Postgres username"`
-	Password   string        `long:"password" description:"Postgres password"`
+	Enabled    bool          `long:"enabled" description:"Whether or not the Postgres datastore is enabled"`
+	Address    string        `long:"addr" default:":5432" env:"GEOCLOUD_POSTGRES_ADDRESS" description:"Postgres address"`
+	User       string        `long:"user" default:"geocloud" env:"GEOCLOUD_POSTGRES_USER" description:"Postgres user"`
+	Password   string        `long:"password" env:"GEOCLOUD_POSTGRES_PASSWORD" description:"Postgres password"`
 	SSLMode    string        `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
 	Retries    int64         `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres. 0 is infinity"`
 	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
@@ -298,8 +300,25 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 	return
 }
 
+func (p *PostgresDatastore) host() string {
+	delimiter := strings.Index(":", p.Address)
+	if delimiter < 0 {
+		return p.Address
+	}
+	return p.Address[:delimiter]
+}
+
+func (p *PostgresDatastore) port() int64 {
+	delimiter := strings.Index(":", p.Address)
+	if delimiter < 0 {
+		return 5432
+	}
+	port, _ := strconv.Atoi(p.Address[delimiter:])
+	return int64(port)
+}
+
 func (p *PostgresDatastore) connectionString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.Host, p.Port, p.SSLMode)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.host(), p.port(), p.SSLMode)
 }
 
 func (p *PostgresDatastore) close() error {
@@ -316,8 +335,8 @@ func (p *PostgresDatastore) Name() string {
 	return "postgres"
 }
 
-func (p *PostgresDatastore) IsConfigured() bool {
-	return p != nil && p.Port > 0 && p.Host != "" && p.User != ""
+func (p *PostgresDatastore) IsEnabled() bool {
+	return p.Enabled
 }
 
 func (p *PostgresDatastore) WithDB(db *sql.DB) *PostgresDatastore {

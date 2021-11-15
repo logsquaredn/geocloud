@@ -41,11 +41,11 @@ func (g *group) Name() string {
 	return g.name
 }
 
-// IsConfigured reports whether or not the component is
+// IsEnabled reports whether or not the component is
 // fully configured to be ran
-func (g *group) IsConfigured() bool {
+func (g *group) IsEnabled() bool {
 	for _, c := range g.cs {
-		if !c.IsConfigured() {
+		if !c.IsEnabled() {
 			return false
 		}
 	}

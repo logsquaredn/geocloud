@@ -29,10 +29,8 @@ type Component interface {
 
 	// Name returns the name of the Component (e.g. "containerd")
 	Name() string
-	// IsConfigured returns whether or not the Component has all the configuration
-	// necessary for it to expect to be able to run properly
-	// (e.g. does the postgres datastore have a host to connect to)
-	IsConfigured() bool
+	// IsEnabled returns whether or not the Component was enabled via arguments
+	IsEnabled() bool
 }
 
 // AWSComponent is a Component that takes advantage of an

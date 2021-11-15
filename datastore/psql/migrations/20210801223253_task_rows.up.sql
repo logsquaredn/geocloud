@@ -35,7 +35,7 @@ INSERT INTO task (
     task_ref
 ) VALUES (
     'removebadgeometry',
-    'docker.io/logsquaredn/geocloud:task-remove-bad-geometry'
+    'docker.io/logsquaredn/geocloud:task-removebadgeometry'
 ) ON CONFLICT DO NOTHING;
 
 COMMIT;

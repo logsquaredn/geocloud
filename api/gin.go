@@ -58,8 +58,10 @@ func (a *GinAPI) Name() string {
 	return "rest"
 }
 
-func (a *GinAPI) IsConfigured() bool {
-	return a != nil && a.ds.IsConfigured() && a.os.IsConfigured() && a.mq.IsConfigured()
+func (a *GinAPI) IsEnabled() bool {
+	// at this point in time, we have no intention of writing
+	// an alternative api implementation
+	return true
 }
 
 func (a *GinAPI) WithDatastore(ds geocloud.Datastore) geocloud.API {
@@ -118,6 +120,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 	if len(missingParams) > 0 {
 		log.Error().Msgf("/create missing paramters: %v", missingParams)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("missing parameters: %v", missingParams)})
+		return
 	}
 
 	jsonData, err := io.ReadAll(ctx.Request.Body)

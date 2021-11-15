@@ -58,8 +58,8 @@ func (c *cmdComponent) Name() string {
 	return "cmd"
 }
 
-// IsConfigured reports whether or not the component is
+// IsEnabled reports whether or not the component is
 // fully configured to be ran
-func (c *cmdComponent) IsConfigured() bool {
+func (c *cmdComponent) IsEnabled() bool {
 	return c.cmd != nil
 }

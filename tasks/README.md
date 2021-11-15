@@ -28,5 +28,5 @@ export C_INCLUDE_PATH=/usr/include/gdal
 # filter:
 ./bin/filter /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_filtered.shp 'BASIN' 'al'
 # remove bad geometry:
-./bin/removeBadGeometry /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_goodGeometry.shp
+./bin/removebadgeometry /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_goodGeometry.shp
 ```

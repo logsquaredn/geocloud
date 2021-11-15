@@ -49,9 +49,8 @@ func (c *componentFunc) Name() string {
 	return c.name
 }
 
-// IsConfigured reports true; this packaged currently
-// provides no way to tell if a component is
-// fully configured to be ran
-func (c *componentFunc) IsConfigured() bool {
+// IsEnabled reports true; this packaged currently
+// provides no way to tell if a component was enabled
+func (c *componentFunc) IsEnabled() bool {
 	return true
 }

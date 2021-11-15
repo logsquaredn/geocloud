@@ -5,7 +5,7 @@ services:
     build:
       context: .
       target: removebadgeometry
-    image: logsquaredn/geocloud:task-remove-bad-geometry
+    image: logsquaredn/geocloud:task-removebadgeometry
     volumes: [../testdata/geojson/featurecollection.geojson:/job/1/input/input.geojson:ro]
     command: /job/1/input/input.geojson /tmp
   buffer:

@@ -8,21 +8,28 @@ bin/*
 runtime/*.tar
 
 # hack
+hack/geocloud/*
+!hack/geocloud/.gitkeep
 hack/minio/*
 !hack/minio/geocloud/
 hack/minio/geocloud/*
 !hack/minio/geocloud/.gitkeep
-hack/geocloud/*
-!hack/geocloud/.gitkeep
+hack/postgresql/*
+!hack/postgresql/.gitkeep
+hack/rabbitmq/*
+!hack/rabbitmq/etc
+!hack/rabbitmq/lib
+!hack/rabbitmq/log
+hack/rabbitmq/lib/*
+hack/rabbitmq/log/*
+!hack/rabbitmq/lib/.gitkeep
+!hack/rabbitmq/log/.gitkeep
 
 # env
 .env
 
 # macOS
 .DS_Store
-
-# terraform
-.terraform/
 
 # vscode
 .vscode/
