@@ -14,14 +14,16 @@ import (
 )
 
 type SQSMessageQueue struct {
+	Enabled           bool          `long:"enabled" description:"Whether or not the SQS messagequeue is enabled"`
 	VisibilityTimeout time.Duration `long:"visibility-timeout" default:"15s" description:"Visibilty timeout for SQS messages"`
 	QueueNames        []string      `long:"queue-name" description:"SQS queue name"`
 
-	cfg   *aws.Config
-	svc   *sqs.SQS
-	rt    geocloud.Runtime
-	ds    geocloud.Datastore
-	tasks []geocloud.TaskType
+	cfg     *aws.Config
+	svc     *sqs.SQS
+	rt      geocloud.Runtime
+	ds      geocloud.Datastore
+	tasks   []geocloud.TaskType
+	taskmap map[geocloud.TaskType]string
 }
 
 var _ geocloud.AWSComponent = (*SQSMessageQueue)(nil)
@@ -29,7 +31,6 @@ var _ geocloud.MessageQueue = (*SQSMessageQueue)(nil)
 
 const (
 	t12h = "12h"
-	tm5  = "5m"
 	t5s  = "5s"
 )
 
@@ -37,13 +38,11 @@ var (
 	maxNumberOfMessages  int64 = 10
 	maxVisibilityTimeout time.Duration
 	minVisibilityTimeout time.Duration
-	queueRefreshInterval time.Duration
 )
 
 func init() {
 	maxVisibilityTimeout, _ = time.ParseDuration(t12h)
 	minVisibilityTimeout, _ = time.ParseDuration(t5s)
-	queueRefreshInterval, _ = time.ParseDuration(tm5)
 }
 
 func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
@@ -53,23 +52,27 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 	}
 	q.svc = sqs.New(sess)
 
+	var queueNames = q.QueueNames
 	wait := make(chan error, 1)
-	if len(q.tasks) > 0 && q.ds.IsConfigured() {
+	if len(q.tasks) > 0 {
+		log.Trace().Msg("getting tasks from datastore")
 		var err error
 		tasks, err := q.ds.GetTasks(q.tasks...)
-		if err != nil && len(q.QueueNames) == 0 {
+		if err != nil && len(queueNames) == 0 {
 			return err
 		}
 
-		q.QueueNames = make([]string, len(tasks))
-		for i, task := range tasks {
-			q.QueueNames[i] = task.QueueID
+		for _, task := range tasks {
+			if task.QueueID != "" {
+				queueNames = append(queueNames, task.QueueID)
+			}
 		}
 	}
 
-	if len(q.QueueNames) > 0 {
+	if len(queueNames) > 0 {
+		log.Trace().Msg("getting queue URLs from queue names")
 		queueURLs := []string{}
-		for _, name := range q.QueueNames {
+		for _, name := range queueNames {
 			output, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{QueueName: &name})
 			if err != nil {
 				return err
@@ -77,6 +80,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 			queueURLs = append(queueURLs, *output.QueueUrl)
 		}
 
+		log.Trace().Msg("shuffling queue URLs")
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(queueURLs), func(i, j int) {
 			queueURLs[i], queueURLs[j] = queueURLs[j], queueURLs[i]
@@ -87,6 +91,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		} else if q.VisibilityTimeout > maxVisibilityTimeout {
 			q.VisibilityTimeout = maxVisibilityTimeout
 		}
+		log.Trace().Msgf("using visibility timeout %d", q.VisibilityTimeout)
 
 		visticker := time.NewTicker(q.VisibilityTimeout)
 		vistimeout := int64(q.VisibilityTimeout.Seconds())
@@ -97,6 +102,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 			defer qticker.Stop()
 			for i := 0; len(queueURLs) > 0; i = (i + 1) % len(queueURLs) {
 				url := queueURLs[i]
+				log.Trace().Msgf("polling %s", url)
 				output, err := q.svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 					MaxNumberOfMessages: &maxNumberOfMessages,
 					QueueUrl:            &url,
@@ -107,6 +113,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 
 				messages := output.Messages
 				m := len(messages)
+				log.Trace().Msgf("got %d messages", m)
 				entriesVis := make([]*sqs.ChangeMessageVisibilityBatchRequestEntry, m)
 				for i, msg := range messages {
 					entriesVis[i] = &sqs.ChangeMessageVisibilityBatchRequestEntry{
@@ -121,6 +128,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 				go func() {
 					for _, msg := range messages {
 						k, v := "id", *msg.Body
+						log.Trace().Str(k, v).Msg("sending message to runtime")
 						err = q.rt.Send(&message{id: v})
 						if err != nil {
 							log.Err(err).Str(k, v).Msgf("runtime failed to process message")
@@ -139,6 +147,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 					select {
 					case <-visticker.C:
 						if len(entriesVis) > 0 {
+							log.Trace().Msg("changing message visibility")
 							_, err = q.svc.ChangeMessageVisibilityBatch(&sqs.ChangeMessageVisibilityBatchInput{
 								Entries:  entriesVis,
 								QueueUrl: &url,
@@ -148,16 +157,19 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 							}
 						}
 					case <-qticker.C:
-						if q.ds.IsConfigured() && len(q.tasks) > 0 {
+						if len(q.tasks) > 0 {
+							log.Trace().Msg("refreshing queue names from datastore")
 							var err error
 							tasks, err := q.ds.GetTasks(q.tasks...)
 							if err != nil {
 								log.Err(err).Msg("unable to update task queue urls")
 							}
 
-							q.QueueNames = make([]string, len(tasks))
-							for i, task := range tasks {
-								q.QueueNames[i] = task.QueueID
+							queueNames = q.QueueNames
+							for _, task := range tasks {
+								if task.QueueID != "" {
+									queueNames = append(queueNames, task.QueueID)
+								}
 							}
 
 							newQueueURLs := []string{}
@@ -180,6 +192,7 @@ func (q *SQSMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 					case <-done:
 						processing = false
 						if len(entriesDel) > 0 {
+							log.Trace().Msg("deleting messages")
 							req, _ := q.svc.DeleteMessageBatchRequest(&sqs.DeleteMessageBatchInput{
 								Entries:  entriesDel,
 								QueueUrl: &url,
@@ -212,8 +225,8 @@ func (q *SQSMessageQueue) Name() string {
 	return "sqs"
 }
 
-func (q *SQSMessageQueue) IsConfigured() bool {
-	return q != nil && q.cfg != nil && q.ds.IsConfigured()
+func (q *SQSMessageQueue) IsEnabled() bool {
+	return q.Enabled
 }
 
 func (q *SQSMessageQueue) Send(m geocloud.Message) error {
@@ -222,8 +235,16 @@ func (q *SQSMessageQueue) Send(m geocloud.Message) error {
 		return err
 	}
 
+	var queueName = task.QueueID
+	if queueName == "" {
+		queueName = q.taskmap[task.Type]
+		if queueName == "" && len(q.QueueNames) == 1 {
+			queueName = q.QueueNames[0]
+		}
+	}
+
 	o, err := q.svc.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: &task.QueueID,
+		QueueName: &queueName,
 	})
 	if err != nil {
 		return err
@@ -252,10 +273,12 @@ func (q *SQSMessageQueue) WithTasks(ts ...geocloud.TaskType) geocloud.MessageQue
 	return q
 }
 
+func (q *SQSMessageQueue) WithTaskmap(tm map[geocloud.TaskType]string) geocloud.MessageQueue {
+	q.taskmap = tm
+	return q
+}
+
 func (q *SQSMessageQueue) WithConfig(cfg *aws.Config) geocloud.AWSComponent {
 	q.cfg = cfg
 	return q
 }
-
-// TODO refactor polling logic in Run here
-// func (q *SQSMessageQueue) poll() error {}

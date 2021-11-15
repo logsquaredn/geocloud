@@ -27,11 +27,11 @@ var _ geocloud.API = (*GinAPI)(nil)
 func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	router := gin.Default()
 
-	v1_job := router.Group("/api/v1/job")
+	v1Job := router.Group("/api/v1/job")
 	{
-		v1_job.POST("/create/:type", a.create)
-		v1_job.GET("/status", a.status)
-		v1_job.GET("/result", a.result)
+		v1Job.POST("/create/:type", a.create)
+		v1Job.GET("/status", a.status)
+		v1Job.GET("/result", a.result)
 	}
 
 	wait := make(chan error, 1)
@@ -58,8 +58,10 @@ func (a *GinAPI) Name() string {
 	return "rest"
 }
 
-func (a *GinAPI) IsConfigured() bool {
-	return a != nil && a.ds.IsConfigured() && a.os.IsConfigured() && a.mq.IsConfigured()
+func (a *GinAPI) IsEnabled() bool {
+	// at this point in time, we have no intention of writing
+	// an alternative api implementation
+	return true
 }
 
 func (a *GinAPI) WithDatastore(ds geocloud.Datastore) geocloud.API {
@@ -118,6 +120,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 	if len(missingParams) > 0 {
 		log.Error().Msgf("/create missing paramters: %v", missingParams)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("missing parameters: %v", missingParams)})
+		return
 	}
 
 	jsonData, err := io.ReadAll(ctx.Request.Body)

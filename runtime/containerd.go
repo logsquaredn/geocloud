@@ -3,6 +3,8 @@ package runtime
 import (
 	"bytes"
 	"context"
+
+	// embed must be imported to use go:embed
 	_ "embed"
 	"errors"
 	"fmt"
@@ -148,8 +150,10 @@ func (c *ContainerdRuntime) Name() string {
 	return "containerd"
 }
 
-func (c *ContainerdRuntime) IsConfigured() bool {
-	return c != nil && c.ds.IsConfigured() && c.os.IsConfigured()
+func (c *ContainerdRuntime) IsEnabled() bool {
+	// at this point in time, we have no intention of writing
+	// an alternative runtime implementation
+	return true
 }
 
 func (c *ContainerdRuntime) Send(m geocloud.Message) error {

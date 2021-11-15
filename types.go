@@ -22,17 +22,15 @@ import (
 // geocloud, therefore, is an orchestration of Components that are ran in parallel
 // and use one another's APIs to talk amongst themselves
 // This makes each Component (datastore, objectstore, runtime, etc) pluggable
-// (e.g. the messagequeue component could have an SQS and a RabbitMQ implementation)
+// (e.g. the messagequeue component could have an SQS and an AMQP implementation)
 type Component interface {
 	flags.Commander
 	ifrit.Runner
 
 	// Name returns the name of the Component (e.g. "containerd")
 	Name() string
-	// IsConfigured returns whether or not the Component has all the configuration
-	// necessary for it to expect to be able to run properly
-	// (e.g. does the postgres datastore have a host to connect to)
-	IsConfigured() bool
+	// IsEnabled returns whether or not the Component is enabled
+	IsEnabled() bool
 }
 
 // AWSComponent is a Component that takes advantage of an
@@ -147,7 +145,7 @@ const (
 	Reproject
 )
 
-// Name returns the string representation of a geocloud Task's type
+// Type returns the string representation of a geocloud Task's type
 func (t TaskType) Type() string {
 	switch t {
 	case Buffer:
@@ -232,6 +230,7 @@ type MessageQueue interface {
 	WithDatastore(Datastore) MessageQueue
 	WithMessageRecipient(Runtime) MessageQueue
 	WithTasks(...TaskType) MessageQueue
+	WithTaskmap(map[TaskType]string) MessageQueue
 }
 
 // API ...
