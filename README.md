@@ -13,7 +13,6 @@
 * make is *required* - version 3.81 is tested; earlier versions may also work
 * containerd is recommended - version 1.5.x is tested; earlier versions may also work
 * runc is recommended - version 1.0.0-rc9x is tested; earlier versions may also work
-* terraform is recommended - version 1.0.2 is tested; earlier versions may also work; docker can be used instead
 * awscli is recommended - version 1.18.69 is tested; earlier versions may also work
 
 > _containerd and runc are dependencies used by and installed alongside docker as of version 1.11_
@@ -25,17 +24,6 @@
 ```sh
 # run geocloud
 make up
-```
-
-### Infrastructure
-
-> `terraform` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or a credentials file configured in_ `~/.aws/`
-
-#### Create Infrastructure
-
-```sh
-# create queue and bucket
-make infrastructure
 ```
 
 ### Tasks
@@ -61,7 +49,6 @@ make push-tasks
 # generate a migration version
 version=`date -u +%Y%m%d%T | tr -cd [0-9]`
 touch datastore/psql/migrations/${version}_my-title.up.sql
-touch migrate/migratecmd/migrations/${version}_my-title.down.sql
 ```
 
 see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
