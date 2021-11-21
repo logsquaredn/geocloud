@@ -106,7 +106,11 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     needs: tag-push
-    container: logsquaredn/geocloud@${{ needs.tag-push.outputs.digest }}
+    container:
+      image: logsquaredn/geocloud@${{ needs.tag-push.outputs.digest }}
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: create-release
         id: create-release
