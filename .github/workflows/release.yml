@@ -1,7 +1,8 @@
 name: Release
 on:
-  tag:
-    - '*'
+  push:
+    tags:
+      - '*'
 jobs:
   tag-push:
     runs-on: ubuntu-latest
