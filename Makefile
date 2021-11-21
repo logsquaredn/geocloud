@@ -74,7 +74,7 @@ push: build
 down:
 	$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= hack/geocloud/* hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/* $(TASKS-TAR)
+CLEAN ?= hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/* $(TASKS-TAR)
 
 .PHONY: clean
 clean: down
