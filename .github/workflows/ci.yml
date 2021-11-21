@@ -22,12 +22,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: build-buffer
-         uses: docker/build-push-action@v2
-         with:
-           context: tasks/
-           load: true
-           target: buffer
-           tags: logsquaredn/geocloud:task-buffer
+        uses: docker/build-push-action@v2
+        with:
+          context: tasks/
+          load: true
+          target: buffer
+          tags: logsquaredn/geocloud:task-buffer
        - name: build-filter
          uses: docker/build-push-action@v2
          with:
