@@ -21,16 +21,39 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: save-tasks
-        run: make save-tasks
+      - name: build-buffer
+         uses: docker/build-push-action@v2
+         with:
+           context: tasks/
+           load: true
+           target: buffer
+           tags: logsquaredn/geocloud:task-buffer
+       - name: build-filter
+         uses: docker/build-push-action@v2
+         with:
+           context: tasks/
+           load: true
+           target: filter
+           tags: logsquaredn/geocloud:task-filter
+       - name: build-removebadgeometry
+         uses: docker/build-push-action@v2
+         with:
+           context: tasks/
+           load: true
+           target: removebadgeometry
+           tags: logsquaredn/geocloud:task-removebadgeometry
+       - name: build-reproject
+         uses: docker/build-push-action@v2
+         with:
+           context: tasks/
+           load: true
+           target: reproject
+           tags: logsquaredn/geocloud:task-reproject
+       - name: save-tasks
+         run: docker save -o runtime/tasks.tar logsquaredn/geocloud:task-buffer logsquaredn/geocloud:task-filter logsquaredn/geocloud:task-removebadgeometry logsquaredn/geocloud:task-reproject
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::$(git rev-parse --short ${{ github.sha }})"
-      - name: debug
-        run: |
-          ls .
-          ls runtime/
-          echo "${{ steps.get-tag.outputs.tag }}"
       - name: build-push
         id: build-push
         uses: docker/build-push-action@v2
