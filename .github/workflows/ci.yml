@@ -26,36 +26,52 @@ jobs:
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-buffer
           context: tasks/
-          push: true
           load: true
           target: buffer
+          tags: logsquaredn/geocloud:task-buffer
+      - name: push-buffer
+        uses: docker/build-push-action@v2
+        with:
+          push: true
           tags: logsquaredn/geocloud:task-buffer
       - name: build-filter
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-filter
           context: tasks/
-          push: true
           load: true
           target: filter
+          tags: logsquaredn/geocloud:task-filter
+      - name: push-filter
+        uses: docker/build-push-action@v2
+        with:
+          push: true
           tags: logsquaredn/geocloud:task-filter
       - name: build-removebadgeometry
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-removebadgeometry
           context: tasks/
-          push: true
           load: true
           target: removebadgeometry
+          tags: logsquaredn/geocloud:task-removebadgeometry
+      - name: push-removebadgeometry
+        uses: docker/build-push-action@v2
+        with:
+          push: true
           tags: logsquaredn/geocloud:task-removebadgeometry
       - name: build-reproject
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-reproject
           context: tasks/
-          push: true
           load: true
           target: reproject
+          tags: logsquaredn/geocloud:task-reproject
+      - name: push-reproject
+        uses: docker/build-push-action@v2
+        with:
+          push: true
           tags: logsquaredn/geocloud:task-reproject
       - name: save-tasks
         run: docker save -o runtime/tasks.tar logsquaredn/geocloud:task-buffer logsquaredn/geocloud:task-filter logsquaredn/geocloud:task-removebadgeometry logsquaredn/geocloud:task-reproject
