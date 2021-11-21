@@ -18,7 +18,7 @@ RUN apt-get install -y --no-install-recommends \
 
 FROM build_image AS build
 COPY . .
-WORKDIR /assets/
+RUN mkdir /assets/
 RUN gcc -Wall badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry
 RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer
 RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter
