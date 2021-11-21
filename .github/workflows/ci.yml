@@ -31,6 +31,7 @@ jobs:
           target: buffer
           tags: logsquaredn/geocloud:task-buffer
       - name: push-buffer
+        if: ${{ github.event_name == 'push' }}
         uses: docker/build-push-action@v2
         with:
           context: tasks/
@@ -46,6 +47,7 @@ jobs:
           target: filter
           tags: logsquaredn/geocloud:task-filter
       - name: push-filter
+        if: ${{ github.event_name == 'push' }}
         uses: docker/build-push-action@v2
         with:
           context: tasks/
@@ -61,6 +63,7 @@ jobs:
           target: removebadgeometry
           tags: logsquaredn/geocloud:task-removebadgeometry
       - name: push-removebadgeometry
+        if: ${{ github.event_name == 'push' }}
         uses: docker/build-push-action@v2
         with:
           context: tasks/
@@ -76,6 +79,7 @@ jobs:
           target: reproject
           tags: logsquaredn/geocloud:task-reproject
       - name: push-reproject
+        if: ${{ github.event_name == 'push' }}
         uses: docker/build-push-action@v2
         with:
           context: tasks/
