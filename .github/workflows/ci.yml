@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - '*'
+      - main
   pull_request:
     branches:
       - main
@@ -60,7 +60,7 @@ jobs:
         with:
           # cache-from: type=registry,ref=logsquaredn/geocloud:latest
           context: .
-          push: false # ${{ github.event_name == 'push' }}
+          push: ${{ github.event_name == 'push' }}
           build-args: |
             revision=${{ steps.get-tag.outputs.tag }}
           tags: logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
