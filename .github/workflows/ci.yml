@@ -32,6 +32,7 @@ jobs:
       - name: push-buffer
         uses: docker/build-push-action@v2
         with:
+          context: tasks/
           push: true
           tags: logsquaredn/geocloud:task-buffer
       - name: build-filter
@@ -45,6 +46,7 @@ jobs:
       - name: push-filter
         uses: docker/build-push-action@v2
         with:
+          context: tasks/
           push: true
           tags: logsquaredn/geocloud:task-filter
       - name: build-removebadgeometry
@@ -58,6 +60,7 @@ jobs:
       - name: push-removebadgeometry
         uses: docker/build-push-action@v2
         with:
+          context: tasks/
           push: true
           tags: logsquaredn/geocloud:task-removebadgeometry
       - name: build-reproject
@@ -71,6 +74,7 @@ jobs:
       - name: push-reproject
         uses: docker/build-push-action@v2
         with:
+          context: tasks/
           push: true
           tags: logsquaredn/geocloud:task-reproject
       - name: save-tasks
