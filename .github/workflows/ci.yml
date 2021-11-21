@@ -26,11 +26,20 @@ jobs:
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::$(git rev-parse --short ${{ github.sha }})"
+      - name: debug
+        run: |
+          ls .
+          ls runtime/
+          echo "${{ steps.get-tag.outputs.tag }}"
       - name: build-push
         id: build-push
         uses: docker/build-push-action@v2
         with:
+          # cache-from: type=registry,ref=logsquaredn/geocloud:latest
+          context: .
           push: false # ${{ github.event_name == 'push' }}
+          build-args: |
+            revision=${{ steps.get-tag.outputs.tag }}
           tags: logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:
       digest: ${{ steps.build-push.outputs.digest }}
