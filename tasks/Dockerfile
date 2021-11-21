@@ -15,15 +15,14 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
         gcc \
         libc6-dev
-RUN rm -rf /var/lib/apt/lists/*
 
 FROM build_image AS build
 COPY . .
-RUN mkdir /assets/ \
-    && gcc -Wall badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry \
-    && gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer \
-    && gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter \
-    && gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
+WORKDIR /assets/
+RUN gcc -Wall badGeometry/removeBadGeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry
+RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer
+RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter
+RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
 
 FROM base_image AS removebadgeometry
 COPY --from=build /assets/removebadgeometry /usr/local/bin/
