@@ -22,6 +22,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-buffer
+          cache-to: type=inline
           context: tasks/
           load: true
           target: buffer
@@ -36,6 +37,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-filter
+          cache-to: type=inline
           context: tasks/
           load: true
           target: filter
@@ -50,6 +52,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-removebadgeometry
+          cache-to: type=inline
           context: tasks/
           load: true
           target: removebadgeometry
@@ -64,6 +67,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:task-reproject
+          cache-to: type=inline
           context: tasks/
           load: true
           target: reproject
@@ -87,6 +91,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:${{ steps.get-short-sha.outputs.short-sha }}
+          cache-to: type=inline
           context: .
           push: true
           build-args: |
