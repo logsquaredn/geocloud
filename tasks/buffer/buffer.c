@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 		error("quadrant segment count must be a valid integer greater than 0", __FILE__, __LINE__);
 		fatalError();
 	}
+	fprintf(stdout, "quadrant segment count: %d\n", quadSegCountInt);
 	
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {

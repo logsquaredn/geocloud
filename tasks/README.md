@@ -22,11 +22,11 @@ export C_INCLUDE_PATH=/usr/include/gdal
 ### Examples
 ```sh
 # reproject:
-./bin/reproject /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_reprojected.shp 2000
+../bin/reproject /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape/ 2000
 # buffer:
-./bin/buffer /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_buffered.shp 2
+./bin/buffer /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape/ 2 50
 # filter:
-./bin/filter /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_filtered.shp 'BASIN' 'al'
+./bin/filter /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape/ 'BASIN' 'al'
 # remove bad geometry:
-./bin/removebadgeometry /home/evan/Downloads/input_shape/AL112017_windswath.shp /home/evan/Downloads/output_shape/AL112017_windswath_goodGeometry.shp
+./bin/removebadgeometry /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape/
 ```
