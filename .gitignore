@@ -7,9 +7,6 @@ bin/*
 !bin/if_tar_exists_xzf_rm_mv_assets
 runtime/*.tar
 
-# dev
-dev/*
-
 # hack
 hack/geocloud/*
 !hack/geocloud/.gitkeep
