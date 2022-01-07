@@ -5,6 +5,7 @@
 int main(int argc, char *argv[]) {
 	if(argc != 4) {
 		error("reproject requires three arguments. Input file, output directory, and target projection in EPSG code format", __FILE__, __LINE__);
+		fatalError();	
 	}
 
 	const char *inputFilePath = argv[1];
@@ -17,12 +18,14 @@ int main(int argc, char *argv[]) {
 	long targetProjectionLong = strtol(targetProjection, NULL, 10);
 	if(targetProjectionLong == 0) {
 		error("EPSG code must be an integer", __FILE__, __LINE__);
+		fatalError();
 	}
 	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);
 
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
+		fatalError();
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
 

@@ -5,6 +5,7 @@
 int main(int argc, char *argv[]) {
 	if(argc != 3) {
 		error("remove bad geometry requires two arguments. Input file and output directory", __FILE__, __LINE__);
+		fatalError();
 	}
 
 	const char *inputFilePath = argv[1];
@@ -16,6 +17,7 @@ int main(int argc, char *argv[]) {
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
+		fatalError();
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
 
