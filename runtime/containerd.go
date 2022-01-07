@@ -3,7 +3,10 @@ package runtime
 import (
 	"bytes"
 	"context"
+
+	// embed must be imported to use go:embed
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -47,6 +50,11 @@ var _ geocloud.Runtime = (*ContainerdRuntime)(nil)
 //go:embed "config.toml"
 var toml []byte
 
+// tasks.tar is generated at build time from tasks/ directory
+// run `make save-tasks` to suppress this warning locally
+//go:embed "tasks.tar"
+var tar []byte
+
 func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	var (
 		bin       = string(c.Bin)
@@ -68,7 +76,7 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return err
 	}
 
-	if _, err := os.Stat(config); os.IsNotExist(err) {
+	if _, err := os.Stat(config); errors.Is(err, os.ErrNotExist) {
 		if err := os.MkdirAll(filepath.Dir(config), 0755); err != nil {
 			return err
 		}
@@ -116,6 +124,16 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 					return err
 				}
 
+				log.Debug().Msg("importing images from embedded tarball")
+				images, err := c.client.Import(c.ctx, bytes.NewReader(tar))
+				if err != nil {
+					return err
+				}
+
+				for _, image := range images {
+					log.Info().Msgf("imported image %s", image.Name)
+				}
+
 				close(rdy)
 				<-sgnls
 				return nil
@@ -132,8 +150,10 @@ func (c *ContainerdRuntime) Name() string {
 	return "containerd"
 }
 
-func (c *ContainerdRuntime) IsConfigured() bool {
-	return c != nil && c.ds.IsConfigured() && c.os.IsConfigured()
+func (c *ContainerdRuntime) IsEnabled() bool {
+	// at this point in time, we have no intention of writing
+	// an alternative runtime implementation
+	return true
 }
 
 func (c *ContainerdRuntime) Send(m geocloud.Message) error {
@@ -323,11 +343,19 @@ func (c *ContainerdRuntime) WithWorkdir(w string) geocloud.Runtime {
 }
 
 func (c *ContainerdRuntime) pull(ref string) (containerd.Image, error) {
-	return c.client.Pull(
-		c.ctx, ref,
-		containerd.WithPullUnpack,
-		containerd.WithResolver(*c.resolver),
-	)
+	img, err := c.client.ImageService().Get(c.ctx, ref)
+	if err != nil {
+		img, err = c.client.Fetch(
+			c.ctx, ref,
+			containerd.WithResolver(*c.resolver),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	image := containerd.NewImage(c.client, img)
+	return image, image.Unpack(c.ctx, containerd.DefaultSnapshotter)
 }
 
 func volume(path string) (*dirVolume, error) {

@@ -99,12 +99,15 @@ func (r *RegistryGroup) Resolver() (*remotes.Resolver, error) {
 }
 
 type APIComponent struct {
-	RestAPI *api.GinAPI
+	Tasks map[string]string `long:"task" short:"t" description:"Map of task types to queue IDs"`
+
+	RestAPI *api.GinAPI `group:"Gin" namespace:"gin"`
 
 	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
 
-	// this need not be configured for the APIComponent
-	SQSMessageQueue *messagequeue.SQSMessageQueue
+	// these need not be configured for the APIComponent
+	SQSMessageQueue  *messagequeue.SQSMessageQueue  `group:"SQS" namespace:"sqs"`
+	AMQPMessageQueue *messagequeue.AMQPMessageQueue `group:"AMQP" namespace:"amqp"`
 
 	S3Objectstore *objectstore.S3Objectstore `group:"S3" namespace:"s3"`
 }
@@ -118,29 +121,35 @@ func (a *APIComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) erro
 	}
 
 	ds := a.PostgresDatastore
-	if !ds.IsConfigured() {
-		return fmt.Errorf("no datastore configured")
+	if !ds.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
 	}
-	
+
+	tm := map[geocloud.TaskType]string{}
+	for taskType, id := range a.Tasks {
+		task, err := geocloud.TaskTypeFrom(taskType)
+		if err != nil {
+			return err
+		}
+		tm[task] = id
+	}
 	cfg, _ := GeocloudCmd.AWSGroup.Config()
-	a.SQSMessageQueue = &messagequeue.SQSMessageQueue{}
-	mq, ok := a.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
-	if !ok || !mq.WithDatastore(ds).IsConfigured() {
-		return fmt.Errorf("no messagequeue configured")
+	mq, ok := component.Coalesce(a.SQSMessageQueue.WithConfig(cfg), a.AMQPMessageQueue).(geocloud.MessageQueue)
+	if !ok || mq == nil {
+		return fmt.Errorf("no messagequeue enabled")
 	}
 
 	os, ok := a.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
-	if !ok || !os.IsConfigured() {
-		return fmt.Errorf("no objectstore configured")
+	if !ok || !os.IsEnabled() {
+		return fmt.Errorf("no objectstore enabled")
 	}
 
-	a.RestAPI = &api.GinAPI{}
 	api := a.RestAPI.WithDatastore(ds).WithMessageRecipient(mq).WithObjectstore(os)
-	if !api.IsConfigured() {
-		return fmt.Errorf("no api configured")
+	if !api.IsEnabled() {
+		return fmt.Errorf("no api enabled")
 	}
 
-	cs := component.NewGroup(ds, mq, os, api)
+	cs := component.NewGroup(ds, mq.WithDatastore(ds).WithTaskmap(tm), os, api)
 
 	return cs.Run(signals, ready)
 }
@@ -153,9 +162,7 @@ func (a *APIComponent) Name() string {
 	return "api"
 }
 
-func (a *APIComponent) IsConfigured() bool {
-	// we don't expect to compose this component with other components
-	// so this is a noop for now
+func (a *APIComponent) IsEnabled() bool {
 	return true
 }
 
@@ -169,7 +176,8 @@ type WorkerComponent struct {
 
 	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
 
-	SQSMessageQueue *messagequeue.SQSMessageQueue `group:"SQS" namespace:"sqs"`
+	SQSMessageQueue  *messagequeue.SQSMessageQueue  `group:"SQS" namespace:"sqs"`
+	AMQPMessageQueue *messagequeue.AMQPMessageQueue `group:"AMQP" namespace:"amqp"`
 
 	S3Objectstore *objectstore.S3Objectstore `group:"S3" namespace:"s3"`
 }
@@ -185,20 +193,20 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 	}
 
 	ds := w.PostgresDatastore
-	if !ds.IsConfigured() {
-		return fmt.Errorf("no datastore configured")
+	if !ds.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
 	}
 
 	cfg, _ := GeocloudCmd.AWSGroup.Config()
 	os, ok := w.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
-	if !ok || !os.IsConfigured() {
-		return fmt.Errorf("no objectstore configured")
+	if !ok || !os.IsEnabled() {
+		return fmt.Errorf("no objectstore enabled")
 	}
 
 	resolver, _ := w.RegistryGroup.Resolver()
 	rt := w.ContainerdRuntime.WithResolver(resolver).WithWorkdir(workdir).WithDatastore(ds).WithObjectstore(os)
-	if !rt.IsConfigured() {
-		return fmt.Errorf("no runtime configured")
+	if !rt.IsEnabled() {
+		return fmt.Errorf("no runtime enabled")
 	}
 
 	tasks := make([]geocloud.TaskType, len(w.Tasks))
@@ -209,13 +217,12 @@ func (w *WorkerComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) e
 		}
 	}
 
-	
-	mq, ok := w.SQSMessageQueue.WithConfig(cfg).(geocloud.MessageQueue)
-	if !ok || !mq.WithMessageRecipient(rt).WithDatastore(ds).WithTasks(tasks...).IsConfigured() {
-		return fmt.Errorf("no message queue configured")
+	mq, ok := component.Coalesce(w.SQSMessageQueue.WithConfig(cfg), w.AMQPMessageQueue).(geocloud.MessageQueue)
+	if !ok || mq == nil {
+		return fmt.Errorf("no messagequeue enabled")
 	}
 
-	cs := component.NewGroup(ds, os, rt, mq)
+	cs := component.NewGroup(ds, os, rt, mq.WithDatastore(ds).WithMessageRecipient(rt).WithTasks(tasks...))
 
 	return cs.Run(signals, ready)
 }
@@ -228,9 +235,7 @@ func (w *WorkerComponent) Name() string {
 	return "worker"
 }
 
-func (w *WorkerComponent) IsConfigured() bool {
-	// we don't expect to compose this component with other components
-	// so this is a noop for now
+func (w *WorkerComponent) IsEnabled() bool {
 	return true
 }
 
@@ -240,8 +245,8 @@ type MigrateComponent struct {
 
 func (m *MigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	ds := m.PostgresDatastore
-	if ds == nil {
-		return fmt.Errorf("no datastore configured")
+	if !ds.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
 	}
 	defer close(ready)
 	return ds.Migrate()
@@ -255,8 +260,6 @@ func (m *MigrateComponent) Name() string {
 	return "migrate"
 }
 
-func (m *MigrateComponent) IsConfigured() bool {
-	// we don't expect to compose this component with other components
-	// so this is a noop for now
+func (m *MigrateComponent) IsEnabled() bool {
 	return true
 }

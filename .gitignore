@@ -5,23 +5,34 @@ assets/*
 # bin
 bin/*
 !bin/if_tar_exists_xzf_rm_mv_assets
+runtime/*.tar
 
 # dev
-dev/minio/*
-!dev/minio/geocloud/
-dev/minio/geocloud/*
-!dev/minio/geocloud/.gitkeep
-dev/geocloud/*
-!dev/geocloud/.gitkeep
+dev/*
+
+# hack
+hack/geocloud/*
+!hack/geocloud/.gitkeep
+hack/minio/*
+!hack/minio/geocloud/
+hack/minio/geocloud/*
+!hack/minio/geocloud/.gitkeep
+hack/postgresql/*
+!hack/postgresql/.gitkeep
+hack/rabbitmq/*
+!hack/rabbitmq/etc
+!hack/rabbitmq/lib
+!hack/rabbitmq/log
+hack/rabbitmq/lib/*
+hack/rabbitmq/log/*
+!hack/rabbitmq/lib/.gitkeep
+!hack/rabbitmq/log/.gitkeep
 
 # env
 .env
 
 # macOS
 .DS_Store
-
-# terraform
-.terraform/
 
 # vscode
 .vscode/

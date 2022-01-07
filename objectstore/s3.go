@@ -14,9 +14,10 @@ import (
 )
 
 type S3Objectstore struct {
-	Bucket         string `long:"bucket" description:"S3 bucket"`
+	Enabled        bool   `long:"enabled" description:"Whether or not the S3 objectstore is enabled"`
+	Bucket         string `long:"bucket" env:"GEOCLOUD_S3_BUCKET" description:"S3 bucket"`
 	Prefix         string `long:"prefix" default:"jobs" description:"Prefix to apply to keys"`
-	Endpoint       string `long:"endpoint" description:"Endpoint to target"`
+	Endpoint       string `long:"endpoint" env:"GEOCLOUD_S3_ENDPOINT" description:"Endpoint to target"`
 	DisableSSL     bool   `long:"disable-ssl" description:"Disable SSL"`
 	ForcePathStyle bool   `long:"force-path-style" description:"Force S3 path style"`
 
@@ -59,8 +60,8 @@ func (s *S3Objectstore) Name() string {
 	return "s3"
 }
 
-func (s *S3Objectstore) IsConfigured() bool {
-	return s != nil && s.cfg != nil && s.Bucket != ""
+func (s *S3Objectstore) IsEnabled() bool {
+	return s.Enabled
 }
 
 func (s *S3Objectstore) WithConfig(cfg *aws.Config) geocloud.AWSComponent {

@@ -1,4 +1,4 @@
-ARG base_image=ubuntu:focal
+ARG base_image=ubuntu:jammy
 ARG build_image=golang:latest
 
 FROM ${base_image} AS base_image
@@ -12,8 +12,9 @@ RUN go mod download
 COPY . .
 
 FROM build_image AS build
-ARG ldflags
-RUN go build -ldflags "${ldflags}" -o /assets/geocloud ./cmd/geocloud/
+ARG version=0.0.0
+ARG revision=
+RUN go build -ldflags "-X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Revision=${revision}" -o /assets/geocloud ./cmd/geocloud/
 
 FROM base_image AS install
 COPY bin/ /usr/local/bin/
@@ -37,8 +38,10 @@ FROM base_image AS geocloud
 ENV PATH=/usr/local/geocloud/bin:$PATH
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends ca-certificates
-RUN update-ca-certificates
-RUN apt-get remove -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get remove -y ca-certificates && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+RUN 
 COPY --from=build /assets/ /usr/local/geocloud/bin/
 COPY --from=containerd /assets/bin/ /usr/local/geocloud/bin/
 COPY --from=pigz /assets/ /usr/local/geocloud/bin/
