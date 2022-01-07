@@ -5,6 +5,7 @@
 int main(int argc, char *argv[]) {
 	if(argc != 5) {
 		error("buffer requires four arguments. input file, output directory, buffer distance, and quadrant segment count", __FILE__, __LINE__);
+		fatalError();
 	}
 
 	const char *inputFilePath = argv[1];
@@ -17,6 +18,7 @@ int main(int argc, char *argv[]) {
 	double bufferDistanceDouble = strtod(bufferDistance, NULL);
 	if(bufferDistanceDouble == 0) {
 		error("buffer distance must be a valid double greater than 0", __FILE__, __LINE__);
+		fatalError();
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 
@@ -24,11 +26,13 @@ int main(int argc, char *argv[]) {
 	int quadSegCountInt = atoi(quadSegCount);
 	if(quadSegCountInt == 0) {
 		error("quadrant segment count must be a valid integer greater than 0", __FILE__, __LINE__);
+		fatalError();
 	}
 	
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
+		fatalError();
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
 
