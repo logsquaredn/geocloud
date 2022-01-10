@@ -3,6 +3,7 @@ package datastore
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -301,7 +302,7 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 }
 
 func (p *PostgresDatastore) host() string {
-	delimiter := strings.Index(":", p.Address)
+	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
 		return p.Address
 	}
@@ -309,11 +310,11 @@ func (p *PostgresDatastore) host() string {
 }
 
 func (p *PostgresDatastore) port() int64 {
-	delimiter := strings.Index(":", p.Address)
+	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
 		return 5432
 	}
-	port, _ := strconv.Atoi(p.Address[delimiter:])
+	port, _ := strconv.Atoi(p.Address[delimiter+1:])
 	return int64(port)
 }
 
@@ -367,5 +368,9 @@ func (p *PostgresDatastore) Migrate() error {
 		time.Sleep(p.RetryDelay)
 	}
 
-	return m.Up()
+	if err = m.Up(); !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
 }

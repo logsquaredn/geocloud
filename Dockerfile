@@ -41,7 +41,6 @@ RUN apt-get install -y --no-install-recommends ca-certificates
 RUN apt-get remove -y ca-certificates && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
-RUN 
 COPY --from=build /assets/ /usr/local/geocloud/bin/
 COPY --from=containerd /assets/bin/ /usr/local/geocloud/bin/
 COPY --from=pigz /assets/ /usr/local/geocloud/bin/
