@@ -140,7 +140,7 @@ func (q *AMQPMessageQueue) Send(m geocloud.Message) error {
 }
 
 func (q *AMQPMessageQueue) host() string {
-	delimiter := strings.Index(":", q.Address)
+	delimiter := strings.Index(q.Address, ":")
 	if delimiter < 0 {
 		return q.Address
 	}
@@ -148,11 +148,11 @@ func (q *AMQPMessageQueue) host() string {
 }
 
 func (q *AMQPMessageQueue) port() int64 {
-	delimiter := strings.Index(":", q.Address)
+	delimiter := strings.Index(q.Address, ":")
 	if delimiter < 0 {
 		return 5672
 	}
-	port, _ := strconv.Atoi(q.Address[delimiter:])
+	port, _ := strconv.Atoi(q.Address[delimiter+1:])
 	return int64(port)
 }
 

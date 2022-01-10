@@ -301,7 +301,7 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 }
 
 func (p *PostgresDatastore) host() string {
-	delimiter := strings.Index(":", p.Address)
+	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
 		return p.Address
 	}
@@ -309,11 +309,11 @@ func (p *PostgresDatastore) host() string {
 }
 
 func (p *PostgresDatastore) port() int64 {
-	delimiter := strings.Index(":", p.Address)
+	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
 		return 5432
 	}
-	port, _ := strconv.Atoi(p.Address[delimiter:])
+	port, _ := strconv.Atoi(p.Address[delimiter+1:])
 	return int64(port)
 }
 
