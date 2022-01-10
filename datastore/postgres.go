@@ -3,6 +3,7 @@ package datastore
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -367,5 +368,9 @@ func (p *PostgresDatastore) Migrate() error {
 		time.Sleep(p.RetryDelay)
 	}
 
-	return m.Up()
+	if err = m.Up(); !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
 }
