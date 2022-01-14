@@ -1,0 +1,117 @@
+definitions:
+  geocloud.CreateResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  geocloud.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  geocloud.StatusResponse:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact:
+    email: logsquaredn@gmail.com
+    name: logsquaredn
+    url: https://logsquaredn.io
+  license:
+    name: logsquaredn
+paths:
+  /create/{type}:
+    post:
+      description: |-
+        Create a job
+        <b>buffer</b>
+        filter
+        reproject
+        removebadgeometry
+      parameters:
+      - description: Job Type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a job
+      tags:
+      - create
+  /result:
+    get:
+      parameters:
+      - description: Job ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Download geojson result of job
+      tags:
+      - result
+  /status:
+    get:
+      parameters:
+      - description: Job ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.StatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Get status of a job
+      tags:
+      - status
+swagger: "2.0"

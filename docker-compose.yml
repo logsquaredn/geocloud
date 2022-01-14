@@ -50,7 +50,7 @@ services:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     networks: [api, worker]
     ports: [5672:5672, 15672:15672]
-    volumes: [./hack/rabbitmq/lib/:/var/lib/rabbitmq/, ./hack/rabbitmq/etc/:/etc/rabbitmq/:ro, ./hack/rabbitmq/log/:/var/log/rabbitmq/]
+    volumes: [./hack/rabbitmq/lib/:/var/lib/rabbitmq/, ./hack/rabbitmq/etc/:/etc/rabbitmq/:ro]
   worker:
     build: .
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}

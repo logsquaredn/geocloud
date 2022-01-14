@@ -48,15 +48,19 @@ messagequeue:
 	$(DOCKER-COMPOSE) up -d messagequeue
 
 .PHONY: services
-services: datastore objectstore messagequeue
+services: datastore messagequeue objectstore
 
 .PHONY: build
 build: save-tasks
 	$(DOCKER-COMPOSE) build
 
+.PHONY: migrate
+migrate: build datastore
+	$(DOCKER-COMPOSE) up -d migrate
+
 .PHONY: up
-up: build services
-	$(DOCKER-COMPOSE) up migrate worker api
+up: build migrate services
+	$(DOCKER-COMPOSE) up worker api
 
 .PHONY: restart
 restart:
