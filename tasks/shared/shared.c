@@ -273,7 +273,7 @@ char *getInputGeoFilePath(const char *inputFilePath) {
 
 int zipShp(const char *outputDir) {
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s%s", "zip ", outputDir, "/output.zip ", outputDir, "/*");
+    snprintf(cmd, sizeof(cmd), "%s%s%s%s%s", "zip -j ", outputDir, "/output.zip ", outputDir, "/*");
 
     int zipResult = system(cmd);
     if(zipResult != 0) {
