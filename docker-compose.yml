@@ -8,6 +8,7 @@ networks:
 services:
   api:
     build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
     command: a --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --amqp-enabled --amqp-queue-name=geocloud
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
@@ -24,6 +25,7 @@ services:
       GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   migrate:
     build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
     command: m --postgres-enabled
     networks: [migrate]
     depends_on: [datastore]
@@ -63,5 +65,3 @@ services:
       <<: *environment
       GEOCLOUD_REGISTRY_USERNAME: ${GEOCLOUD_REGISTRY_USERNAME:-}
       GEOCLOUD_REGISTRY_PASSWORD: ${GEOCLOUD_REGISTRY_PASSWORD:-}
-
-volumes: {}

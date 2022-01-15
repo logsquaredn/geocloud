@@ -1,5 +1,5 @@
 ARG base_image=ubuntu:jammy
-ARG build_image=golang:latest
+ARG build_image=golang:1.16
 
 FROM ${base_image} AS base_image
 
