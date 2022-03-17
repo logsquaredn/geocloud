@@ -35,23 +35,12 @@ push-tasks: build-tasks
 save-tasks: build-tasks
 	$(DOCKER) save -o $(TASKS-TAR) $(TASKS-TAGS)
 
-.PHONY: datastore
-datastore:
-	$(DOCKER-COMPOSE) up -d datastore
-
-.PHONY: objectstore
-objectstore:
-	$(DOCKER-COMPOSE) up -d objectstore
-
-.PHONY: messagequeue
-messagequeue:
-	$(DOCKER-COMPOSE) up -d messagequeue
-
-.PHONY: services
-services: datastore messagequeue objectstore
+.PHONY: infra
+infra: save-tasks
+	$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
 
 .PHONY: build
-build: save-tasks
+build:
 	$(DOCKER-COMPOSE) build
 
 .PHONY: migrate
@@ -59,12 +48,13 @@ migrate: build datastore
 	$(DOCKER-COMPOSE) up -d migrate
 
 .PHONY: up
-up: build migrate services
-	$(DOCKER-COMPOSE) up worker api
+up: build
+	$(DOCKER-COMPOSE) up migrate worker api
 
 .PHONY: restart
-restart:
-	$(DOCKER-COMPOSE) restart
+restart: build
+	$(DOCKER-COMPOSE) stop worker api
+	$(DOCKER-COMPOSE) up worker api
 
 .PHONY: scan
 scan: build
@@ -86,7 +76,7 @@ clean: down
 
 .PHONY: prune
 prune: clean
-	$(DOCKER) system prune -a
+	$(DOCKER) system prune --volumes -a
 
 .PHONY: test
 test: save-tasks

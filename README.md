@@ -22,8 +22,12 @@
 > `docker-compose` _requires credentials to be supplied through the shell via environment variables_ `AWS_ACCESS_KEY_ID` _and_ `AWS_SECRET_ACCESS_KEY` _or an environment file_ `.env` _in the root of the repository_
 
 ```sh
+# setup services, build tasks
+make infra
 # run geocloud
 make up
+# restart geocloud
+make restart
 ```
 
 ### Tasks
@@ -56,6 +60,6 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 #### Migrate
 
 ```sh
-# run the migrations
+# run migrations
 geocloud migrate
 ```
