@@ -1,19 +1,15 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {
-            "name": "logsquaredn",
-            "url": "https://logsquaredn.io",
-            "email": "logsquaredn@gmail.com"
-        },
-        "license": {
-            "name": "logsquaredn"
-        }
+        "contact": {}
     },
     "paths": {
         "/create/{type}": {
             "post": {
-                "description": "Create a job\n\u003cb\u003ebuffer\u003c/b\u003e\nfilter\nreproject\nremovebadgeometry",
+                "description": "\u003cb\u003e\u003cu\u003eCreate a job\u003c/u\u003e\u003c/b\u003e\n\u003cb\u003e1. {type}: buffer {params}: distance, quadSegCount\u003c/b\u003e\n\u0026emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u003cbr\u003e\n\u003cb\u003e2. {type}: filter {params}: filterColumn, filterValue\u003c/b\u003e\n\u003cbr\u003e\n\u003cb\u003e3. {type}: reproject {params}: targetProjection\u003c/b\u003e\n\u0026emsp; - targetProjection should be an EPSG code\n\u003cbr\u003e\n\u003cb\u003e4. {type}: removebadgeometry\u003c/b\u003e\n\u0026emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH\n\u003cbr\u003e\nPass the geojson to be processed in the body.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],

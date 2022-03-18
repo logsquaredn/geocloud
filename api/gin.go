@@ -37,7 +37,7 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	docs.SwaggerInfo.Title = "Geocloud"
 	docs.SwaggerInfo.Description = "Geocloud"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "https://geocloud.logsqua.red"
+	docs.SwaggerInfo.Host = "geocloud.logsqua.red"
 	docs.SwaggerInfo.BasePath = "/api/v1/job"
 	docs.SwaggerInfo.Schemes = []string{"https"}
 
@@ -116,12 +116,21 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 }
 
 // @Summary Create a job
-// @Description Create a job
-// @Description <b>buffer</b>
-// @Description filter
-// @Description reproject
-// @Description removebadgeometry
+// @Description <b><u>Create a job</u></b>
+// @Description <b>1. {type}: buffer {params}: distance, quadSegCount</b>
+// @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+// @Description <br>
+// @Description <b>2. {type}: filter {params}: filterColumn, filterValue</b>
+// @Description <br>
+// @Description <b>3. {type}: reproject {params}: targetProjection</b>
+// @Description &emsp; - targetProjection should be an EPSG code
+// @Description <br>
+// @Description <b>4. {type}: removebadgeometry</b>
+// @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
+// @Description <br>
+// @Description Pass the geojson to be processed in the body.
 // @Tags create
+// @Accept json
 // @Produce json
 // @Param type path string true "Job Type"
 // @Success 200 {object} geocloud.CreateResponse

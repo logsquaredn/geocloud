@@ -17,21 +17,26 @@ definitions:
         type: string
     type: object
 info:
-  contact:
-    email: logsquaredn@gmail.com
-    name: logsquaredn
-    url: https://logsquaredn.io
-  license:
-    name: logsquaredn
+  contact: {}
 paths:
   /create/{type}:
     post:
+      consumes:
+      - application/json
       description: |-
-        Create a job
-        <b>buffer</b>
-        filter
-        reproject
-        removebadgeometry
+        <b><u>Create a job</u></b>
+        <b>1. {type}: buffer {params}: distance, quadSegCount</b>
+        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+        <br>
+        <b>2. {type}: filter {params}: filterColumn, filterValue</b>
+        <br>
+        <b>3. {type}: reproject {params}: targetProjection</b>
+        &emsp; - targetProjection should be an EPSG code
+        <br>
+        <b>4. {type}: removebadgeometry</b>
+        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
+        <br>
+        Pass the geojson to be processed in the body.
       parameters:
       - description: Job Type
         in: path
