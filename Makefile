@@ -43,10 +43,6 @@ infra: save-tasks
 build:
 	$(DOCKER-COMPOSE) build
 
-.PHONY: migrate
-migrate: build datastore
-	$(DOCKER-COMPOSE) up -d migrate
-
 .PHONY: up
 up: build
 	$(DOCKER-COMPOSE) up migrate worker api
