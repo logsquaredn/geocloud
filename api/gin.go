@@ -120,7 +120,7 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 // @Description <b>1. {type}: buffer {params}: distance, quadSegCount</b>
 // @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description <br>
-// @Description <b>2. {type}: filter {params}: filterColumn, filterVps -aalue</b>
+// @Description <b>2. {type}: filter {params}: filterColumn, filterValue</b>
 // @Description <br>
 // @Description <b>3. {type}: reproject {params}: targetProjection</b>
 // @Description &emsp; - targetProjection should be an EPSG code
@@ -309,6 +309,11 @@ func (a *GinAPI) result(ctx *gin.Context) {
 	})
 	if err != nil {
 		log.Error().Msgf("/result failed to download result from s3 for id: %s", id)
+		// TODO add message
+		ctx.Status(http.StatusInternalServerError)
+		return
+	} else if len(buf) < 1 {
+		log.Error().Msgf("/result downloaded no data from s3 for id: %s", id)
 		// TODO add message
 		ctx.Status(http.StatusInternalServerError)
 		return
