@@ -120,7 +120,7 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 // @Description <b>1. {type}: buffer {params}: distance, quadSegCount</b>
 // @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description <br>
-// @Description <b>2. {type}: filter {params}: filterColumn, filterValue</b>
+// @Description <b>2. {type}: filter {params}: filterColumn, filterVps -aalue</b>
 // @Description <br>
 // @Description <b>3. {type}: reproject {params}: targetProjection</b>
 // @Description &emsp; - targetProjection should be an EPSG code
@@ -244,7 +244,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 // @Summary Download geojson result of job
 // @Description
 // @Tags result
-// @Produce json
+// @Produce json application/zip
 // @Param id query string true "Job ID"
 // @Success 200
 // @Failure 400 {object} geocloud.ErrorResponse
@@ -286,16 +286,25 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return
 	}
 
+	wantZip := false
+	if ctx.Request.Header.Get("Accept") == "application/zip" {
+		wantZip = true
+	}
 	var buf []byte
 	err = vol.Walk(func(_ string, f geocloud.File, e error) error {
 		if e != nil {
 			return e
 		}
-		if filepath.Ext(f.Name()) == ".geojson" {
+		if wantZip && filepath.Ext(f.Name()) == ".zip" {
+			buf = make([]byte, f.Size())
+			_, e = f.Read(buf)
+			return e
+		} else if !wantZip && filepath.Ext(f.Name()) == ".geojson" {
 			buf = make([]byte, f.Size())
 			_, e = f.Read(buf)
 			return e
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -305,16 +314,20 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return
 	}
 
-	var js map[string]interface{}
-	json.Unmarshal(buf, &js)
-	if js == nil {
-		log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
-		return
-	}
+	if wantZip {
+		ctx.Data(http.StatusOK, "application/zip", buf)
+	} else {
+		var js map[string]interface{}
+		json.Unmarshal(buf, &js)
+		if js == nil {
+			log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
+			// TODO add message
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
 
-	ctx.JSON(http.StatusOK, js)
+		ctx.JSON(http.StatusOK, js)
+	}
 }
 
 func isJSON(jsBytes []byte) bool {
