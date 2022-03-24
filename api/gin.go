@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
@@ -244,7 +245,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 // @Summary Download geojson result of job
 // @Description
 // @Tags result
-// @Produce json application/zip
+// @Produce application/json application/zip
 // @Param id query string true "Job ID"
 // @Success 200
 // @Failure 400 {object} geocloud.ErrorResponse
@@ -287,7 +288,7 @@ func (a *GinAPI) result(ctx *gin.Context) {
 	}
 
 	wantZip := false
-	if ctx.Request.Header.Get("Accept") == "application/zip" {
+	if strings.Contains(ctx.Request.Header.Get("Accept"), "application/zip") {
 		wantZip = true
 	}
 	var buf []byte
@@ -308,7 +309,7 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		log.Error().Msgf("/result failed to download result from s3 for id: %s", id)
+		log.Err(err).Msgf("/result failed to download result from s3 for id: %s", id)
 		// TODO add message
 		ctx.Status(http.StatusInternalServerError)
 		return
