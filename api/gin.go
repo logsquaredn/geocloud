@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
@@ -244,7 +245,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 // @Summary Download geojson result of job
 // @Description
 // @Tags result
-// @Produce json
+// @Produce application/json, application/zip
 // @Param id query string true "Job ID"
 // @Success 200
 // @Failure 400 {object} geocloud.ErrorResponse
@@ -286,35 +287,53 @@ func (a *GinAPI) result(ctx *gin.Context) {
 		return
 	}
 
+	wantZip := false
+	if strings.Contains(ctx.Request.Header.Get("Accept"), "application/zip") {
+		wantZip = true
+	}
 	var buf []byte
 	err = vol.Walk(func(_ string, f geocloud.File, e error) error {
 		if e != nil {
 			return e
 		}
-		if filepath.Ext(f.Name()) == ".geojson" {
+		if wantZip && filepath.Ext(f.Name()) == ".zip" {
+			buf = make([]byte, f.Size())
+			_, e = f.Read(buf)
+			return e
+		} else if !wantZip && filepath.Ext(f.Name()) == ".geojson" {
 			buf = make([]byte, f.Size())
 			_, e = f.Read(buf)
 			return e
 		}
+
 		return nil
 	})
 	if err != nil {
-		log.Error().Msgf("/result failed to download result from s3 for id: %s", id)
+		log.Err(err).Msgf("/result failed to download result from s3 for id: %s", id)
+		// TODO add message
+		ctx.Status(http.StatusInternalServerError)
+		return
+	} else if len(buf) < 1 {
+		log.Error().Msgf("/result downloaded no data from s3 for id: %s", id)
 		// TODO add message
 		ctx.Status(http.StatusInternalServerError)
 		return
 	}
 
-	var js map[string]interface{}
-	json.Unmarshal(buf, &js)
-	if js == nil {
-		log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
-		return
-	}
+	if wantZip {
+		ctx.Data(http.StatusOK, "application/zip", buf)
+	} else {
+		var js map[string]interface{}
+		json.Unmarshal(buf, &js)
+		if js == nil {
+			log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
+			// TODO add message
+			ctx.Status(http.StatusInternalServerError)
+			return
+		}
 
-	ctx.JSON(http.StatusOK, js)
+		ctx.JSON(http.StatusOK, js)
+	}
 }
 
 func isJSON(jsBytes []byte) bool {
