@@ -245,7 +245,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 // @Summary Download geojson result of job
 // @Description
 // @Tags result
-// @Produce application/json application/zip
+// @Produce application/json, application/zip
 // @Param id query string true "Job ID"
 // @Success 200
 // @Failure 400 {object} geocloud.ErrorResponse

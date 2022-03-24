@@ -70,7 +70,8 @@ var doc = `{
         "/result": {
             "get": {
                 "produces": [
-                    "application/json"
+                    "application/json",
+                    " application/zip"
                 ],
                 "tags": [
                     "result"
