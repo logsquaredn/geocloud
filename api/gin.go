@@ -243,7 +243,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 }
 
 // @Summary Download geojson result of job
-// @Description
+// @Description Results are downloadable as geojson or zip. The zip will contain the files that comprise an ESRI shapefile.
 // @Tags result
 // @Produce application/json, application/zip
 // @Param id query string true "Job ID"
