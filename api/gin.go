@@ -164,10 +164,32 @@ func (a *GinAPI) create(ctx *gin.Context) {
 		return
 	}
 
-	jsonData, err := io.ReadAll(ctx.Request.Body)
-	if err != nil || !isJSON(jsonData) {
-		log.Err(err).Msgf("/create received invalid json for type: %s", taskType)
-		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "request body must be valid JSON"})
+	inputData, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		log.Err(err).Msgf("/create failed to read request body for type: %s", taskType)
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to read request body"})
+		return
+	}
+
+	contentType := ctx.Request.Header.Get("Content-Type")
+	var filename string
+	if strings.Contains(contentType, "application/json") {
+		if !isJSON(inputData) {
+			log.Error().Msgf("/create received invalid json for type: %s", taskType)
+			ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "request body must be valid JSON"})
+			return
+		}
+		filename = "input.geojson"
+	} else if strings.Contains(contentType, "application/zip") {
+		if !isZIP(inputData) {
+			log.Error().Msgf("/create received invalid zip for type: %s", taskType)
+			ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "request body must be valid ZIP"})
+			return
+		}
+		filename = "input.zip"
+	} else {
+		log.Error().Msgf("/create received invalid Content-Type: %s for type: %s", contentType, taskType)
+		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: fmt.Sprintf("invalid Content-Type: %s", contentType)})
 		return
 	}
 
@@ -182,8 +204,8 @@ func (a *GinAPI) create(ctx *gin.Context) {
 	}
 
 	vol := &bytesVolume{
-		reader: bytes.NewReader(jsonData),
-		name:   "input.geojson",
+		reader: bytes.NewReader(inputData),
+		name:   filename,
 	}
 	if err = a.os.PutInput(job, vol); err != nil {
 		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.ID())
@@ -339,4 +361,10 @@ func (a *GinAPI) result(ctx *gin.Context) {
 func isJSON(jsBytes []byte) bool {
 	var js map[string]interface{}
 	return json.Unmarshal(jsBytes, &js) == nil
+}
+
+func isZIP(zipBytes []byte) bool {
+	// TODO
+
+	return true
 }
