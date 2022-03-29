@@ -364,7 +364,5 @@ func isJSON(jsBytes []byte) bool {
 }
 
 func isZIP(zipBytes []byte) bool {
-	// TODO
-
-	return true
+	return http.DetectContentType(zipBytes) == "application/zip"
 }
