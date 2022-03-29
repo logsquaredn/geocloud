@@ -82,3 +82,20 @@ test: save-tasks
 vet: save-tasks
 	$(GO) fmt ./...
 	$(GO) vet ./...
+
+
+LOCALHOST-DIR ?= hack/localhost
+LOCALHOST-KEY ?= $(LOCALHOST-DIR)/localhost.key
+LOCALHOST-PEM ?= $(LOCALHOST-DIR)/localhost.pem
+LOCALHOST-CRT ?= $(LOCALHOST-DIR)/localhost.crt
+SSL-CRTS ?= /etc/ssl/certs.pem
+
+.PHONY: crt
+crt:
+	mkdir $(LOCALHOST-DIR) || true
+	openssl req -x509 -nodes -new -sha256 -days 90 -keyout $(LOCALHOST-KEY) -out $(LOCALHOST-PEM) -subj "/C=US/CN=localhost"
+	openssl x509 -outform pem -in $(LOCALHOST-PEM) -out $(LOCALHOST-CRT)
+
+.PHONY: trust
+trust:
+	sudo cat $(LOCALHOST-CRT) >> $(SSL-CRTS)
