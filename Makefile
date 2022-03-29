@@ -99,3 +99,4 @@ crt:
 .PHONY: trust
 trust:
 	sudo cat $(LOCALHOST-CRT) >> $(SSL-CRTS)
+# sudo security add-trusted-cert -d -r trustAsRoot -k /Library/Keychains/System.keychain $(LOCALHOST-CRT)
