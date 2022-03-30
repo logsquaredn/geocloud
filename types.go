@@ -264,3 +264,16 @@ type Runtime interface {
 	WithObjectstore(Objectstore) Runtime
 	WithWorkdir(string) Runtime
 }
+
+type CreateResponse struct {
+	Id string `json:"id"`
+}
+
+type StatusResponse struct {
+	Status string `json:"status"`
+	Error  string `json:"error"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}

@@ -1,0 +1,123 @@
+definitions:
+  geocloud.CreateResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  geocloud.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  geocloud.StatusResponse:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /create/{type}:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        <b><u>Create a job</u></b>
+        <b>1. {type}: buffer {params}: distance, quadSegCount</b>
+        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+        <br>
+        <b>2. {type}: filter {params}: filterColumn, filterValue</b>
+        <br>
+        <b>3. {type}: reproject {params}: targetProjection</b>
+        &emsp; - targetProjection should be an EPSG code
+        <br>
+        <b>4. {type}: removebadgeometry</b>
+        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
+        <br>
+        Pass the geojson to be processed in the body.
+      parameters:
+      - description: Job Type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a job
+      tags:
+      - create
+  /result:
+    get:
+      parameters:
+      - description: Job ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - ' application/zip'
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Download geojson result of job
+      tags:
+      - result
+  /status:
+    get:
+      parameters:
+      - description: Job ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.StatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Get status of a job
+      tags:
+      - status
+swagger: "2.0"

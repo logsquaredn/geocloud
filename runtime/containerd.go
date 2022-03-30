@@ -263,7 +263,7 @@ func (c *ContainerdRuntime) Send(m geocloud.Message) error {
 	inmountdest, outmountdest := "/job/input", "/job/output"
 	args := append([]string{filepath.Join(inmountdest, filename), outmountdest}, j.Args...)
 	mounts := []specs.Mount{
-		c.mount(invol.path, inmountdest, "ro"),
+		c.mount(invol.path, inmountdest, "rw"),
 		c.mount(outvol.path, outmountdest, "rw"),
 	}
 
