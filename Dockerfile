@@ -14,7 +14,7 @@ COPY . .
 FROM build_image AS build
 ARG version=0.0.0
 ARG revision=
-RUN go build -ldflags "-X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Revision=${revision}" -o /assets/geocloud ./cmd/geocloud/
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Revision=${revision}" -o /assets/geocloud ./cmd/geocloud/
 
 FROM base_image AS install
 COPY bin/ /usr/local/bin/
