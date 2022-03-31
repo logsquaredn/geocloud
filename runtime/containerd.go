@@ -35,6 +35,8 @@ type ContainerdRuntime struct {
 	Root      flags.Filename `long:"root" default:"/var/lib/containerd" description:"Containerd root directory"`
 	State     flags.Filename `long:"state" default:"/run/containerd" description:"Containerd state directory"`
 	Namespace string         `long:"namespace" default:"geocloud" description:"Containerd namespace"`
+	Retries   int64          `long:"retries" default:"5" description:"Number of times to retry connecting to Containerd. 0 is infinity"`
+	Timeout   time.Duration  `long:"timeout" description:"Time to wait between attempts at connecting to Containerd. Containerd defaults to 10s"`
 
 	ds geocloud.Datastore
 	os geocloud.Objectstore
@@ -115,24 +117,28 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 		component.NewCmdComponent(cmd),
 		component.NewComponentFunc(
 			func(sgnls <-chan os.Signal, rdy chan<- struct{}) error {
-				var err error
-				c.client, err = containerd.New(
+				var (
+					err error
+					i   int64 = 1
+				)
+				for c.client, err = containerd.New(
 					address,
 					containerd.WithDefaultNamespace(namespace),
-					containerd.WithTimeout(30 * time.Second),
-				)
-				if err != nil {
-					return err
+					containerd.WithTimeout(c.Timeout),
+				); err != nil; i++ {
+					if i >= c.Retries && c.Retries > 0 {
+						return fmt.Errorf("failed to connect to containerd after %d attempts: %w", i, err)
+					}
 				}
 
 				log.Debug().Msg("importing images from embedded tarball")
 				images, err := c.client.Import(c.ctx, bytes.NewReader(tar))
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to import task images (this indicates something wrong with the binary): %w", err)
 				}
 
-				for _, image := range images {
-					log.Info().Msgf("imported image %s", image.Name)
+				for i, image := range images {
+					log.Info().Msgf("imported image #%d '%s'", i, image.Name)
 				}
 
 				close(rdy)
