@@ -119,6 +119,7 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 				c.client, err = containerd.New(
 					address,
 					containerd.WithDefaultNamespace(namespace),
+					containerd.WithTimeout(30 * time.Second),
 				)
 				if err != nil {
 					return err
