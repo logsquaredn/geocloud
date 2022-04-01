@@ -59,13 +59,14 @@ var tar []byte
 
 func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	var (
-		bin       = string(c.Bin)
-		address   = string(c.Address)
-		root      = string(c.Root)
-		state     = string(c.State)
-		config    = string(c.Config)
-		loglevel  = c.Loglevel
-		namespace = c.Namespace
+		bin        = string(c.Bin)
+		address    = string(c.Address)
+		root       = string(c.Root)
+		state      = string(c.State)
+		config     = string(c.Config)
+		loglevel   = c.Loglevel
+		namespace  = c.Namespace
+		components = []geocloud.Component{}
 	)
 
 	c.ctx = namespaces.WithNamespace(context.Background(), namespace)
@@ -78,43 +79,46 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return err
 	}
 
-	if _, err := os.Stat(config); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(filepath.Dir(config), 0755); err != nil {
-			return err
+	if !c.NoRun {
+		if _, err := os.Stat(config); errors.Is(err, os.ErrNotExist) {
+			if err := os.MkdirAll(filepath.Dir(config), 0755); err != nil {
+				return err
+			}
+
+			if err := os.WriteFile(config, toml, 0755); err != nil {
+				return err
+			}
 		}
 
-		if err := os.WriteFile(config, toml, 0755); err != nil {
-			return err
+		if bin == "" {
+			bin = "containerd"
 		}
+		args := []string{}
+		if config != "" {
+			args = append(args, "--config="+config)
+		}
+		if loglevel != "" {
+			args = append(args, "--log-level="+loglevel)
+		}
+		if address != "" {
+			args = append(args, "--address="+address)
+		}
+		if root != "" {
+			args = append(args, "--root="+root)
+		}
+		if state != "" {
+			args = append(args, "--state="+state)
+		}
+
+		cmd := exec.Command(bin, args...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		components = append(components, component.NewCmdComponent(cmd))
 	}
 
-	if bin == "" {
-		bin = "containerd"
-	}
-	args := []string{}
-	if config != "" {
-		args = append(args, "--config="+config)
-	}
-	if loglevel != "" {
-		args = append(args, "--log-level="+loglevel)
-	}
-	if address != "" {
-		args = append(args, "--address="+address)
-	}
-	if root != "" {
-		args = append(args, "--root="+root)
-	}
-	if state != "" {
-		args = append(args, "--state="+state)
-	}
-
-	cmd := exec.Command(bin, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return component.NewNamedGroup(
-		c.Name(),
-		component.NewCmdComponent(cmd),
+	components = append(
+		components,
 		component.NewComponentFunc(
 			func(sgnls <-chan os.Signal, rdy chan<- struct{}) error {
 				var (
@@ -146,7 +150,9 @@ func (c *ContainerdRuntime) Run(signals <-chan os.Signal, ready chan<- struct{})
 				return nil
 			},
 		),
-	).Run(signals, ready)
+	)
+
+	return component.NewNamedGroup(c.Name(), components...).Run(signals, ready)
 }
 
 func (c *ContainerdRuntime) Execute(_ []string) error {
