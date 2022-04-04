@@ -30,20 +30,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if delete_before > end_time {
             println!("Cleaning up Job ID: {}", id);
-            let mut key = "jobs/".to_owned();
-            key.push_str(id);
-            let results = bucket.list(key.clone(), None).await?;
-            for result in results {
-                for item in result.contents {
-                    bucket.delete_object(item.key).await?;
-                }
-            }
+            // let mut key = "jobs/".to_owned();
+            // key.push_str(id);
+            // let results = bucket.list(key.clone(), None).await?;
+            // for result in results {
+            //     for item in result.contents {
+            //         bucket.delete_object(item.key).await?;
+            //     }
+            // }
 
-            bucket.delete_object(key).await?;
+            // bucket.delete_object(key).await?;
 
-            postgres_client.execute("DELETE FROM job WHERE job_id = $1", &[&id]).await?;
+            // postgres_client.execute("DELETE FROM job WHERE job_id = $1", &[&id]).await?;
+
+            dump_row_to_archive(row)?;
         }
     }
+
+    Ok(())
+}
+
+fn dump_row_to_archive(row: tokio_postgres::Row) -> Result<(), Box<dyn std::error::Error>> {
+    let mut csv_row = "".to_owned();
+    let job_id: &str = row.try_get("job_id")?;
+    let task_type: &str = row.try_get("task_type")?;
+    let job_status: &str = row.try_get("job_status")?;
+    let job_error: &str = row.try_get("job_error")?;
+    let start_time: DateTime<Utc> = row.try_get("start_time")?;
+    let end_time: DateTime<Utc> = row.try_get("end_time")?;
+    let job_args: Vec<&str> = row.try_get("job_args")?;
+
+    csv_row.push_str(job_id);
+    csv_row.push_str(",");
+    csv_row.push_str(task_type);
+    csv_row.push_str(",");
+    csv_row.push_str(job_status);
+    csv_row.push_str(",");
+    csv_row.push_str(job_error);
+    csv_row.push_str(",");
+    csv_row.push_str(&start_time.to_rfc3339());
+    csv_row.push_str(",");
+    csv_row.push_str(&end_time.to_rfc3339());
+    csv_row.push_str(",");
+    for arg in job_args {
+        csv_row.push_str(arg);
+        csv_row.push_str("|");
+    }
+
+    println!("{}", csv_row);
 
     Ok(())
 }
