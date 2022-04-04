@@ -83,7 +83,6 @@ vet: save-tasks
 	$(GO) fmt ./...
 	$(GO) vet ./...
 
-
 LOCALHOST-DIR ?= hack/localhost
 LOCALHOST-KEY ?= $(LOCALHOST-DIR)/localhost.key
 LOCALHOST-PEM ?= $(LOCALHOST-DIR)/localhost.pem
