@@ -33,3 +33,6 @@ hack/rabbitmq/log/*
 
 # vscode
 .vscode/
+
+# rust
+janitor/target
