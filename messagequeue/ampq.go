@@ -91,6 +91,8 @@ func (q *AMQPMessageQueue) Run(signals <-chan os.Signal, ready chan<- struct{}) 
 						if err != nil {
 							return err
 						}
+
+						queueNames = append(queueNames, name)
 					}
 				}
 			}
@@ -199,7 +201,7 @@ func (q *AMQPMessageQueue) poll(name string) error {
 		msgs, err := q.ch.Consume(
 			queue.Name,
 			"",
-			true,
+			false,
 			false,
 			false,
 			false,
@@ -213,10 +215,13 @@ func (q *AMQPMessageQueue) poll(name string) error {
 			for msg := range msgs {
 				k, v := "id", string(msg.Body)
 				log.Trace().Str(k, v).Msg("sending message to runtime")
-				err = q.rt.Send(&message{id: v})
-				if err != nil {
-					log.Err(err).Str(k, v).Msgf("runtime failed to process message")
-				}
+				go func(msg amqp.Delivery) {
+					err = q.rt.Send(&message{id: v})
+					if err != nil {
+						log.Err(err).Str(k, v).Msgf("runtime failed to process message")
+					}
+					msg.Ack(true)
+				}(msg)
 			}
 		}()
 	}
