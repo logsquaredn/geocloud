@@ -26,7 +26,7 @@ type PostgresDatastore struct {
 	Address    string        `long:"addr" default:":5432" env:"GEOCLOUD_POSTGRES_ADDRESS" description:"Postgres address"`
 	User       string        `long:"user" default:"geocloud" env:"GEOCLOUD_POSTGRES_USER" description:"Postgres user"`
 	Password   string        `long:"password" env:"GEOCLOUD_POSTGRES_PASSWORD" description:"Postgres password"`
-	SSLMode    string        `long:"ssl-mode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
+	SSLMode    string        `long:"sslmode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
 	Retries    int64         `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres. 0 is infinity"`
 	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
 
