@@ -18,6 +18,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/rs/zerolog v1.25.0
 	github.com/streadway/amqp v1.0.0
+	github.com/stripe/stripe-go/v72 v72.103.0 // indirect
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
 	github.com/swaggo/gin-swagger v1.3.3 // indirect
 	github.com/swaggo/swag v1.7.8 // indirect
