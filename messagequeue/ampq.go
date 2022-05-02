@@ -213,15 +213,16 @@ func (q *AMQPMessageQueue) poll(name string) error {
 
 		go func() {
 			for msg := range msgs {
-				k, v := "id", string(msg.Body)
-				log.Trace().Str(k, v).Msg("sending message to runtime")
-				go func(msg amqp.Delivery) {
+				go func(dTag uint64, body string) {
+					k, v := "id", string(body)
+					log.Trace().Str(k, v).Msg("sending message to runtime")
 					err = q.rt.Send(&message{id: v})
 					if err != nil {
 						log.Err(err).Str(k, v).Msgf("runtime failed to process message")
 					}
-					msg.Ack(true)
-				}(msg)
+
+					q.ch.Ack(dTag, false)
+				}(msg.DeliveryTag, string(msg.Body))
 			}
 		}()
 	}
