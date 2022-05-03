@@ -59,12 +59,21 @@ func init() {
 }
 
 func (a *AWSGroup) Config() (*aws.Config, error) {
+	accessKeyID, secretAccessKey := a.AccessKeyID, a.SecretAccessKey
+	if accessKeyID == "" {
+		accessKeyID = os.Getenv("GEOCLOUD_AWS_ACCESS_KEY_ID")
+	}
+
+	if secretAccessKey == "" {
+		secretAccessKey = os.Getenv("GEOCLOUD_AWS_SECRET_ACCESS_KEY")
+	}
+
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.StaticProvider{
 				Value: credentials.Value{
-					AccessKeyID:     a.AccessKeyID,
-					SecretAccessKey: a.SecretAccessKey,
+					AccessKeyID:     accessKeyID,
+					SecretAccessKey: secretAccessKey,
 				},
 			},
 			&credentials.EnvProvider{},
