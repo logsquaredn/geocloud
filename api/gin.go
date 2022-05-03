@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -107,23 +106,20 @@ func StripeMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
 		customer_id := ctx.GetHeader("customer-id")
-		customer, err := customer.Get(customer_id, nil)
+		_, err := customer.Get(customer_id, nil)
 		if err != nil {
 			if stripeErr, ok := err.(*stripe.Error); ok {
 				if stripeErr.HTTPStatusCode == 404 {
 					log.Err(err).Msgf("customer id: %s was not found when querying Stripe", customer_id)
-					ctx.AbortWithStatusJSON(http.StatusNotFound, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
+					ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
 					return
 				}
 			}
 
 			log.Err(err).Msgf("failed to retrieve customer information from Stripe")
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information from Stripe"})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information"})
 			return
 		}
-
-		ctx.Set("customer-current-balance", fmt.Sprint(customer.Balance))
-		ctx.Set("customer-charge-rate", customer.Metadata["charge_rate"])
 
 		ctx.Next()
 	}
@@ -224,48 +220,10 @@ func (a *GinAPI) create(ctx *gin.Context) {
 		return
 	}
 
-	current_balance, exists := ctx.Get("customer-current-balance")
-	if !exists {
-		log.Error().Msgf("/create could not find customer's current balance")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "error finding current account balance"})
-		return
-	}
-
-	charge_rate, exists := ctx.Get("customer-charge-rate")
-	if !exists {
-		log.Error().Msgf("/create could not find customer's charge rate")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "error finding account charge rate"})
-		return
-	}
-
-	int_current_balance, err := strconv.ParseInt(current_balance.(string), 10, 64)
-	if err != nil {
-		log.Error().Msgf("/create could not get customer's current balance")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "error getting current account balance"})
-		return
-	}
-
-	int_charge_rate, err := strconv.ParseInt(charge_rate.(string), 10, 64)
-	if err != nil {
-		log.Error().Msgf("/create could not get customer's charge rate")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "error getting account charge rate"})
-		return
-	}
-
-	newBalance := int_current_balance + int_charge_rate
-	customerParams := &stripe.CustomerParams{
-		Balance: &newBalance,
-	}
-	_, err = customer.Update(ctx.GetHeader("customer-id"), customerParams)
-	if err != nil {
-		log.Err(err).Msgf("/create failed to update customer's balance")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "error updating account balance"})
-		return
-	}
-
 	job := &geocloud.Job{
-		TaskType: task.Type,
-		Args:     buildJobArgs(ctx, task.Params),
+		TaskType:   task.Type,
+		Args:       buildJobArgs(ctx, task.Params),
+		CustomerID: ctx.GetHeader("customer-id"),
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)

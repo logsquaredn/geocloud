@@ -4,6 +4,7 @@ networks:
   api:
   migrate:
   worker:
+  secretary:
 
 services:
   api:
@@ -30,18 +31,25 @@ services:
     networks: [migrate]
     depends_on: [datastore]
     environment: *environment
+  secretary:
+    build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    command: s --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --work-jobs-before 1h
+    networks: [secretary]
+    depends_on: [datastore, objectstore]
+    environment: *environment
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
     volumes: [./hack/minio:/var/lib/minio]
-    networks: [api, worker]
+    networks: [api, worker, secretary]
     ports: [9000:9000, 9001:9001]
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-geocloud}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   datastore:
     image: postgres:${POSTGRES_TAG:-alpine}
-    networks: [api, migrate, worker]
+    networks: [api, migrate, worker, secretary]
     ports: [5432:5432]
     volumes: [./hack/postgresql/:/var/lib/postgresql/]
     environment:

@@ -43,6 +43,10 @@ infra: save-tasks
 build:
 	$(DOCKER-COMPOSE) build
 
+.PHONY: secretary
+secretary:
+	$(DOCKER-COMPOSE) up --build secretary
+
 .PHONY: up
 up: build
 	$(DOCKER-COMPOSE) up migrate worker api

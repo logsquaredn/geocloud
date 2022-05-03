@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -27,9 +28,10 @@ type Geocloud struct {
 
 	AWSGroup AWSGroup `group:"AWS" namespace:"aws"`
 
-	API     APIComponent     `command:"api" alias:"a" description:"Run the api component"`
-	Migrate MigrateComponent `command:"migrate" alias:"m" description:"Apply database migrations"`
-	Worker  WorkerComponent  `command:"worker" alias:"w" description:"Run the worker component"`
+	API       APIComponent       `command:"api" alias:"a" description:"Run the api component"`
+	Migrate   MigrateComponent   `command:"migrate" alias:"m" description:"Apply database migrations"`
+	Worker    WorkerComponent    `command:"worker" alias:"w" description:"Run the worker component"`
+	Secretary SecretaryComponent `command:"secretary" alias:"s" description:"Run the secretary component"`
 	// Infrastructure InfrastructureComponent `command:"infrastructure" alias:"infra" description:"Apply infrastructure changes"`
 	// Quickstart QuickstartComponent `command:"quickstart" alias:"qs" description:"Run all geocloud components"`
 }
@@ -261,5 +263,55 @@ func (m *MigrateComponent) Name() string {
 }
 
 func (m *MigrateComponent) IsEnabled() bool {
+	return true
+}
+
+type SecretaryComponent struct {
+	PostgresDatastore    *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
+	S3Objectstore        *objectstore.S3Objectstore   `group:"S3" namespace:"s3"`
+	S3ArchiveObjectstore *objectstore.S3Objectstore   `group:"S3Archive" namespace:"s3-archive"`
+	WorkJobsBefore       time.Duration                `long:"work-jobs-before" default:"24h" description:"Work on jobs before this time"`
+}
+
+func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	dataStore := s.PostgresDatastore
+	if !dataStore.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
+	}
+
+	cfg, _ := GeocloudCmd.AWSGroup.Config()
+	objStore, ok := s.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
+	if !ok || !objStore.IsEnabled() {
+		return fmt.Errorf("no objectstore enabled")
+	}
+
+	cs := component.NewGroup(dataStore, objStore, component.NewComponentFunc(
+		func(_ <-chan os.Signal, ready chan<- struct{}) error {
+			jobs, err := dataStore.GetJobs(s.WorkJobsBefore)
+			if err != nil {
+				return err
+			}
+
+			for _, job := range jobs {
+				fmt.Println(job.Id)
+			}
+
+			close(ready)
+			return nil
+		},
+	))
+
+	return cs.Run(signals, ready)
+}
+
+func (s *SecretaryComponent) Execute(_ []string) error {
+	return <-ifrit.Invoke(s).Wait()
+}
+
+func (s *SecretaryComponent) Name() string {
+	return "secretary"
+}
+
+func (s *SecretaryComponent) IsEnabled() bool {
 	return true
 }

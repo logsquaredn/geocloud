@@ -32,12 +32,14 @@ type PostgresDatastore struct {
 
 	db   *sql.DB
 	stmt struct {
-		createJob       *sql.Stmt
-		updateJob       *sql.Stmt
-		getJobByID      *sql.Stmt
-		getTaskByJobID  *sql.Stmt
-		getTaskByType   *sql.Stmt
-		getTasksByTypes *sql.Stmt
+		createJob         *sql.Stmt
+		createCustomerJob *sql.Stmt
+		updateJob         *sql.Stmt
+		getJobByID        *sql.Stmt
+		getJobsBefore     *sql.Stmt
+		getTaskByJobID    *sql.Stmt
+		getTaskByType     *sql.Stmt
+		getTasksByTypes   *sql.Stmt
 	}
 }
 
@@ -67,12 +69,20 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
+	if p.stmt.createCustomerJob, err = p.db.Prepare(createCustomerJobSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
 	if p.stmt.updateJob, err = p.db.Prepare(updateJobSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
 	if p.stmt.getJobByID, err = p.db.Prepare(getJobByIDSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.getJobsBefore, err = p.db.Prepare(getJobsBeforeSQL); err != nil {
+		return fmt.Errorf("failed to prepare statment: %w", err)
 	}
 
 	if p.stmt.getTaskByJobID, err = p.db.Prepare(getTaskByJobIDSQL); err != nil {
@@ -99,6 +109,9 @@ func (p *PostgresDatastore) Execute(_ []string) error {
 
 //go:embed psql/execs/create_job.sql
 var createJobSQL string
+
+//go:embed psql/execs/create_customer_job.sql
+var createCustomerJobSQL string
 
 func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
@@ -131,6 +144,13 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	}
 
 	j.Status, err = geocloud.JobStatusFrom(jobStatus)
+	if err != nil {
+		return j, err
+	}
+
+	err = p.stmt.createCustomerJob.QueryRow(
+		id, j.CustomerID,
+	).Scan(&j.CustomerID)
 	if err != nil {
 		return j, err
 	}
@@ -221,6 +241,57 @@ func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	}
 
 	return j, nil
+}
+
+//go:embed psql/queries/get_jobs_before.sql
+var getJobsBeforeSQL string
+
+func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
+	before_timestamp := time.Now().Add(-before)
+	rows, err := p.stmt.getJobsBefore.Query(before_timestamp)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jobs []*geocloud.Job
+
+	for rows.Next() {
+		var (
+			j         = &geocloud.Job{}
+			jobErr    sql.NullString
+			jobStatus string
+			endTime   sql.NullTime
+			taskType  string
+		)
+
+		err = rows.Scan(
+			&j.Id, &taskType,
+			&jobStatus, &jobErr,
+			&j.StartTime, &endTime,
+			pq.Array(&j.Args),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		j.Err = fmt.Errorf(jobErr.String)
+		j.EndTime = endTime.Time
+
+		j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+		if err != nil {
+			return nil, err
+		}
+
+		j.Status, err = geocloud.JobStatusFrom(jobStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, j)
+	}
+
+	return jobs, nil
 }
 
 //go:embed psql/queries/get_task_by_job_id.sql
@@ -324,8 +395,10 @@ func (p *PostgresDatastore) connectionString() string {
 
 func (p *PostgresDatastore) close() error {
 	defer p.stmt.createJob.Close()
+	defer p.stmt.createCustomerJob.Close()
 	defer p.stmt.updateJob.Close()
 	defer p.stmt.getJobByID.Close()
+	defer p.stmt.getJobsBefore.Close()
 	defer p.stmt.getTaskByJobID.Close()
 	defer p.stmt.getTaskByType.Close()
 	defer p.stmt.getTasksByTypes.Close()
