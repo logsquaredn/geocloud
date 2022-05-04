@@ -292,8 +292,9 @@ func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}
 				return err
 			}
 
-			for _, job := range jobs {
-				fmt.Println(job.Id)
+			for _, j := range jobs {
+				fmt.Println(j.Id)
+				fmt.Println(j.CustomerID)
 			}
 
 			close(ready)

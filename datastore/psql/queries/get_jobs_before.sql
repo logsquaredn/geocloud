@@ -1,1 +1,4 @@
-SELECT job_id, task_type, job_status, job_error, start_time, end_time, job_args FROM job where end_time < $1;
+SELECT j.job_id, j.task_type, j.job_status, j.job_error, j.start_time, j.end_time, j.job_args, c.customer_id 
+FROM job j
+inner join customer c on j.job_id = c.job_id
+where j.end_time < $1;

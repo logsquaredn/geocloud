@@ -161,3 +161,30 @@ func (s *S3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 		Objects: objs,
 	})
 }
+
+func (s *S3Objectstore) DeleteRecursive(bucket string, prefix string) error {
+	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
+		Bucket: &s.Bucket,
+		Prefix: &prefix,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, s3Obj := range o.Contents {
+		_, err = s.svc.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: &s.Bucket,
+			Key:    s3Obj.Key,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	s.svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: &s.Bucket,
+		Key:    &prefix,
+	})
+
+	return nil
+}
