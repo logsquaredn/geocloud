@@ -40,7 +40,7 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	docs.SwaggerInfo.Title = "Geocloud"
 	docs.SwaggerInfo.Description = "Geocloud"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "logsquaredn.io"
+	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
 	docs.SwaggerInfo.BasePath = "/api/v1/job"
 	docs.SwaggerInfo.Schemes = []string{"https"}
 
