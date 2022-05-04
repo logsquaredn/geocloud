@@ -31,11 +31,16 @@ push-tasks: build-tasks
 tasks save-tasks: build-tasks
 	@$(DOCKER) save -o $(TASKS-TAR) $(TASKS-TAGS)
 
-.PHONY: infra infrastructure
-infra infrastructure:
+.PHONY: services
+services:
 	@$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
-	@sleep 2
+
+.PHONY: migrate
+migrate:
 	@$(DOCKER-COMPOSE) up --build migrate
+
+.PHONY: infra infrastructure
+infra infrastructure: services sleep migrate
 
 .PHONY: up
 up:
@@ -80,3 +85,7 @@ test: save-tasks
 vet: save-tasks
 	@$(GO) fmt ./...
 	@$(GO) vet ./...
+
+.PHONY: sleep
+sleep:
+	@sleep 2
