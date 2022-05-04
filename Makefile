@@ -35,8 +35,8 @@ tasks save-tasks: build-tasks
 services:
 	@$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
 
-.PHONY: migrate
-migrate:
+.PHONY: migrate migrations
+migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
 
 .PHONY: infra infrastructure
