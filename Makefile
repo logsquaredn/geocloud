@@ -16,42 +16,44 @@ TASKS-DIR ?= tasks
 
 GCC-ARGS ?= -Wall
 
+.PHONY: fallthrough
+fallthrough: save-tasks infra up
+
 .PHONY: build-tasks
 build-tasks:
-	@$(DOCKER-COMPOSE) -f tasks/docker-compose.yml build
-
-.PHONY: build-tasks-c
-build-tasks-c:
-	@$(GCC) $(GCC-ARGS) $(TASKS-DIR)/buffer/buffer.c $(TASKS-DIR)/shared/shared.c -l gdal -o $(BIN)/buffer
-	@$(GCC) $(GCC-ARGS) $(TASKS-DIR)/filter/filter.c $(TASKS-DIR)/shared/shared.c -l gdal -o $(BIN)/filter
-	@$(GCC) $(GCC-ARGS) $(TASKS-DIR)/reproject/reproject.c $(TASKS-DIR)/shared/shared.c -l gdal -o $(BIN)/reproject
-	@$(GCC) $(GCC-ARGS) $(TASKS-DIR)/badGeometry/removeBadGeometry.c $(TASKS-DIR)/shared/shared.c -l gdal -o $(BIN)/removebadgeometry
+	@$(DOCKER-COMPOSE) -f $(TASKS-DIR)/docker-compose.yml build
 
 .PHONY: push-tasks
 push-tasks: build-tasks
-	@$(DOCKER-COMPOSE) -f tasks/docker-compose.yml push
+	@$(DOCKER-COMPOSE) -f $(TASKS-DIR)/docker-compose.yml push
 
-.PHONY: save-tasks
-save-tasks: build-tasks
+.PHONY: tasks save-tasks
+tasks save-tasks: build-tasks
 	@$(DOCKER) save -o $(TASKS-TAR) $(TASKS-TAGS)
 
-.PHONY: infra
-infra: save-tasks
+.PHONY: services
+services:
 	@$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
-	@$(DOCKER-COMPOSE) run migrate
+
+.PHONY: migrate migrations
+migrate migrations:
+	@$(DOCKER-COMPOSE) up --build migrate
+
+.PHONY: infra infrastructure
+infra infrastructure: services sleep migrate
+
+.PHONY: up
+up:
+	@$(DOCKER-COMPOSE) up --build worker api
+
+.PHONY: restart
+restart:
+	@$(DOCKER-COMPOSE) stop worker api
+	@$(DOCKER-COMPOSE) up --build worker api
 
 .PHONY: build
 build:
 	@$(DOCKER-COMPOSE) build
-
-.PHONY: up
-up: build
-	@$(DOCKER-COMPOSE) up worker api
-
-.PHONY: restart
-restart: build
-	@$(DOCKER-COMPOSE) stop worker api
-	@$(DOCKER-COMPOSE) up worker api
 
 .PHONY: scan
 scan: build
@@ -83,3 +85,7 @@ test: save-tasks
 vet: save-tasks
 	@$(GO) fmt ./...
 	@$(GO) vet ./...
+
+.PHONY: sleep
+sleep:
+	@sleep 2
