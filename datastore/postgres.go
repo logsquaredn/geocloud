@@ -14,6 +14,7 @@ import (
 	// postgres must be imported to inject the postgres driver
 	// into the database/sql module
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -41,6 +42,7 @@ type PostgresDatastore struct {
 		getTaskByJobID           *sql.Stmt
 		getTaskByType            *sql.Stmt
 		getTasksByTypes          *sql.Stmt
+		getCustomerByCustomerID  *sql.Stmt
 	}
 }
 
@@ -100,6 +102,10 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 
 	if p.stmt.getTasksByTypes, err = p.db.Prepare(getTasksByTypesSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.getCustomerByCustomerID, err = p.db.Prepare(getCustomerByCustomerIDSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement; %w", err)
 	}
 
 	defer p.close()
@@ -390,6 +396,19 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 	return
 }
 
+//go:embed psql/queries/get_customer_by_customer_id.sql
+var getCustomerByCustomerIDSQL string
+
+func (p *PostgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer, error) {
+	c := &geocloud.Customer{}
+	err := p.stmt.getCustomerByCustomerID.QueryRow(customer_id).Scan(&c.Id, &c.Name)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
 func (p *PostgresDatastore) host() string {
 	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
@@ -436,11 +455,20 @@ func (p *PostgresDatastore) WithDB(db *sql.DB) *PostgresDatastore {
 	return p
 }
 
-//go:embed psql/migrations/*.up.sql
-var migrations embed.FS
+//go:embed psql/coremigrations/*.up.sql
+var coremigrations embed.FS
 
-func (p *PostgresDatastore) Migrate() error {
-	src, err := iofs.New(migrations, "psql/migrations")
+//go:embed psql/externalmigrations/*.up.sql
+var externalmigrations embed.FS
+
+func (p *PostgresDatastore) Migrate(folder_name string) error {
+	var src source.Driver
+	var err error
+	if strings.Contains(folder_name, "core") {
+		src, err = iofs.New(coremigrations, fmt.Sprintf("psql/%s", folder_name))
+	} else {
+		src, err = iofs.New(externalmigrations, fmt.Sprintf("psql/%s", folder_name))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to read migrations: %w", err)
 	}
@@ -450,7 +478,7 @@ func (p *PostgresDatastore) Migrate() error {
 		i int64 = 1
 	)
 	for m, err = migrate.NewWithSourceInstance(
-		"migrations", src,
+		folder_name, src,
 		p.connectionString(),
 	); err != nil; i++ {
 		if i >= p.Retries && p.Retries > 0 {

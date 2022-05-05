@@ -31,10 +31,11 @@ type Geocloud struct {
 
 	AWSGroup AWSGroup `group:"AWS" namespace:"aws"`
 
-	API       APIComponent       `command:"api" alias:"a" description:"Run the api component"`
-	Migrate   MigrateComponent   `command:"migrate" alias:"m" description:"Apply database migrations"`
-	Worker    WorkerComponent    `command:"worker" alias:"w" description:"Run the worker component"`
-	Secretary SecretaryComponent `command:"secretary" alias:"s" description:"Run the secretary component"`
+	API             APIComponent             `command:"api" alias:"a" description:"Run the api component"`
+	CoreMigrate     CoreMigrateComponent     `command:"coremigrate" alias:"cm" description:"Apply core database migrations"`
+	ExternalMigrate ExternalMigrateComponent `command:"externalmigrate" alias:"em" description:"Apply external database migrations"`
+	Worker          WorkerComponent          `command:"worker" alias:"w" description:"Run the worker component"`
+	Secretary       SecretaryComponent       `command:"secretary" alias:"s" description:"Run the secretary component"`
 	// Infrastructure InfrastructureComponent `command:"infrastructure" alias:"infra" description:"Apply infrastructure changes"`
 	// Quickstart QuickstartComponent `command:"quickstart" alias:"qs" description:"Run all geocloud components"`
 }
@@ -253,28 +254,53 @@ func (w *WorkerComponent) IsEnabled() bool {
 	return true
 }
 
-type MigrateComponent struct {
+type CoreMigrateComponent struct {
 	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
 }
 
-func (m *MigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+func (m *CoreMigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	ds := m.PostgresDatastore
 	if !ds.IsEnabled() {
 		return fmt.Errorf("no datastore enabled")
 	}
 	defer close(ready)
-	return ds.Migrate()
+	return ds.Migrate("coremigrations")
 }
 
-func (m *MigrateComponent) Execute(_ []string) error {
+func (m *CoreMigrateComponent) Execute(_ []string) error {
 	return <-ifrit.Invoke(m).Wait()
 }
 
-func (m *MigrateComponent) Name() string {
-	return "migrate"
+func (m *CoreMigrateComponent) Name() string {
+	return "coremigrate"
 }
 
-func (m *MigrateComponent) IsEnabled() bool {
+func (m *CoreMigrateComponent) IsEnabled() bool {
+	return true
+}
+
+type ExternalMigrateComponent struct {
+	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
+}
+
+func (m *ExternalMigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	ds := m.PostgresDatastore
+	if !ds.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
+	}
+	defer close(ready)
+	return ds.Migrate("externalmigrations")
+}
+
+func (m *ExternalMigrateComponent) Execute(_ []string) error {
+	return <-ifrit.Invoke(m).Wait()
+}
+
+func (m *ExternalMigrateComponent) Name() string {
+	return "externalmigrate"
+}
+
+func (m *ExternalMigrateComponent) IsEnabled() bool {
 	return true
 }
 
@@ -286,52 +312,49 @@ type SecretaryComponent struct {
 }
 
 func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	dataStore := s.PostgresDatastore
-	if !dataStore.IsEnabled() {
+	d := s.PostgresDatastore
+	if !d.IsEnabled() {
 		return fmt.Errorf("no datastore enabled")
 	}
 
 	cfg, _ := GeocloudCmd.AWSGroup.Config()
-	objStore, ok := s.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
-	if !ok || !objStore.IsEnabled() {
+	o, ok := s.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
+	if !ok || !o.IsEnabled() {
 		return fmt.Errorf("no objectstore enabled")
 	}
 
-	cs := component.NewGroup(dataStore, objStore, component.NewComponentFunc(
+	cs := component.NewGroup(d, o, component.NewComponentFunc(
 		func(_ <-chan os.Signal, ready chan<- struct{}) error {
-			jobs, err := dataStore.GetJobs(s.WorkJobsBefore)
+			stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
+			jobs, err := d.GetJobs(s.WorkJobsBefore)
 			if err != nil {
 				return err
 			}
 
 			for _, j := range jobs {
-				fmt.Println(j.Id)
-				fmt.Println(j.CustomerID)
-
-				stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
-				cus, err := customer.Get(j.CustomerID, nil)
+				c, err := customer.Get(j.CustomerID, nil)
 				if err != nil {
 					return err
 				}
 
-				charge_rate, err := strconv.ParseInt(cus.Metadata["charge_rate"], 10, 64)
+				charge_rate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 				if err != nil {
 					return err
 				}
-				updatedBalance := cus.Balance + charge_rate
+				update_balance := c.Balance + charge_rate
 				_, err = customer.Update(j.CustomerID, &stripe.CustomerParams{
-					Balance: &updatedBalance,
+					Balance: &update_balance,
 				})
 				if err != nil {
 					return err
 				}
 
-				err = objStore.DeleteRecursive(fmt.Sprintf("jobs/%s", j.Id))
+				err = o.DeleteRecursive(fmt.Sprintf("jobs/%s", j.Id))
 				if err != nil {
 					return err
 				}
 
-				err = dataStore.DeleteJob(j)
+				err = d.DeleteJob(j)
 				if err != nil {
 					return err
 				}

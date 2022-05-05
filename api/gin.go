@@ -15,8 +15,6 @@ import (
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/docs"
 	"github.com/rs/zerolog/log"
-	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/customer"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"github.com/tedsuo/ifrit"
@@ -46,7 +44,7 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	router := gin.Default()
 
-	router.Use(StripeMiddleware())
+	router.Use(StripeMiddleware(a))
 
 	v1Job := router.Group("/api/v1/job")
 	{
@@ -102,21 +100,18 @@ func (a *GinAPI) WithMessageRecipient(mq geocloud.MessageRecipient) geocloud.API
 	return a
 }
 
-func StripeMiddleware() gin.HandlerFunc {
+func StripeMiddleware(a *GinAPI) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
 		customer_id := ctx.GetHeader("customer-id")
-		_, err := customer.Get(customer_id, nil)
+		_, err := a.ds.GetCustomer(customer_id)
 		if err != nil {
-			if stripeErr, ok := err.(*stripe.Error); ok {
-				if stripeErr.HTTPStatusCode == 404 {
-					log.Err(err).Msgf("customer id: %s was not found when querying Stripe", customer_id)
-					ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
-					return
-				}
+			if err == sql.ErrNoRows {
+				log.Err(err).Msgf("header 'customer-id' must be a valid customer ID")
+				ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
+				return
 			}
 
-			log.Err(err).Msgf("failed to retrieve customer information from Stripe")
+			log.Err(err).Msgf("failed to retrieve customer information")
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information"})
 			return
 		}

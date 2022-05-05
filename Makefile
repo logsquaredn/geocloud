@@ -37,7 +37,7 @@ services:
 
 .PHONY: migrate migrations
 migrate migrations:
-	@$(DOCKER-COMPOSE) up --build migrate
+	@$(DOCKER-COMPOSE) up --build coremigrate externalmigrate
 
 .PHONY: infra infrastructure
 infra infrastructure: services sleep migrate

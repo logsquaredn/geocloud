@@ -1,0 +1,1 @@
+select customer_id, customer_name from customer where customer_id = $1;

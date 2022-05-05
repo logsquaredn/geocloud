@@ -113,6 +113,11 @@ func (j *Job) ID() string {
 	return j.Id
 }
 
+type Customer struct {
+	Id   string
+	Name string
+}
+
 // File ...
 type File interface {
 	io.Reader
@@ -203,10 +208,11 @@ type Datastore interface {
 	GetTaskByJobID(Message) (*Task, error)
 	GetTask(TaskType) (*Task, error)
 	GetTasks(...TaskType) ([]*Task, error)
+	GetCustomer(string) (*Customer, error)
 	GetJob(Message) (*Job, error)
 	GetJobs(time.Duration) ([]*Job, error)
 	DeleteJob(*Job) error
-	Migrate() error
+	Migrate(string) error
 }
 
 // Objectstore ...

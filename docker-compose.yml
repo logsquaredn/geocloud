@@ -2,7 +2,8 @@ version: '3.4'
 
 networks:
   api:
-  migrate:
+  coremigrate:
+  externalmigrate:
   worker:
   secretary:
 
@@ -14,7 +15,7 @@ services:
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
     ports: [8080:8080]
-    depends_on: &depends_on [datastore, messagequeue, migrate, objectstore]
+    depends_on: &depends_on [datastore, messagequeue, coremigrate, externalmigrate, objectstore]
     environment: &environment
       GEOCLOUD_POSTGRES_ADDRESS: datastore
       GEOCLOUD_POSTGRES_PASSWORD: geocloud
@@ -24,11 +25,18 @@ services:
       GEOCLOUD_AMQP_PASSWORD: geocloud
       GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
       GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
-  migrate:
+  coremigrate:
     build: .
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: m --postgres-enabled
-    networks: [migrate]
+    command: cm --postgres-enabled
+    networks: [coremigrate]
+    depends_on: [datastore]
+    environment: *environment
+  externalmigrate:
+    build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    command: em --postgres-enabled
+    networks: [externalmigrate]
     depends_on: [datastore]
     environment: *environment
   secretary:
@@ -49,7 +57,7 @@ services:
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   datastore:
     image: postgres:${POSTGRES_TAG:-alpine}
-    networks: [api, migrate, worker, secretary]
+    networks: [api, coremigrate, externalmigrate, worker, secretary]
     ports: [5432:5432]
     volumes: [./hack/postgresql/:/var/lib/postgresql/]
     environment:
