@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/logsquaredn/geocloud/runtime"
 	"github.com/rs/zerolog"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 	"github.com/tedsuo/ifrit"
 )
 
@@ -304,6 +307,34 @@ func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}
 			for _, j := range jobs {
 				fmt.Println(j.Id)
 				fmt.Println(j.CustomerID)
+
+				stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
+				cus, err := customer.Get(j.CustomerID, nil)
+				if err != nil {
+					return err
+				}
+
+				charge_rate, err := strconv.ParseInt(cus.Metadata["charge_rate"], 10, 64)
+				if err != nil {
+					return err
+				}
+				updatedBalance := cus.Balance + charge_rate
+				_, err = customer.Update(j.CustomerID, &stripe.CustomerParams{
+					Balance: &updatedBalance,
+				})
+				if err != nil {
+					return err
+				}
+
+				err = objStore.DeleteRecursive(fmt.Sprintf("jobs/%s", j.Id))
+				if err != nil {
+					return err
+				}
+
+				err = dataStore.DeleteJob(j)
+				if err != nil {
+					return err
+				}
 			}
 
 			close(ready)

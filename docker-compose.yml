@@ -34,7 +34,7 @@ services:
   secretary:
     build: .
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: s --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --work-jobs-before 1h
+    command: s --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --work-jobs-before 1s
     networks: [secretary]
     depends_on: [datastore, objectstore]
     environment: *environment

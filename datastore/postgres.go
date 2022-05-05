@@ -32,14 +32,15 @@ type PostgresDatastore struct {
 
 	db   *sql.DB
 	stmt struct {
-		createJob         *sql.Stmt
-		createCustomerJob *sql.Stmt
-		updateJob         *sql.Stmt
-		getJobByID        *sql.Stmt
-		getJobsBefore     *sql.Stmt
-		getTaskByJobID    *sql.Stmt
-		getTaskByType     *sql.Stmt
-		getTasksByTypes   *sql.Stmt
+		createJob                *sql.Stmt
+		createJobCustomerMapping *sql.Stmt
+		updateJob                *sql.Stmt
+		getJobByID               *sql.Stmt
+		getJobsBefore            *sql.Stmt
+		deleteJob                *sql.Stmt
+		getTaskByJobID           *sql.Stmt
+		getTaskByType            *sql.Stmt
+		getTasksByTypes          *sql.Stmt
 	}
 }
 
@@ -69,7 +70,7 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if p.stmt.createCustomerJob, err = p.db.Prepare(createCustomerJobSQL); err != nil {
+	if p.stmt.createJobCustomerMapping, err = p.db.Prepare(createJobCustomerMappingSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
@@ -82,7 +83,11 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 	}
 
 	if p.stmt.getJobsBefore, err = p.db.Prepare(getJobsBeforeSQL); err != nil {
-		return fmt.Errorf("failed to prepare statment: %w", err)
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.deleteJob, err = p.db.Prepare(deleteJobSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
 	if p.stmt.getTaskByJobID, err = p.db.Prepare(getTaskByJobIDSQL); err != nil {
@@ -110,8 +115,8 @@ func (p *PostgresDatastore) Execute(_ []string) error {
 //go:embed psql/execs/create_job.sql
 var createJobSQL string
 
-//go:embed psql/execs/create_customer_job.sql
-var createCustomerJobSQL string
+//go:embed psql/execs/create_job_customer_mapping.sql
+var createJobCustomerMappingSQL string
 
 func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
@@ -148,7 +153,7 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		return j, err
 	}
 
-	err = p.stmt.createCustomerJob.QueryRow(
+	err = p.stmt.createJobCustomerMapping.QueryRow(
 		id, j.CustomerID,
 	).Scan(&j.CustomerID)
 	if err != nil {
@@ -295,6 +300,18 @@ func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 	return jobs, nil
 }
 
+//go:embed psql/execs/delete_job.sql
+var deleteJobSQL string
+
+func (p *PostgresDatastore) DeleteJob(j *geocloud.Job) error {
+	_, err := p.stmt.deleteJob.Exec(j.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 //go:embed psql/queries/get_task_by_job_id.sql
 var getTaskByJobIDSQL string
 
@@ -396,7 +413,7 @@ func (p *PostgresDatastore) connectionString() string {
 
 func (p *PostgresDatastore) close() error {
 	defer p.stmt.createJob.Close()
-	defer p.stmt.createCustomerJob.Close()
+	defer p.stmt.createJobCustomerMapping.Close()
 	defer p.stmt.updateJob.Close()
 	defer p.stmt.getJobByID.Close()
 	defer p.stmt.getJobsBefore.Close()

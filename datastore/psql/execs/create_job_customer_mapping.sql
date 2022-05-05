@@ -1,4 +1,4 @@
-INSERT INTO customer (
+INSERT INTO job_customer_mapping (
     job_id,
     customer_id
 ) VALUES (

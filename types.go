@@ -204,6 +204,8 @@ type Datastore interface {
 	GetTask(TaskType) (*Task, error)
 	GetTasks(...TaskType) ([]*Task, error)
 	GetJob(Message) (*Job, error)
+	GetJobs(time.Duration) ([]*Job, error)
+	DeleteJob(*Job) error
 	Migrate() error
 }
 
@@ -215,6 +217,7 @@ type Objectstore interface {
 	GetOutput(Message) (Volume, error)
 	PutInput(Message, Volume) error
 	PutOutput(Message, Volume) error
+	DeleteRecursive(string) error
 }
 
 // MessageRecipient ...
