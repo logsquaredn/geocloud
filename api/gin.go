@@ -44,7 +44,7 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	router := gin.Default()
 
-	router.Use(StripeMiddleware(a))
+	router.Use(CustomerMiddleware(a))
 
 	v1Job := router.Group("/api/v1/job")
 	{
@@ -100,7 +100,7 @@ func (a *GinAPI) WithMessageRecipient(mq geocloud.MessageRecipient) geocloud.API
 	return a
 }
 
-func StripeMiddleware(a *GinAPI) gin.HandlerFunc {
+func CustomerMiddleware(a *GinAPI) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		customer_id := ctx.GetHeader("customer-id")
 		_, err := a.ds.GetCustomer(customer_id)
