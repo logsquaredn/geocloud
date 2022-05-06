@@ -13,7 +13,9 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	// postgres must be imported to inject the postgres driver
 	// into the database/sql module
+
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -32,12 +34,17 @@ type PostgresDatastore struct {
 
 	db   *sql.DB
 	stmt struct {
-		createJob       *sql.Stmt
-		updateJob       *sql.Stmt
-		getJobByID      *sql.Stmt
-		getTaskByJobID  *sql.Stmt
-		getTaskByType   *sql.Stmt
-		getTasksByTypes *sql.Stmt
+		createJob                *sql.Stmt
+		createJobCustomerMapping *sql.Stmt
+		createCustomer           *sql.Stmt
+		updateJob                *sql.Stmt
+		getJobByID               *sql.Stmt
+		getJobsBefore            *sql.Stmt
+		deleteJob                *sql.Stmt
+		getTaskByJobID           *sql.Stmt
+		getTaskByType            *sql.Stmt
+		getTasksByTypes          *sql.Stmt
+		getCustomerByCustomerID  *sql.Stmt
 	}
 }
 
@@ -67,11 +74,27 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
+	if p.stmt.createJobCustomerMapping, err = p.db.Prepare(createJobCustomerMappingSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.createCustomer, err = p.db.Prepare(createCustomerSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
 	if p.stmt.updateJob, err = p.db.Prepare(updateJobSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
 	if p.stmt.getJobByID, err = p.db.Prepare(getJobByIDSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.getJobsBefore, err = p.db.Prepare(getJobsBeforeSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.deleteJob, err = p.db.Prepare(deleteJobSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
@@ -87,6 +110,10 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
+	if p.stmt.getCustomerByCustomerID, err = p.db.Prepare(getCustomerByCustomerIDSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
 	defer p.close()
 	close(ready)
 	<-signals
@@ -99,6 +126,9 @@ func (p *PostgresDatastore) Execute(_ []string) error {
 
 //go:embed psql/execs/create_job.sql
 var createJobSQL string
+
+//go:embed psql/execs/create_job_customer_mapping.sql
+var createJobCustomerMappingSQL string
 
 func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
@@ -131,6 +161,13 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	}
 
 	j.Status, err = geocloud.JobStatusFrom(jobStatus)
+	if err != nil {
+		return j, err
+	}
+
+	err = p.stmt.createJobCustomerMapping.QueryRow(
+		id, j.CustomerID,
+	).Scan(&j.CustomerID)
 	if err != nil {
 		return j, err
 	}
@@ -223,6 +260,70 @@ func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	return j, nil
 }
 
+//go:embed psql/queries/get_jobs_before.sql
+var getJobsBeforeSQL string
+
+func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
+	before_timestamp := time.Now().Add(-before)
+	rows, err := p.stmt.getJobsBefore.Query(before_timestamp)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jobs []*geocloud.Job
+
+	for rows.Next() {
+		var (
+			j         = &geocloud.Job{}
+			jobErr    sql.NullString
+			jobStatus string
+			endTime   sql.NullTime
+			taskType  string
+		)
+
+		err = rows.Scan(
+			&j.Id, &taskType,
+			&jobStatus, &jobErr,
+			&j.StartTime, &endTime,
+			pq.Array(&j.Args),
+			&j.CustomerID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		j.Err = fmt.Errorf(jobErr.String)
+		j.EndTime = endTime.Time
+
+		j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+		if err != nil {
+			return nil, err
+		}
+
+		j.Status, err = geocloud.JobStatusFrom(jobStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, j)
+	}
+
+	return jobs, nil
+}
+
+//go:embed psql/execs/delete_job.sql
+var deleteJobSQL string
+
+func (p *PostgresDatastore) DeleteJob(j *geocloud.Job) error {
+	_, err := p.stmt.deleteJob.Exec(j.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 //go:embed psql/queries/get_task_by_job_id.sql
 var getTaskByJobIDSQL string
 
@@ -301,6 +402,31 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 	return
 }
 
+//go:embed psql/queries/get_customer_by_customer_id.sql
+var getCustomerByCustomerIDSQL string
+
+func (p *PostgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer, error) {
+	c := &geocloud.Customer{}
+	err := p.stmt.getCustomerByCustomerID.QueryRow(customer_id).Scan(&c.Id, &c.Name)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+//go:embed psql/execs/create_customer.sql
+var createCustomerSQL string
+
+func (p *PostgresDatastore) CreateCustomer(customer_id string, customer_name string) error {
+	_, err := p.stmt.createCustomer.Exec(customer_id, customer_name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *PostgresDatastore) host() string {
 	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
@@ -324,8 +450,10 @@ func (p *PostgresDatastore) connectionString() string {
 
 func (p *PostgresDatastore) close() error {
 	defer p.stmt.createJob.Close()
+	defer p.stmt.createJobCustomerMapping.Close()
 	defer p.stmt.updateJob.Close()
 	defer p.stmt.getJobByID.Close()
+	defer p.stmt.getJobsBefore.Close()
 	defer p.stmt.getTaskByJobID.Close()
 	defer p.stmt.getTaskByType.Close()
 	defer p.stmt.getTasksByTypes.Close()
@@ -345,11 +473,20 @@ func (p *PostgresDatastore) WithDB(db *sql.DB) *PostgresDatastore {
 	return p
 }
 
-//go:embed psql/migrations/*.up.sql
-var migrations embed.FS
+//go:embed psql/coremigrations/*.up.sql
+var coremigrations embed.FS
 
-func (p *PostgresDatastore) Migrate() error {
-	src, err := iofs.New(migrations, "psql/migrations")
+//go:embed psql/externalmigrations/*.up.sql
+var externalmigrations embed.FS
+
+func (p *PostgresDatastore) Migrate(folder_name string) error {
+	var src source.Driver
+	var err error
+	if strings.Contains(folder_name, "core") {
+		src, err = iofs.New(coremigrations, fmt.Sprintf("psql/%s", folder_name))
+	} else {
+		src, err = iofs.New(externalmigrations, fmt.Sprintf("psql/%s", folder_name))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to read migrations: %w", err)
 	}
@@ -358,9 +495,10 @@ func (p *PostgresDatastore) Migrate() error {
 		m *migrate.Migrate
 		i int64 = 1
 	)
+
 	for m, err = migrate.NewWithSourceInstance(
-		"migrations", src,
-		p.connectionString(),
+		folder_name, src,
+		fmt.Sprintf("%s&%s%s", p.connectionString(), "x-migrations-table=", folder_name),
 	); err != nil; i++ {
 		if i >= p.Retries && p.Retries > 0 {
 			return fmt.Errorf("failed to apply migrations after %d attempts: %w", i, err)

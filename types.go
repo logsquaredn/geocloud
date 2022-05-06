@@ -96,13 +96,14 @@ func (s JobStatus) String() string {
 
 // Job ...
 type Job struct {
-	Id        string
-	TaskType  TaskType
-	Status    JobStatus
-	Err       error
-	StartTime time.Time
-	EndTime   time.Time
-	Args      []string
+	Id         string
+	TaskType   TaskType
+	Status     JobStatus
+	Err        error
+	StartTime  time.Time
+	EndTime    time.Time
+	Args       []string
+	CustomerID string
 }
 
 var _ Message = (*Job)(nil)
@@ -110,6 +111,11 @@ var _ Message = (*Job)(nil)
 // ID returns a Job's id
 func (j *Job) ID() string {
 	return j.Id
+}
+
+type Customer struct {
+	Id   string
+	Name string
 }
 
 // File ...
@@ -202,8 +208,11 @@ type Datastore interface {
 	GetTaskByJobID(Message) (*Task, error)
 	GetTask(TaskType) (*Task, error)
 	GetTasks(...TaskType) ([]*Task, error)
+	GetCustomer(string) (*Customer, error)
 	GetJob(Message) (*Job, error)
-	Migrate() error
+	GetJobs(time.Duration) ([]*Job, error)
+	DeleteJob(*Job) error
+	Migrate(string) error
 }
 
 // Objectstore ...
@@ -214,6 +223,7 @@ type Objectstore interface {
 	GetOutput(Message) (Volume, error)
 	PutInput(Message, Volume) error
 	PutOutput(Message, Volume) error
+	DeleteRecursive(string) error
 }
 
 // MessageRecipient ...

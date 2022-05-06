@@ -1,0 +1,1 @@
+INSERT INTO customer (customer_id, customer_name) values ($1, $2) ON CONFLICT DO NOTHING;

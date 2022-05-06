@@ -44,6 +44,8 @@ func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 
 	router := gin.Default()
 
+	router.Use(StripeMiddleware(a))
+
 	v1Job := router.Group("/api/v1/job")
 	{
 		v1Job.POST("/create/:type", a.create)
@@ -96,6 +98,26 @@ func (a *GinAPI) WithObjectstore(os geocloud.Objectstore) geocloud.API {
 func (a *GinAPI) WithMessageRecipient(mq geocloud.MessageRecipient) geocloud.API {
 	a.mq = mq
 	return a
+}
+
+func StripeMiddleware(a *GinAPI) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		customer_id := ctx.GetHeader("customer-id")
+		_, err := a.ds.GetCustomer(customer_id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Err(err).Msgf("header 'customer-id' must be a valid customer ID")
+				ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
+				return
+			}
+
+			log.Err(err).Msgf("failed to retrieve customer information")
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information"})
+			return
+		}
+
+		ctx.Next()
+	}
 }
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
@@ -194,8 +216,9 @@ func (a *GinAPI) create(ctx *gin.Context) {
 	}
 
 	job := &geocloud.Job{
-		TaskType: task.Type,
-		Args:     buildJobArgs(ctx, task.Params),
+		TaskType:   task.Type,
+		Args:       buildJobArgs(ctx, task.Params),
+		CustomerID: ctx.GetHeader("customer-id"),
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
@@ -248,7 +271,7 @@ func (a *GinAPI) status(ctx *gin.Context) {
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/status got 0 results querying for id: %s", id)
 		// TODO add message
-		ctx.Status(http.StatusNotFound)
+		ctx.JSON(http.StatusNotFound, &geocloud.ErrorResponse{Error: "query parameter 'id' must be a valid job ID"})
 		return
 	} else if err != nil {
 		log.Err(err).Msgf("/status failed to query for status for id: %s", id)

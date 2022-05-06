@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -18,6 +20,8 @@ import (
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/logsquaredn/geocloud/runtime"
 	"github.com/rs/zerolog"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 	"github.com/tedsuo/ifrit"
 )
 
@@ -27,9 +31,11 @@ type Geocloud struct {
 
 	AWSGroup AWSGroup `group:"AWS" namespace:"aws"`
 
-	API     APIComponent     `command:"api" alias:"a" description:"Run the api component"`
-	Migrate MigrateComponent `command:"migrate" alias:"m" description:"Apply database migrations"`
-	Worker  WorkerComponent  `command:"worker" alias:"w" description:"Run the worker component"`
+	API             APIComponent             `command:"api" alias:"a" description:"Run the api component"`
+	CoreMigrate     CoreMigrateComponent     `command:"coremigrate" alias:"cm" description:"Apply core database migrations"`
+	ExternalMigrate ExternalMigrateComponent `command:"externalmigrate" alias:"em" description:"Apply external database migrations"`
+	Worker          WorkerComponent          `command:"worker" alias:"w" description:"Run the worker component"`
+	Secretary       SecretaryComponent       `command:"secretary" alias:"s" description:"Run the secretary component"`
 	// Infrastructure InfrastructureComponent `command:"infrastructure" alias:"infra" description:"Apply infrastructure changes"`
 	// Quickstart QuickstartComponent `command:"quickstart" alias:"qs" description:"Run all geocloud components"`
 }
@@ -248,27 +254,139 @@ func (w *WorkerComponent) IsEnabled() bool {
 	return true
 }
 
-type MigrateComponent struct {
+type CoreMigrateComponent struct {
 	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
 }
 
-func (m *MigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+func (m *CoreMigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
 	ds := m.PostgresDatastore
 	if !ds.IsEnabled() {
 		return fmt.Errorf("no datastore enabled")
 	}
 	defer close(ready)
-	return ds.Migrate()
+	return ds.Migrate("coremigrations")
 }
 
-func (m *MigrateComponent) Execute(_ []string) error {
+func (m *CoreMigrateComponent) Execute(_ []string) error {
 	return <-ifrit.Invoke(m).Wait()
 }
 
-func (m *MigrateComponent) Name() string {
-	return "migrate"
+func (m *CoreMigrateComponent) Name() string {
+	return "coremigrate"
 }
 
-func (m *MigrateComponent) IsEnabled() bool {
+func (m *CoreMigrateComponent) IsEnabled() bool {
+	return true
+}
+
+type ExternalMigrateComponent struct {
+	PostgresDatastore *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
+}
+
+func (m *ExternalMigrateComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	ds := m.PostgresDatastore
+	if !ds.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
+	}
+	defer close(ready)
+	return ds.Migrate("externalmigrations")
+}
+
+func (m *ExternalMigrateComponent) Execute(_ []string) error {
+	return <-ifrit.Invoke(m).Wait()
+}
+
+func (m *ExternalMigrateComponent) Name() string {
+	return "externalmigrate"
+}
+
+func (m *ExternalMigrateComponent) IsEnabled() bool {
+	return true
+}
+
+type SecretaryComponent struct {
+	PostgresDatastore    *datastore.PostgresDatastore `group:"Postgres" namespace:"postgres"`
+	S3Objectstore        *objectstore.S3Objectstore   `group:"S3" namespace:"s3"`
+	S3ArchiveObjectstore *objectstore.S3Objectstore   `group:"S3Archive" namespace:"s3-archive"`
+	WorkJobsBefore       time.Duration                `long:"work-jobs-before" default:"24h" description:"Work on jobs before this time"`
+	StripeKey            string                       `long:"stripe-key" env:"GEOCLOUD_STRIPE_API_KEY" description:"Stripe API key"`
+}
+
+func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	d := s.PostgresDatastore
+	if !d.IsEnabled() {
+		return fmt.Errorf("no datastore enabled")
+	}
+
+	cfg, _ := GeocloudCmd.AWSGroup.Config()
+	o, ok := s.S3Objectstore.WithConfig(cfg).(geocloud.Objectstore)
+	if !ok || !o.IsEnabled() {
+		return fmt.Errorf("no objectstore enabled")
+	}
+
+	cs := component.NewGroup(d, o, component.NewComponentFunc(
+		func(_ <-chan os.Signal, ready chan<- struct{}) error {
+			stripe.Key = s.StripeKey
+
+			i := customer.List(&stripe.CustomerListParams{})
+			for i.Next() {
+				c := i.Customer()
+				err := d.CreateCustomer(c.ID, c.Name)
+				if err != nil {
+					return err
+				}
+			}
+
+			jobs, err := d.GetJobs(s.WorkJobsBefore)
+			if err != nil {
+				return err
+			}
+
+			for _, j := range jobs {
+				c, err := customer.Get(j.CustomerID, nil)
+				if err != nil {
+					return err
+				}
+
+				charge_rate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
+				if err != nil {
+					return err
+				}
+				update_balance := c.Balance + charge_rate
+				_, err = customer.Update(j.CustomerID, &stripe.CustomerParams{
+					Balance: &update_balance,
+				})
+				if err != nil {
+					return err
+				}
+
+				err = o.DeleteRecursive(fmt.Sprintf("jobs/%s", j.Id))
+				if err != nil {
+					return err
+				}
+
+				err = d.DeleteJob(j)
+				if err != nil {
+					return err
+				}
+			}
+
+			close(ready)
+			return nil
+		},
+	))
+
+	return cs.Run(signals, ready)
+}
+
+func (s *SecretaryComponent) Execute(_ []string) error {
+	return <-ifrit.Invoke(s).Wait()
+}
+
+func (s *SecretaryComponent) Name() string {
+	return "secretary"
+}
+
+func (s *SecretaryComponent) IsEnabled() bool {
 	return true
 }

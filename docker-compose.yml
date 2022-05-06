@@ -2,8 +2,10 @@ version: '3.4'
 
 networks:
   api:
-  migrate:
+  coremigrate:
+  externalmigrate:
   worker:
+  secretary:
 
 services:
   api:
@@ -13,7 +15,7 @@ services:
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
     ports: [8080:8080]
-    depends_on: &depends_on [datastore, messagequeue, migrate, objectstore]
+    depends_on: &depends_on [datastore, messagequeue, coremigrate, externalmigrate, objectstore]
     environment: &environment
       GEOCLOUD_POSTGRES_ADDRESS: datastore
       GEOCLOUD_POSTGRES_PASSWORD: geocloud
@@ -23,25 +25,40 @@ services:
       GEOCLOUD_AMQP_PASSWORD: geocloud
       GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
       GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
-  migrate:
+      GEOCLOUD_STRIPE_API_KEY: ${GEOCLOUD_STRIPE_API_KEY:-geocloud}
+  coremigrate:
     build: .
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: m --postgres-enabled
-    networks: [migrate]
+    command: cm --postgres-enabled
+    networks: [coremigrate]
     depends_on: [datastore]
+    environment: *environment
+  externalmigrate:
+    build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    command: em --postgres-enabled
+    networks: [externalmigrate]
+    depends_on: [datastore, coremigrate]
+    environment: *environment
+  secretary:
+    build: .
+    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    command: s --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --work-jobs-before 1s
+    networks: [secretary]
+    depends_on: [datastore, objectstore]
     environment: *environment
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
     volumes: [./hack/minio:/var/lib/minio]
-    networks: [api, worker]
+    networks: [api, worker, secretary]
     ports: [9000:9000, 9001:9001]
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-geocloud}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   datastore:
     image: postgres:${POSTGRES_TAG:-alpine}
-    networks: [api, migrate, worker]
+    networks: [api, coremigrate, externalmigrate, worker, secretary]
     ports: [5432:5432]
     volumes: [./hack/postgresql/:/var/lib/postgresql/]
     environment:

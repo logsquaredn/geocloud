@@ -37,10 +37,11 @@ services:
 
 .PHONY: migrate migrations
 migrate migrations:
-	@$(DOCKER-COMPOSE) up --build migrate
+	@$(DOCKER-COMPOSE) up --build coremigrate 
+	@$(DOCKER-COMPOSE) up --build externalmigrate
 
 .PHONY: infra infrastructure
-infra infrastructure: services sleep migrate
+infra infrastructure: services sleep migrate secretary
 
 .PHONY: up
 up:
@@ -54,6 +55,10 @@ restart:
 .PHONY: build
 build:
 	@$(DOCKER-COMPOSE) build
+
+.PHONY: secretary
+secretary:
+	$(DOCKER-COMPOSE) up --build secretary
 
 .PHONY: scan
 scan: build
