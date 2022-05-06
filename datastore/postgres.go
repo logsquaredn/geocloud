@@ -13,6 +13,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	// postgres must be imported to inject the postgres driver
 	// into the database/sql module
+
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -35,6 +36,7 @@ type PostgresDatastore struct {
 	stmt struct {
 		createJob                *sql.Stmt
 		createJobCustomerMapping *sql.Stmt
+		createCustomer           *sql.Stmt
 		updateJob                *sql.Stmt
 		getJobByID               *sql.Stmt
 		getJobsBefore            *sql.Stmt
@@ -73,6 +75,10 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 	}
 
 	if p.stmt.createJobCustomerMapping, err = p.db.Prepare(createJobCustomerMappingSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if p.stmt.createCustomer, err = p.db.Prepare(createCustomerSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
@@ -409,6 +415,18 @@ func (p *PostgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer,
 	return c, nil
 }
 
+//go:embed psql/execs/create_customer.sql
+var createCustomerSQL string
+
+func (p *PostgresDatastore) CreateCustomer(customer_id string, customer_name string) error {
+	_, err := p.stmt.createCustomer.Exec(customer_id, customer_name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *PostgresDatastore) host() string {
 	delimiter := strings.Index(p.Address, ":")
 	if delimiter < 0 {
@@ -477,9 +495,10 @@ func (p *PostgresDatastore) Migrate(folder_name string) error {
 		m *migrate.Migrate
 		i int64 = 1
 	)
+
 	for m, err = migrate.NewWithSourceInstance(
 		folder_name, src,
-		p.connectionString(),
+		fmt.Sprintf("%s&%s%s", p.connectionString(), "x-migrations-table=", folder_name),
 	); err != nil; i++ {
 		if i >= p.Retries && p.Retries > 0 {
 			return fmt.Errorf("failed to apply migrations after %d attempts: %w", i, err)

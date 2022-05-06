@@ -309,6 +309,7 @@ type SecretaryComponent struct {
 	S3Objectstore        *objectstore.S3Objectstore   `group:"S3" namespace:"s3"`
 	S3ArchiveObjectstore *objectstore.S3Objectstore   `group:"S3Archive" namespace:"s3-archive"`
 	WorkJobsBefore       time.Duration                `long:"work-jobs-before" default:"24h" description:"Work on jobs before this time"`
+	StripeKey            string                       `long:"stripe-key" env:"GEOCLOUD_STRIPE_API_KEY" description:"Stripe API key"`
 }
 
 func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
@@ -325,7 +326,17 @@ func (s *SecretaryComponent) Run(signals <-chan os.Signal, ready chan<- struct{}
 
 	cs := component.NewGroup(d, o, component.NewComponentFunc(
 		func(_ <-chan os.Signal, ready chan<- struct{}) error {
-			stripe.Key = "sk_test_51KqoGYLGb3vuVHuLyWPwFiDVuOTW5ZJHVFsBq9MroY4TiRTeBtBX8TQIq7JxIa3064M5bnE4AP1YNU7aMMaSE5W500vrRFAzL7"
+			stripe.Key = s.StripeKey
+
+			i := customer.List(&stripe.CustomerListParams{})
+			for i.Next() {
+				c := i.Customer()
+				err := d.CreateCustomer(c.ID, c.Name)
+				if err != nil {
+					return err
+				}
+			}
+
 			jobs, err := d.GetJobs(s.WorkJobsBefore)
 			if err != nil {
 				return err

@@ -25,6 +25,7 @@ services:
       GEOCLOUD_AMQP_PASSWORD: geocloud
       GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
       GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
+      GEOCLOUD_STRIPE_API_KEY: ${GEOCLOUD_STRIPE_API_KEY:-geocloud}
   coremigrate:
     build: .
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
@@ -37,7 +38,7 @@ services:
     image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
     command: em --postgres-enabled
     networks: [externalmigrate]
-    depends_on: [datastore]
+    depends_on: [datastore, coremigrate]
     environment: *environment
   secretary:
     build: .
