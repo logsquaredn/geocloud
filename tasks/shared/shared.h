@@ -25,5 +25,6 @@ char *getInputGeoFilePath(const char *inputFilePath);
 int dumpToGeojson(const char *outputDir);
 int zipShp(const char *outputDir);
 int cleanup(const char *outputDir);
+int splitGeometries(OGRGeometryH[], int, OGRGeometryH);
 
 #endif

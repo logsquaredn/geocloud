@@ -142,6 +142,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 
 	int numberOfLayers = GDALDatasetGetLayerCount(inputDataset);
 	if(numberOfLayers > 0) {
+
 		OGRLayerH inputLayer = GDALDatasetGetLayer(inputDataset, 0);
 		if(inputLayer == NULL) {
 			error("failed to get layer from intput dataset", __FILE__, __LINE__);
@@ -177,6 +178,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 			return 1;
 		}
         gdalHandles->outputFeatureDefn = outputFeatureDefn;
+
     }
 
     return 0;
@@ -323,4 +325,165 @@ int cleanup(const char *outputDir) {
     }
 
     return 0;
+}
+
+OGRGeometryH createTopLeftPoly(OGREnvelope* envelope) {
+    OGRGeometryH topLeftRing =  OGR_G_CreateGeometry(wkbLinearRing);
+    if(topLeftRing == NULL) {
+        error("failed to create top left ring", __FILE__, __LINE__);
+        return NULL;
+    }
+    OGR_G_AddPoint_2D(topLeftRing, envelope->MinX, envelope->MaxY);
+    OGR_G_AddPoint_2D(topLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY);
+    OGR_G_AddPoint_2D(topLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(topLeftRing, envelope->MinX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(topLeftRing, envelope->MinX, envelope->MaxY);
+
+    OGRGeometryH topLeftPoly = OGR_G_CreateGeometry(wkbPolygon);
+    if(topLeftPoly == NULL) {
+        error("failed to create top left poly", __FILE__, __LINE__);
+        return NULL;
+    }
+    if(OGR_G_AddGeometry(topLeftPoly, topLeftRing) != OGRERR_NONE) {
+        error("failed to add top left ring to top left poly", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    OGR_G_DestroyGeometry(topLeftRing);
+
+    return topLeftPoly;
+}
+
+OGRGeometryH createTopRightPoly(OGREnvelope* envelope) {
+    OGRGeometryH topRightRing =  OGR_G_CreateGeometry(wkbLinearRing);
+    if(topRightRing == NULL) {
+        error("failed to create top right ring", __FILE__, __LINE__);
+        return NULL;
+    }
+    OGR_G_AddPoint_2D(topRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY);
+    OGR_G_AddPoint_2D(topRightRing, envelope->MaxX, envelope->MaxY);
+    OGR_G_AddPoint_2D(topRightRing, envelope->MaxX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(topRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(topRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY);
+
+    OGRGeometryH topRightPoly = OGR_G_CreateGeometry(wkbPolygon);
+    if(topRightPoly == NULL) {
+        error("failed to create top right poly", __FILE__, __LINE__);
+        return NULL;
+    }
+    if(OGR_G_AddGeometry(topRightPoly, topRightRing) != OGRERR_NONE) {
+        error("failed to add top right ring to top right poly", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    OGR_G_DestroyGeometry(topRightRing);
+
+    return topRightPoly;
+}
+
+OGRGeometryH createBottomRightPoly(OGREnvelope* envelope) {
+    OGRGeometryH bottomRightRing =  OGR_G_CreateGeometry(wkbLinearRing);
+    if(bottomRightRing == NULL) {
+        error("failed to create bottom right ring", __FILE__, __LINE__);
+        return NULL;
+    }
+    OGR_G_AddPoint_2D(bottomRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(bottomRightRing, envelope->MaxX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(bottomRightRing, envelope->MaxX, envelope->MinY);
+    OGR_G_AddPoint_2D(bottomRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MinY);
+    OGR_G_AddPoint_2D(bottomRightRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+
+    OGRGeometryH buttomRightPoly = OGR_G_CreateGeometry(wkbPolygon);
+    if(buttomRightPoly == NULL) {
+        error("failed to create bottom right poly", __FILE__, __LINE__);
+        return NULL;
+    }
+    if(OGR_G_AddGeometry(buttomRightPoly, bottomRightRing) != OGRERR_NONE) {
+        error("failed to add bottom right ring to bottom right poly", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    OGR_G_DestroyGeometry(bottomRightRing);
+
+    return buttomRightPoly;
+}
+
+OGRGeometryH createBottomLeftPoly(OGREnvelope* envelope) {
+    OGRGeometryH bottomLeftRing =  OGR_G_CreateGeometry(wkbLinearRing);
+    if(bottomLeftRing == NULL) {
+        error("failed to create bottom left ring", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    OGR_G_AddPoint_2D(bottomLeftRing, envelope->MinX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(bottomLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+    OGR_G_AddPoint_2D(bottomLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MinY);
+    OGR_G_AddPoint_2D(bottomLeftRing, envelope->MinX, envelope->MinY);
+    OGR_G_AddPoint_2D(bottomLeftRing, envelope->MinX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
+
+    OGRGeometryH buttomLeftPoly = OGR_G_CreateGeometry(wkbPolygon);
+    if(buttomLeftPoly == NULL) {
+        error("failed to create bottom left poly", __FILE__, __LINE__);
+        return NULL;
+    }
+    if(OGR_G_AddGeometry(buttomLeftPoly, bottomLeftRing) != OGRERR_NONE) {
+        error("failed to add bottom left ring to bottom left poly", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    OGR_G_DestroyGeometry(bottomLeftRing);
+
+    return buttomLeftPoly;
+}
+
+
+int splitGeometries(OGRGeometryH splitGeoms[], int seed, OGRGeometryH inputGeometry) {
+    if(OGR_G_GetGeometryCount(inputGeometry) < 50) {
+        splitGeoms[seed] = inputGeometry; 
+        return seed + 1;
+    }
+
+    OGREnvelope envelope;
+    OGR_G_GetEnvelope(inputGeometry, &envelope);
+
+    OGRGeometryH topLeft = createTopLeftPoly(&envelope);
+    OGRGeometryH topRight = createTopRightPoly(&envelope);
+    OGRGeometryH bottomRight = createBottomRightPoly(&envelope);
+    OGRGeometryH bottomLeft = createBottomLeftPoly(&envelope);
+
+    OGRGeometryH topLeftIntersection = OGR_G_Intersection(inputGeometry, topLeft);
+    if(topLeftIntersection == NULL) {
+        error("failed to intersect input geometry with top left geometry", __FILE__, __LINE__);
+        fatalError();
+    }
+    // int topLeftGeomCount = OGR_G_GetGeometryCount(topLeftIntersection);
+
+    OGRGeometryH topRightIntersection = OGR_G_Intersection(inputGeometry, topRight);
+    if(topRightIntersection == NULL) {
+        error("failed to intersect input geometry with top right geometry", __FILE__, __LINE__);
+        fatalError();
+    }
+    // int topRightGeomCount = OGR_G_GetGeometryCount(topRightIntersection);
+
+    OGRGeometryH bottomRightIntersection = OGR_G_Intersection(inputGeometry, bottomRight);
+    if(bottomRightIntersection == NULL) {
+        error("failed to intersect input geometry with bottom right geometry", __FILE__, __LINE__);
+        fatalError();
+    }
+    // int bottomRightGeomCount = OGR_G_GetGeometryCount(bottomRightIntersection);
+
+    OGRGeometryH bottomLeftIntersection = OGR_G_Intersection(inputGeometry, bottomLeft);
+    if(bottomLeftIntersection == NULL) {
+        error("failed to intersect input geometry with bottom left geometry", __FILE__, __LINE__);
+        fatalError();
+    }
+    // int bottomLeftGeomCount = OGR_G_GetGeometryCount(bottomLeftIntersection);
+
+
+    seed = splitGeometries(splitGeoms, seed, topLeftIntersection);
+    seed = splitGeometries(splitGeoms, seed, topRightIntersection);
+    seed = splitGeometries(splitGeoms, seed, bottomRightIntersection);
+    seed = splitGeometries(splitGeoms, seed, bottomLeftIntersection);
+
+    return seed;
 }
