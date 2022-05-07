@@ -414,7 +414,6 @@ OGRGeometryH createBottomLeftPoly(OGREnvelope* envelope) {
         error("failed to create bottom left ring", __FILE__, __LINE__);
         return NULL;
     }
-
     OGR_G_AddPoint_2D(bottomLeftRing, envelope->MinX, envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
     OGR_G_AddPoint_2D(bottomLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MaxY - ((envelope->MaxY - envelope->MinY) / 2.0));
     OGR_G_AddPoint_2D(bottomLeftRing, envelope->MaxX - ((envelope->MaxX - envelope->MinX) / 2), envelope->MinY);
@@ -456,28 +455,24 @@ int splitGeometries(OGRGeometryH splitGeoms[], int seed, OGRGeometryH inputGeome
         error("failed to intersect input geometry with top left geometry", __FILE__, __LINE__);
         fatalError();
     }
-    // int topLeftGeomCount = OGR_G_GetGeometryCount(topLeftIntersection);
 
     OGRGeometryH topRightIntersection = OGR_G_Intersection(inputGeometry, topRight);
     if(topRightIntersection == NULL) {
         error("failed to intersect input geometry with top right geometry", __FILE__, __LINE__);
         fatalError();
     }
-    // int topRightGeomCount = OGR_G_GetGeometryCount(topRightIntersection);
 
     OGRGeometryH bottomRightIntersection = OGR_G_Intersection(inputGeometry, bottomRight);
     if(bottomRightIntersection == NULL) {
         error("failed to intersect input geometry with bottom right geometry", __FILE__, __LINE__);
         fatalError();
     }
-    // int bottomRightGeomCount = OGR_G_GetGeometryCount(bottomRightIntersection);
 
     OGRGeometryH bottomLeftIntersection = OGR_G_Intersection(inputGeometry, bottomLeft);
     if(bottomLeftIntersection == NULL) {
         error("failed to intersect input geometry with bottom left geometry", __FILE__, __LINE__);
         fatalError();
     }
-    // int bottomLeftGeomCount = OGR_G_GetGeometryCount(bottomLeftIntersection);
 
 
     seed = splitGeometries(splitGeoms, seed, topLeftIntersection);
