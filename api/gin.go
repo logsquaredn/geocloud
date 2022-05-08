@@ -53,7 +53,7 @@ func NewServer(opts *GinOpts) (*ginAPI, error) {
 		}
 	)
 
-	// a.router.Use(a.middleware)
+	a.router.Use(a.middleware)
 
 	v1Job := a.router.Group("/api/v1/job")
 	{
