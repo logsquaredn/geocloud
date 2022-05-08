@@ -70,19 +70,19 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		charge_rate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
+		chargeRate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 		if err != nil {
 			return err
 		}
-		update_balance := c.Balance + charge_rate
+		updateBalance := c.Balance + chargeRate
 		_, err = customer.Update(j.CustomerID, &stripe.CustomerParams{
-			Balance: &update_balance,
+			Balance: &updateBalance,
 		})
 		if err != nil {
 			return err
 		}
 
-		err = os.DeleteRecursive(fmt.Sprintf("jobs/%s", j.Id))
+		err = os.DeleteRecursive(fmt.Sprintf("jobs/%s", j.ID))
 		if err != nil {
 			return err
 		}

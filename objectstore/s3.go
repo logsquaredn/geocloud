@@ -75,7 +75,7 @@ func NewS3(opts *S3ObjectstoreOpts) (*s3Objectstore, error) {
 }
 
 func (s *s3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.prefix, m.ID(), "input")
+	prefix := filepath.Join(s.prefix, m.GetID(), "input")
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
 		Prefix: &prefix,
@@ -97,7 +97,7 @@ func (s *s3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
 }
 
 func (s *s3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.prefix, m.ID(), "output")
+	prefix := filepath.Join(s.prefix, m.GetID(), "output")
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
 		Prefix: &prefix,
@@ -119,7 +119,7 @@ func (s *s3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
 func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 	var objs []s3manager.BatchUploadObject
 	if err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.prefix, m.ID(), "input", f.Name())
+		key := filepath.Join(s.prefix, m.GetID(), "input", f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
 				Bucket: &s.bucket,
@@ -144,7 +144,7 @@ func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 func (s *s3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 	var objs []s3manager.BatchUploadObject
 	err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.prefix, m.ID(), "output", f.Name())
+		key := filepath.Join(s.prefix, m.GetID(), "output", f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
 				Bucket: &s.bucket,

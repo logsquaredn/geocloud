@@ -187,7 +187,7 @@ func (p *postgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		id, j.TaskType.String(),
 		pq.Array(j.Args),
 	).Scan(
-		&j.Id, &taskType,
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -239,12 +239,12 @@ func (p *postgresDatastore) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	}
 
 	err := p.stmt.updateJob.QueryRow(
-		j.ID(), j.TaskType.String(),
+		j.GetID(), j.TaskType.String(),
 		j.Status.String(), jobErrError,
 		j.StartTime, j.EndTime,
 		pq.Array(j.Args),
 	).Scan(
-		&j.Id, &taskType,
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -281,8 +281,8 @@ func (p *postgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 		taskType  string
 	)
 
-	err := p.stmt.getJobByID.QueryRow(m.ID()).Scan(
-		&j.Id, &taskType,
+	err := p.stmt.getJobByID.QueryRow(m.GetID()).Scan(
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -330,7 +330,7 @@ func (p *postgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 		)
 
 		err = rows.Scan(
-			&j.Id, &taskType,
+			&j.ID, &taskType,
 			&jobStatus, &jobErr,
 			&j.StartTime, &endTime,
 			pq.Array(&j.Args),
@@ -363,7 +363,7 @@ func (p *postgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 var deleteJobSQL string
 
 func (p *postgresDatastore) DeleteJob(j *geocloud.Job) error {
-	_, err := p.stmt.deleteJob.Exec(j.Id)
+	_, err := p.stmt.deleteJob.Exec(j.ID)
 	if err != nil {
 		return err
 	}
@@ -381,7 +381,7 @@ func (p *postgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, 
 		taskType string
 	)
 
-	err := p.stmt.getTaskByJobID.QueryRow(m.ID()).Scan(&taskType, pq.Array(&t.Params), &queueID)
+	err := p.stmt.getTaskByJobID.QueryRow(m.GetID()).Scan(&taskType, pq.Array(&t.Params), &queueID)
 	if err != nil {
 		return t, err
 	}
@@ -452,9 +452,9 @@ func (p *postgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 //go:embed psql/queries/get_customer_by_customer_id.sql
 var getCustomerByCustomerIDSQL string
 
-func (p *postgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer, error) {
+func (p *postgresDatastore) GetCustomer(customerID string) (*geocloud.Customer, error) {
 	c := &geocloud.Customer{}
-	err := p.stmt.getCustomerByCustomerID.QueryRow(customer_id).Scan(&c.Id, &c.Name)
+	err := p.stmt.getCustomerByCustomerID.QueryRow(customerID).Scan(&c.ID, &c.Name)
 	if err != nil {
 		return c, err
 	}
@@ -465,8 +465,8 @@ func (p *postgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer,
 //go:embed psql/execs/create_customer.sql
 var createCustomerSQL string
 
-func (p *postgresDatastore) CreateCustomer(customer_id string, customer_name string) error {
-	_, err := p.stmt.createCustomer.Exec(customer_id, customer_name)
+func (p *postgresDatastore) CreateCustomer(customerID string, customer_name string) error {
+	_, err := p.stmt.createCustomer.Exec(customerID, customer_name)
 	if err != nil {
 		return err
 	}

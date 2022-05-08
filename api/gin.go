@@ -150,7 +150,7 @@ func (a *ginAPI) create(ctx *gin.Context) {
 
 	missingParams := validateParamsPassed(ctx, task.Params)
 	if len(missingParams) > 0 {
-		log.Error().Msgf("/create missing paramters: %v", missingParams)
+		log.Error().Msgf("/create missing parameters: %v", missingParams)
 		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: fmt.Sprintf("missing parameters: %v", missingParams)})
 		return
 	}
@@ -200,7 +200,7 @@ func (a *ginAPI) create(ctx *gin.Context) {
 		name:   filename,
 	}
 	if err = a.os.PutInput(job, vol); err != nil {
-		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.ID())
+		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.GetID())
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create job of type %s", taskType)})
 		job.Err = err
 		job.Status = geocloud.Error
@@ -209,12 +209,12 @@ func (a *ginAPI) create(ctx *gin.Context) {
 	}
 
 	if err = a.mq.Send(job); err != nil {
-		log.Err(err).Msgf("/create failed to send message to messagequeue for id: %s", job.ID())
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed send message for id %s with type %s", job.ID(), taskType)})
+		log.Err(err).Msgf("/create failed to send message to messagequeue for id: %s", job.GetID())
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed send message for id %s with type %s", job.GetID(), taskType)})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &geocloud.CreateResponse{Id: job.ID()})
+	ctx.JSON(http.StatusOK, &geocloud.CreateResponse{ID: job.GetID()})
 }
 
 // @Summary Get status of a job
@@ -269,7 +269,7 @@ func (a *ginAPI) status(ctx *gin.Context) {
 func (a *ginAPI) result(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
-		log.Error().Msg("/result query paramter 'id' not passed or empty")
+		log.Error().Msg("/result query parameter 'id' not passed or empty")
 		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "query parameter 'id' required"})
 		return
 	}

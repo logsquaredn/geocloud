@@ -27,7 +27,7 @@ func NewOS(opts *OSRuntimeOpts) (*osRuntime, error) {
 }
 
 func (o *osRuntime) Send(m geocloud.Message) error {
-	k, v := "id", m.ID()
+	k, v := "id", m.GetID()
 	log.Info().Str(k, v).Msg("processing message")
 
 	log.Trace().Str(k, v).Msg("getting job from datastore")
@@ -163,7 +163,7 @@ func (o *osRuntime) outvolume(m geocloud.Message) (*dirVolume, error) {
 }
 
 func (o *osRuntime) jobdir(m geocloud.Message) string {
-	return filepath.Join(o.jobsdir(), m.ID())
+	return filepath.Join(o.jobsdir(), m.GetID())
 }
 
 func (o *osRuntime) jobsdir() string {

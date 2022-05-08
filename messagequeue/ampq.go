@@ -45,7 +45,7 @@ func NewAMQP(opts *AMQPMessageQueueOpts) (*amqpMessageQueue, error) {
 func (a *amqpMessageQueue) Send(m geocloud.Message) error {
 	return a.ch.Publish("", a.queueName, false, false, amqp.Publishing{
 		ContentType: "text/plain",
-		Body:        []byte(m.ID()),
+		Body:        []byte(m.GetID()),
 	})
 }
 

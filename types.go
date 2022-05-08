@@ -10,7 +10,7 @@ import (
 
 // Message is the primary object that is passed between geocloud components
 type Message interface {
-	ID() string
+	GetID() string
 }
 
 // JobStatus is an enum representing different statuses for geocloud Jobs
@@ -60,7 +60,7 @@ func (s JobStatus) String() string {
 
 // Job ...
 type Job struct {
-	Id         string
+	ID         string
 	TaskType   TaskType
 	Status     JobStatus
 	Err        error
@@ -73,12 +73,12 @@ type Job struct {
 var _ Message = (*Job)(nil)
 
 // ID returns a Job's id
-func (j *Job) ID() string {
-	return j.Id
+func (j *Job) GetID() string {
+	return j.ID
 }
 
 type Customer struct {
-	Id   string
+	ID   string
 	Name string
 }
 
@@ -200,13 +200,13 @@ type API interface {
 	Serve(l net.Listener) error
 }
 
-// Runtime is the component that ultimately recieves a
+// Runtime is the component that ultimately receives a
 // Message, aggregates that Message's data from a
 // Datastore and Objectstore, executes that
 // Message's job, and sends the results back to the Datastore
 // and Objectstore
 type Runtime interface {
-	// Runtime could substitue as MessageRecipient
+	// Runtime could substitute as MessageRecipient
 	// since it ultimately is the recipient of messages;
 	// MessageQueues such as SQS are just proxies
 	//
@@ -216,7 +216,7 @@ type Runtime interface {
 }
 
 type CreateResponse struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 }
 
 type StatusResponse struct {
