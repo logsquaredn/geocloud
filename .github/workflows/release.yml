@@ -18,7 +18,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: get-short-sha
         id: get-short-sha
-        run: echo "::set-output name=short-sha::$(git rev-parse --short ${{ github.sha }})"
+        run: echo "::set-output name=short-sha::${GITHUB_SHA::7}"
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
