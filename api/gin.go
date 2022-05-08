@@ -53,6 +53,8 @@ func NewServer(opts *GinOpts) (*ginAPI, error) {
 		}
 	)
 
+	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	a.router.Use(a.middleware)
 
 	v1Job := a.router.Group("/api/v1/job")
@@ -62,8 +64,6 @@ func NewServer(opts *GinOpts) (*ginAPI, error) {
 		v1Job.GET("/result", a.result)
 	}
 
-	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
 	return a, nil
 }
 
@@ -71,18 +71,30 @@ func (a *ginAPI) Serve(l net.Listener) error {
 	return a.router.RunListener(l)
 }
 
+const (
+	apiKeyQueryParam = "api-key"
+	apiKeyHeader = "X-API-Key"
+	apiKeyCookie = apiKeyHeader
+)
+
 func (a *ginAPI) middleware(ctx *gin.Context) {
-	customerID := ctx.GetHeader("customer-id")
-	_, err := a.ds.GetCustomer(customerID)
-	if err != nil {
+	apiKey := ctx.Query(apiKeyQueryParam)
+	if apiKey == "" {
+		apiKey = ctx.GetHeader(apiKeyHeader)
+		if apiKey == "" {
+			apiKey, _ = ctx.Cookie(apiKeyCookie)
+		}
+	}
+
+	if _, err := a.ds.GetCustomer(apiKey); err != nil {
 		if err == sql.ErrNoRows {
-			log.Err(err).Msgf("header 'customer-id' must be a valid customer ID")
-			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
+			log.Err(err).Msgf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: fmt.Sprintf("header '%s', header '%s' cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)})
 			return
 		}
 
-		log.Err(err).Msgf("failed to retrieve customer information")
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retrieve customer information"})
+		log.Err(err).Msgf("failed to get user information")
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to get user information"})
 		return
 	}
 
