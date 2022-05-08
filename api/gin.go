@@ -73,19 +73,12 @@ func (a *ginAPI) Serve(l net.Listener) error {
 
 const (
 	apiKeyQueryParam = "api-key"
-	apiKeyHeader = "X-API-Key"
-	apiKeyCookie = apiKeyHeader
+	apiKeyHeader     = "X-API-Key"
+	apiKeyCookie     = apiKeyHeader
 )
 
 func (a *ginAPI) middleware(ctx *gin.Context) {
-	apiKey := ctx.Query(apiKeyQueryParam)
-	if apiKey == "" {
-		apiKey = ctx.GetHeader(apiKeyHeader)
-		if apiKey == "" {
-			apiKey, _ = ctx.Cookie(apiKeyCookie)
-		}
-	}
-
+	apiKey := getCustomerID(ctx)
 	if _, err := a.ds.GetCustomer(apiKey); err != nil {
 		if err == sql.ErrNoRows {
 			log.Err(err).Msgf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)
@@ -99,6 +92,17 @@ func (a *ginAPI) middleware(ctx *gin.Context) {
 	}
 
 	ctx.Next()
+}
+
+func getCustomerID(ctx *gin.Context) string {
+	apiKey := ctx.Query(apiKeyQueryParam)
+	if apiKey == "" {
+		apiKey = ctx.GetHeader(apiKeyHeader)
+		if apiKey == "" {
+			apiKey, _ = ctx.Cookie(apiKeyCookie)
+		}
+	}
+	return apiKey
 }
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
@@ -199,7 +203,7 @@ func (a *ginAPI) create(ctx *gin.Context) {
 	job := &geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
-		CustomerID: ctx.GetHeader("customer-id"),
+		CustomerID: getCustomerID(ctx),
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
