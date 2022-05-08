@@ -9,7 +9,7 @@ networks:
 services:
   api:
     build: .
-    image: &image logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    image: &image ghcr.io/logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
     command: a
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
@@ -38,6 +38,7 @@ services:
     build: .
     image: *image
     command: s --work-jobs-before 1s
+    volumes: [~/.aws/:/root/.aws/:ro]
     networks: [secretary]
     depends_on: [datastore, objectstore]
     environment: *environment

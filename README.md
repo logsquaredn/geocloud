@@ -33,7 +33,7 @@ make restart
 ```sh
 # generate a migration version
 version=`date -u +%Y%m%d%T | tr -cd [0-9]`
-touch datastore/psql/migrations/${version}_my-title.up.sql
+touch datastore/psql/migrations/core/${version}_my_title.up.sql
 ```
 
 see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md)
