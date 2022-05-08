@@ -37,12 +37,11 @@ ARG build=
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease} -X github.com/logsquaredn/geocloud.Build=${build}" -o /assets/geocloud ./cmd/geocloud/
 
 FROM base_image AS geocloud
-ENV PATH=/usr/local/geocloud/bin:$PATH
 RUN apk add --no-cache ca-certificates
 RUN apk del ca-certificates
 VOLUME /var/lib/geocloud
 ENTRYPOINT ["geocloud"]
 CMD ["--help"]
-COPY --from=zip /assets /usr/local/geocloud/bin
-COPY --from=build_tasks /assets /usr/local/geocloud/bin
-COPY --from=build /assets /usr/local/geocloud/bin
+COPY --from=zip /assets /usr/local/bin
+COPY --from=build_tasks /assets /usr/local/bin
+COPY --from=build /assets /usr/local/bin

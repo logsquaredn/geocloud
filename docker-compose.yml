@@ -38,6 +38,7 @@ services:
     build: .
     image: *image
     command: s --work-jobs-before 1s
+    volumes: [~/.aws/:/root/.aws/:ro]
     networks: [secretary]
     depends_on: [datastore, objectstore]
     environment: *environment
