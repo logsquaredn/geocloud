@@ -7,8 +7,6 @@ jobs:
   tag-push:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
       # - name: setup-qemu
       #   uses: docker/setup-qemu-action@v1
       - name: setup-buildx
@@ -18,71 +16,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: build-buffer
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-buffer
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: buffer
-          tags: logsquaredn/geocloud:task-buffer
-      - name: push-buffer
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-buffer
-      - name: build-filter
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-filter
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: filter
-          tags: logsquaredn/geocloud:task-filter
-      - name: push-filter
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-filter
-      - name: build-removebadgeometry
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-removebadgeometry
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: removebadgeometry
-          tags: logsquaredn/geocloud:task-removebadgeometry
-      - name: push-removebadgeometry
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-removebadgeometry
-      - name: build-reproject
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-reproject
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: reproject
-          tags: logsquaredn/geocloud:task-reproject
-      - name: push-reproject
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-reproject
-      - name: save-tasks
-        run: docker save -o runtime/tasks.tar logsquaredn/geocloud:task-buffer logsquaredn/geocloud:task-filter logsquaredn/geocloud:task-removebadgeometry logsquaredn/geocloud:task-reproject
       - name: get-short-sha
         id: get-short-sha
-        run: echo "::set-output name=short-sha::$(git rev-parse --short ${{ github.sha }})"
+        run: echo "::set-output name=short-sha::${GITHUB_SHA::7}"
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
@@ -91,8 +27,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:${{ steps.get-short-sha.outputs.short-sha }}
-          cache-to: type=inline
-          context: .
           push: true
           build-args: |
             version=${{ steps.get-tag.outputs.tag }}
@@ -120,7 +54,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: v${{ needs.tag-push.outputs.tag }}
-      - name: upload-asset
+      - name: upload-geocloud
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
@@ -128,4 +62,40 @@ jobs:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: /usr/local/geocloud/bin/geocloud
           asset_name: geocloud_linux_amd64
+          asset_content_type: application/octet-stream
+      - name: upload-task-removebadgeometry
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/geocloud/bin/removebadgeometry/task
+          asset_name: task_removebadgeometry_linux_amd64
+          asset_content_type: application/octet-stream
+      - name: upload-task-filter
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/geocloud/bin/filter/task
+          asset_name: task_filter_linux_amd64
+          asset_content_type: application/octet-stream
+      - name: upload-task-buffer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/geocloud/bin/buffer/task
+          asset_name: task_buffer_linux_amd64
+          asset_content_type: application/octet-stream
+      - name: upload-task-reproject
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/geocloud/bin/reproject/task
+          asset_name: task_reproject_linux_amd64
           asset_content_type: application/octet-stream

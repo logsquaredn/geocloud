@@ -7,11 +7,17 @@ on:
     branches:
       - main
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - uses: golangci/golangci-lint-action@v3.1.0
   build-push:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
       # - name: setup-qemu
       #   uses: docker/setup-qemu-action@v1
       - name: setup-buildx
@@ -21,83 +27,16 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: build-buffer
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-buffer
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: buffer
-          tags: logsquaredn/geocloud:task-buffer
-      - name: push-buffer
-        if: ${{ github.event_name == 'push' }}
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-buffer
-      - name: build-filter
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-filter
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: filter
-          tags: logsquaredn/geocloud:task-filter
-      - name: push-filter
-        if: ${{ github.event_name == 'push' }}
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-filter
-      - name: build-removebadgeometry
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-removebadgeometry
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: removebadgeometry
-          tags: logsquaredn/geocloud:task-removebadgeometry
-      - name: push-removebadgeometry
-        if: ${{ github.event_name == 'push' }}
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-removebadgeometry
-      - name: build-reproject
-        uses: docker/build-push-action@v2
-        with:
-          cache-from: type=registry,ref=logsquaredn/geocloud:task-reproject
-          cache-to: type=inline
-          context: tasks/
-          load: true
-          target: reproject
-          tags: logsquaredn/geocloud:task-reproject
-      - name: push-reproject
-        if: ${{ github.event_name == 'push' }}
-        uses: docker/build-push-action@v2
-        with:
-          context: tasks/
-          push: true
-          tags: logsquaredn/geocloud:task-reproject
-      - name: save-tasks
-        run: docker save -o runtime/tasks.tar logsquaredn/geocloud:task-buffer logsquaredn/geocloud:task-filter logsquaredn/geocloud:task-removebadgeometry logsquaredn/geocloud:task-reproject
       - name: get-tag
         id: get-tag
-        run: echo "::set-output name=tag::$(git rev-parse --short ${{ github.sha }})"
+        run: echo "::set-output name=tag::${GITHUB_SHA::7}"
       - name: build-push
         id: build-push
         uses: docker/build-push-action@v2
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:latest
-          cache-to: type=inline
-          context: .
           push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:

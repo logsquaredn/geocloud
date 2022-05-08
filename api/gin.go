@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -17,7 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
-	"github.com/tedsuo/ifrit"
 )
 
 // @contact.name logsquaredn
@@ -26,98 +25,68 @@ import (
 
 // @license.name logsquaredn
 
-type GinAPI struct {
-	ds geocloud.Datastore
-	os geocloud.Objectstore
-	mq geocloud.MessageRecipient
+type ginAPI struct {
+	ds     geocloud.Datastore
+	os     geocloud.Objectstore
+	mq     geocloud.MessageRecipient
+	router *gin.Engine
 }
 
-var _ geocloud.API = (*GinAPI)(nil)
+var _ geocloud.API = (*ginAPI)(nil)
 
-func (a *GinAPI) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+func init() {
 	docs.SwaggerInfo.Title = "Geocloud"
 	docs.SwaggerInfo.Description = "Geocloud"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
 	docs.SwaggerInfo.BasePath = "/api/v1/job"
 	docs.SwaggerInfo.Schemes = []string{"https"}
+}
 
-	router := gin.Default()
+func NewServer(opts *GinOpts) (*ginAPI, error) {
+	var (
+		a = &ginAPI{
+			ds:     opts.Datastore,
+			os:     opts.Objectstore,
+			mq:     opts.MessageQueue,
+			router: gin.Default(),
+		}
+	)
 
-	router.Use(CustomerMiddleware(a))
+	a.router.Use(a.middleware)
 
-	v1Job := router.Group("/api/v1/job")
+	v1Job := a.router.Group("/api/v1/job")
 	{
 		v1Job.POST("/create/:type", a.create)
 		v1Job.GET("/status", a.status)
 		v1Job.GET("/result", a.result)
 	}
 
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	wait := make(chan error, 1)
-	go func() {
-		wait <- router.Run()
-	}()
-
-	close(ready)
-	for {
-		select {
-		case <-signals:
-			return nil
-		case err := <-wait:
-			return err
-		}
-	}
+	return a, nil
 }
 
-func (a *GinAPI) Execute(_ []string) error {
-	return <-ifrit.Invoke(a).Wait()
+func (a *ginAPI) Serve(l net.Listener) error {
+	return a.router.RunListener(l)
 }
 
-func (a *GinAPI) Name() string {
-	return "rest"
-}
-
-func (a *GinAPI) IsEnabled() bool {
-	// at this point in time, we have no intention of writing
-	// an alternative api implementation
-	return true
-}
-
-func (a *GinAPI) WithDatastore(ds geocloud.Datastore) geocloud.API {
-	a.ds = ds
-	return a
-}
-
-func (a *GinAPI) WithObjectstore(os geocloud.Objectstore) geocloud.API {
-	a.os = os
-	return a
-}
-
-func (a *GinAPI) WithMessageRecipient(mq geocloud.MessageRecipient) geocloud.API {
-	a.mq = mq
-	return a
-}
-
-func CustomerMiddleware(a *GinAPI) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		customer_id := ctx.GetHeader("customer-id")
-		_, err := a.ds.GetCustomer(customer_id)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				log.Err(err).Msgf("header 'customer-id' must be a valid customer ID")
-				ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
-				return
-			}
-
-			log.Err(err).Msgf("failed to retrieve customer information")
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information"})
+func (a *ginAPI) middleware(ctx *gin.Context) {
+	customerID := ctx.GetHeader("customer-id")
+	_, err := a.ds.GetCustomer(customerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Err(err).Msgf("header 'customer-id' must be a valid customer ID")
+			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: "header 'customer-id' must be a valid customer ID"})
 			return
 		}
 
-		ctx.Next()
+		log.Err(err).Msgf("failed to retrieve customer information")
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retrieve customer information"})
+		return
 	}
+
+	ctx.Next()
 }
 
 func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
@@ -160,7 +129,7 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/{type} [post]
-func (a *GinAPI) create(ctx *gin.Context) {
+func (a *ginAPI) create(ctx *gin.Context) {
 	taskType, err := geocloud.TaskTypeFrom(ctx.Param("type"))
 	if err != nil {
 		log.Err(err).Msgf("/create invalid task type requested: %s", taskType)
@@ -181,7 +150,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 
 	missingParams := validateParamsPassed(ctx, task.Params)
 	if len(missingParams) > 0 {
-		log.Error().Msgf("/create missing paramters: %v", missingParams)
+		log.Error().Msgf("/create missing parameters: %v", missingParams)
 		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: fmt.Sprintf("missing parameters: %v", missingParams)})
 		return
 	}
@@ -231,7 +200,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 		name:   filename,
 	}
 	if err = a.os.PutInput(job, vol); err != nil {
-		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.ID())
+		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.GetID())
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create job of type %s", taskType)})
 		job.Err = err
 		job.Status = geocloud.Error
@@ -240,12 +209,12 @@ func (a *GinAPI) create(ctx *gin.Context) {
 	}
 
 	if err = a.mq.Send(job); err != nil {
-		log.Err(err).Msgf("/create failed to send message to messagequeue for id: %s", job.ID())
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed send message for id %s with type %s", job.ID(), taskType)})
+		log.Err(err).Msgf("/create failed to send message to messagequeue for id: %s", job.GetID())
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed send message for id %s with type %s", job.GetID(), taskType)})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &geocloud.CreateResponse{Id: job.ID()})
+	ctx.JSON(http.StatusOK, &geocloud.CreateResponse{ID: job.GetID()})
 }
 
 // @Summary Get status of a job
@@ -258,7 +227,7 @@ func (a *GinAPI) create(ctx *gin.Context) {
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /status [get]
-func (a *GinAPI) status(ctx *gin.Context) {
+func (a *ginAPI) status(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/status query parameter 'id' not passed or empty")
@@ -297,10 +266,10 @@ func (a *GinAPI) status(ctx *gin.Context) {
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /result [get]
-func (a *GinAPI) result(ctx *gin.Context) {
+func (a *ginAPI) result(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
-		log.Error().Msg("/result query paramter 'id' not passed or empty")
+		log.Error().Msg("/result query parameter 'id' not passed or empty")
 		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "query parameter 'id' required"})
 		return
 	}

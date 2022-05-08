@@ -1,67 +1,49 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"strings"
-	"time"
+	"runtime"
 
-	"github.com/jessevdk/go-flags"
-	"github.com/logsquaredn/geocloud/cmd"
+	"github.com/logsquaredn/geocloud"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:               "geocloud",
+	Version:           geocloud.Semver(),
+	PersistentPreRunE: persistentPreRun,
+}
+
+var (
+	loglevel string
 )
 
 func init() {
-	o := zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339Nano,
-	}
-
-	o.FormatTimestamp = func(i interface{}) string {
-		return fmt.Sprintf("time=\"%s\"", i)
-	}
-
-	o.FormatLevel = func(i interface{}) string {
-		return fmt.Sprintf("level=%s", i)
-	}
-
-	o.FormatMessage = func(i interface{}) string {
-		s := fmt.Sprintf("%s", i)
-		if strings.Contains(s, " ") {
-			s = fmt.Sprintf("msg=\"%s\"", s)
-		}
-		return s
-	}
-
-	o.FormatFieldName = func(i interface{}) string {
-		return fmt.Sprintf("%s=", i)
-	}
-
-	o.FormatFieldValue = func(i interface{}) string {
-		s := fmt.Sprintf("%s", i)
-		if strings.Contains(s, " ") {
-			s = fmt.Sprintf("\"%s\"", s)
-		}
-		return s
-	}
-
-	log.Logger = zerolog.New(o).With().Timestamp().Logger()
+	rootCmd.PersistentFlags().StringVarP(&loglevel, "loglevel", "l", "info", "Loglevel")
+	rootCmd.SetVersionTemplate(fmt.Sprintf("{{ .Name }}{{ .Version }} %s\n", runtime.Version()))
+	rootCmd.AddCommand(
+		migrateCmd,
+		apiCmd,
+		workerCmd,
+		secretaryCmd,
+	)
 }
 
-var p *flags.Parser
-
-func init() {
-	p = flags.NewParser(cmd.GeocloudCmd, flags.HelpFlag)
-	p.NamespaceDelimiter = "-"
+func persistentPreRun(cmd *cobra.Command, args []string) error {
+	loglevel, err := zerolog.ParseLevel(loglevel)
+	if err == nil {
+		zerolog.SetGlobalLevel(loglevel)
+	}
+	return err
 }
 
 func main() {
-	if _, err := p.Parse(); err == flags.ErrHelp {
-		fmt.Println(err)
-	} else if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+	if err := rootCmd.ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
+
 	os.Exit(0)
 }
