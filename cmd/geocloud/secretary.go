@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/customer"
@@ -50,48 +50,62 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 
 	stripe.Key = stripeAPIKey
 
+	log.Info().Msg("importing customers")
 	i := customer.List(&stripe.CustomerListParams{})
 	for i.Next() {
 		c := i.Customer()
-		err := ds.CreateCustomer(c.ID, c.Name)
-		if err != nil {
+		if err := ds.CreateCustomer(c.ID, c.Name); err != nil {
+			log.Err(err).Msgf("creating customer '%s' '%s'", c.ID, c.Name)
 			return err
 		}
 	}
 
+	log.Info().Msg("getting jobs")
 	jobs, err := ds.GetJobs(workJobsBefore)
 	if err != nil {
+		log.Err(err).Msg("getting jobs")
 		return err
 	}
 
+	log.Info().Msg("processing jobs")
 	for _, j := range jobs {
 		c, err := customer.Get(j.CustomerID, nil)
 		if err != nil {
+			log.Err(err).Msgf("getting customer '%s'", j.CustomerID)
 			return err
 		}
 
+		log.Debug().Msgf("parsing charge_rate for customer '%s'", j.CustomerID)
 		chargeRate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 		if err != nil {
 			return err
 		}
+
+		log.Debug().Msgf("updating balance for customer '%s'", j.CustomerID)
 		updateBalance := c.Balance + chargeRate
 		_, err = customer.Update(j.CustomerID, &stripe.CustomerParams{
 			Balance: &updateBalance,
 		})
 		if err != nil {
+			log.Err(err).Msgf("updating balance for customer '%s'", j.CustomerID)
 			return err
 		}
 
-		err = os.DeleteRecursive(fmt.Sprintf("jobs/%s", j.ID))
+		log.Debug().Msgf("deleting objects for customer '%s'", j.CustomerID)
+		err = os.DeleteRecursive(j.ID)
 		if err != nil {
+			log.Err(err).Msgf("deleting objects for customer '%s'", j.CustomerID)
 			return err
 		}
 
+		log.Debug().Msgf("deleting data for customer '%s'", j.CustomerID)
 		err = ds.DeleteJob(j)
 		if err != nil {
+			log.Err(err).Msgf("deleting data for customer '%s'", j.CustomerID)
 			return err
 		}
 	}
 
+	log.Info().Msg("done")
 	return nil
 }
