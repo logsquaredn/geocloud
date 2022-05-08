@@ -6,8 +6,9 @@ GO ?= go
 BIN ?= bin
 ASSETS ?= assets
 
+REGISTRY ?= ghcr.io
 REPOSITORY ?= logsquaredn/geocloud
-TAG ?= $(REPOSITORY):latest
+TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
 .PHONY: fallthrough
 fallthrough: fmt infra up
