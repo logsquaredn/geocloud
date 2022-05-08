@@ -1,7 +1,14 @@
-ARG base_image=ubuntu:jammy
-ARG build_image=golang:1.16
+ARG base_image=osgeo/gdal:alpine-normal-3.4.3
+ARG build_image=golang:1.18-alpine3.15
+ARG build_tasks_image=osgeo/gdal:alpine-normal-3.4.3
 
 FROM ${base_image} AS base_image
+
+FROM base_image AS install
+
+FROM install AS zip
+ARG zip=assets/zip_3.0_x86_64.tgz
+ADD ${zip} /assets
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
@@ -11,40 +18,31 @@ COPY go.sum .
 RUN go mod download
 COPY . .
 
+FROM ${build_tasks_image} AS build_tasks_image
+WORKDIR /src/github.com/logsquaredn/geocloud/tasks
+RUN apk add --no-cache gcc libc-dev
+COPY tasks/ .
+
+FROM build_tasks_image AS build_tasks
+RUN mkdir -p /assets/removebadgeometry /assets/buffer /assets/filter /assets/reproject
+RUN gcc -Wall removebadgeometry/removebadgeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry/task
+RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer/task
+RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter/task
+RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject/task
+
 FROM build_image AS build
 ARG version=0.0.0
-ARG revision=
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Revision=${revision}" -o /assets/geocloud ./cmd/geocloud/
-
-FROM base_image AS install
-COPY bin/ /usr/local/bin/
-
-FROM install AS containerd
-ARG containerd=https://github.com/containerd/containerd/releases/download/v1.5.7/containerd-1.5.7-linux-amd64.tar.gz
-ADD ${containerd} /tmp/
-RUN if_tar_exists_xzf_rm_mv_assets /tmp/$(basename ${containerd})
-RUN rm /assets/bin/ctr
-
-FROM install AS pigz
-ARG pigz=assets/pigz_2.4_x86_64.tgz
-ADD ${pigz} /assets/
-
-FROM install AS runc
-ARG runc=https://github.com/opencontainers/runc/releases/download/v1.0.2/runc.amd64
-ADD ${runc} /assets/runc
-RUN chmod +x /assets/runc
+ARG prerelease=
+ARG build=
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease} -X github.com/logsquaredn/geocloud.Build=${build}" -o /assets/geocloud ./cmd/geocloud/
 
 FROM base_image AS geocloud
 ENV PATH=/usr/local/geocloud/bin:$PATH
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends ca-certificates
-RUN apt-get remove -y ca-certificates && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
-COPY --from=build /assets/ /usr/local/geocloud/bin/
-COPY --from=containerd /assets/bin/ /usr/local/geocloud/bin/
-COPY --from=pigz /assets/ /usr/local/geocloud/bin/
-COPY --from=runc /assets/ /usr/local/geocloud/bin/
-VOLUME /var/lib/containerd/
+RUN apk add --no-cache ca-certificates
+RUN apk del ca-certificates
+VOLUME /var/lib/geocloud
 ENTRYPOINT ["geocloud"]
 CMD ["--help"]
+COPY --from=zip /assets /usr/local/geocloud/bin
+COPY --from=build_tasks /assets /usr/local/geocloud/bin
+COPY --from=build /assets /usr/local/geocloud/bin

@@ -3,48 +3,12 @@ package geocloud
 import (
 	"fmt"
 	"io"
+	"net"
 	"strings"
 	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/jessevdk/go-flags"
-	"github.com/tedsuo/ifrit"
 )
 
-// Component is a combination of a long-running process (e.g. containerd),
-// a client to talk to said long-running process (e.g. a postgres client),
-// and/or an API wrapped around said client to make interacting with it easy
-// from other Components
-//
-// A Component must be started either by calling Component.Run or Component.Execute
-// before its API should be expected to by functional
-//
-// geocloud, therefore, is an orchestration of Components that are ran in parallel
-// and use one another's APIs to talk amongst themselves
-// This makes each Component (datastore, objectstore, runtime, etc) pluggable
-// (e.g. the messagequeue component could have an SQS and an AMQP implementation)
-type Component interface {
-	flags.Commander
-	ifrit.Runner
-
-	// Name returns the name of the Component (e.g. "containerd")
-	Name() string
-	// IsEnabled returns whether or not the Component is enabled
-	IsEnabled() bool
-}
-
-// AWSComponent is a Component that takes advantage of an
-// *github.com/aws/aws-sdk-go/aws.Config
-// so that such a Config can be shared by multiple AWSComponents
-type AWSComponent interface {
-	Component
-
-	// WithConfig sets the AWSComponents' Config to the provided Config
-	// and returns the AWSComponent for chaining
-	WithConfig(*aws.Config) AWSComponent
-}
-
-// Message is the primary object that is passed between geocloud Components
+// Message is the primary object that is passed between geocloud components
 type Message interface {
 	ID() string
 }
@@ -196,13 +160,10 @@ type Task struct {
 	Type    TaskType
 	Params  []string
 	QueueID string
-	Ref     string
 }
 
 // Datastore ...
 type Datastore interface {
-	Component
-
 	CreateJob(*Job) (*Job, error)
 	UpdateJob(*Job) (*Job, error)
 	GetTaskByJobID(Message) (*Task, error)
@@ -212,13 +173,10 @@ type Datastore interface {
 	GetJob(Message) (*Job, error)
 	GetJobs(time.Duration) ([]*Job, error)
 	DeleteJob(*Job) error
-	Migrate(string) error
 }
 
 // Objectstore ...
 type Objectstore interface {
-	Component
-
 	GetInput(Message) (Volume, error)
 	GetOutput(Message) (Volume, error)
 	PutInput(Message, Volume) error
@@ -228,35 +186,21 @@ type Objectstore interface {
 
 // MessageRecipient ...
 type MessageRecipient interface {
-	Component
-
 	Send(Message) error
 }
 
 // MessageQueue ...
 type MessageQueue interface {
 	MessageRecipient
-
-	WithDatastore(Datastore) MessageQueue
-	WithMessageRecipient(Runtime) MessageQueue
-	WithTasks(...TaskType) MessageQueue
-	WithTaskmap(map[TaskType]string) MessageQueue
+	Poll(f func(Message) error) error
 }
 
 // API ...
 type API interface {
-	Component
-
-	// Create(TaskType, []string) (Job, error)
-	// Status(Message) (Job, error)
-	// Result(Message) (map[string]string, error)
-
-	WithDatastore(Datastore) API
-	WithObjectstore(Objectstore) API
-	WithMessageRecipient(MessageRecipient) API
+	Serve(l net.Listener) error
 }
 
-// Runtime is a Component that ultimately recieves a
+// Runtime is the component that ultimately recieves a
 // Message, aggregates that Message's data from a
 // Datastore and Objectstore, executes that
 // Message's job, and sends the results back to the Datastore
@@ -269,10 +213,6 @@ type Runtime interface {
 	// With that said, for HA purposes, a genuine MessageQueue
 	// should be utilized instead
 	MessageRecipient
-
-	WithDatastore(Datastore) Runtime
-	WithObjectstore(Objectstore) Runtime
-	WithWorkdir(string) Runtime
 }
 
 type CreateResponse struct {

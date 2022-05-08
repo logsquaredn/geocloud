@@ -2,48 +2,42 @@ version: '3.4'
 
 networks:
   api:
-  coremigrate:
-  externalmigrate:
+  migrate:
   worker:
   secretary:
 
 services:
   api:
     build: .
-    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: a --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --amqp-enabled --amqp-queue-name=geocloud
+    image: &image logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    command: a
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
     ports: [8080:8080]
-    depends_on: &depends_on [datastore, messagequeue, coremigrate, externalmigrate, objectstore]
+    depends_on: &depends_on [datastore, messagequeue, migrate, objectstore]
     environment: &environment
       GEOCLOUD_POSTGRES_ADDRESS: datastore
       GEOCLOUD_POSTGRES_PASSWORD: geocloud
       GEOCLOUD_S3_BUCKET: geocloud
       GEOCLOUD_S3_ENDPOINT: http://objectstore:9000
+      GEOCLOUD_S3_DISABLE_SSL: t
+      GEOCLOUD_S3_FORCE_PATH_STYLE: t
       GEOCLOUD_AMQP_ADDRESS: messagequeue
       GEOCLOUD_AMQP_PASSWORD: geocloud
       GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
       GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
       GEOCLOUD_STRIPE_API_KEY: ${GEOCLOUD_STRIPE_API_KEY:-geocloud}
-  coremigrate:
+  migrate:
     build: .
-    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: cm --postgres-enabled
-    networks: [coremigrate]
+    image: *image
+    command: m
+    networks: [migrate]
     depends_on: [datastore]
-    environment: *environment
-  externalmigrate:
-    build: .
-    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: em --postgres-enabled
-    networks: [externalmigrate]
-    depends_on: [datastore, coremigrate]
     environment: *environment
   secretary:
     build: .
-    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    command: s --postgres-enabled --s3-enabled --s3-disable-ssl --s3-force-path-style --work-jobs-before 1s
+    image: *image
+    command: s --work-jobs-before 1s
     networks: [secretary]
     depends_on: [datastore, objectstore]
     environment: *environment
@@ -58,9 +52,9 @@ services:
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
   datastore:
     image: postgres:${POSTGRES_TAG:-alpine}
-    networks: [api, coremigrate, externalmigrate, worker, secretary]
+    networks: [api, migrate, worker, secretary]
     ports: [5432:5432]
-    volumes: [./hack/postgresql/:/var/lib/postgresql/]
+    volumes: [./hack/postgresql:/var/lib/postgresql]
     environment:
       POSTGRES_DB: geocloud
       POSTGRES_USER: geocloud
@@ -69,16 +63,36 @@ services:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     networks: [api, worker]
     ports: [5672:5672, 15672:15672]
-    volumes: [./hack/rabbitmq/lib/:/var/lib/rabbitmq/, ./hack/rabbitmq/etc/:/etc/rabbitmq/:ro]
+    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
   worker:
     build: .
-    image: logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
-    privileged: true
-    command: w --postgres-enabled --s3-enabled --amqp-enabled --s3-disable-ssl --s3-force-path-style --amqp-queue-name=geocloud
-    volumes: [~/.aws/:/root/.aws/:ro, ./hack/geocloud:/var/lib/geocloud/]
+    image: *image
+    command: w
+    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud]
     networks: [worker]
     depends_on: *depends_on
-    environment:
-      <<: *environment
-      GEOCLOUD_REGISTRY_USERNAME: ${GEOCLOUD_REGISTRY_USERNAME:-}
-      GEOCLOUD_REGISTRY_PASSWORD: ${GEOCLOUD_REGISTRY_PASSWORD:-}
+    environment: *environment
+  removebadgeometry:
+    build: .
+    image: *image
+    entrypoint: /usr/local/geocloud/bin/removebadgeometry/task
+    command: /tmp/input/input.geojson /tmp
+    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+  buffer:
+    build: .
+    image: *image
+    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    entrypoint: /usr/local/geocloud/bin/buffer/task
+    command: /tmp/input/input.geojson /tmp 2
+  filter:
+    build: .
+    image: *image
+    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    entrypoint: /usr/local/geocloud/bin/filter/task
+    command: /tmp/input/input.geojson /tmp prop0 value0
+  reproject:
+    build: .
+    image: *image
+    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    entrypoint: /usr/local/geocloud/bin/reproject/task
+    command: /tmp/input/input.geojson /tmp 2000

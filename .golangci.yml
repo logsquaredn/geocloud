@@ -1,0 +1,23 @@
+run:
+  timeout: 3m
+linters:
+  enable:
+    - megacheck
+    - govet
+    - revive
+    - gocyclo
+    - gosec
+    - unconvert
+    - dupl
+    - nakedret
+    - prealloc
+    - exportloopref
+    - gocritic
+    - goimports
+    - whitespace
+    - misspell
+    - depguard
+    - importas
+    - contextcheck
+    - nolintlint
+    - revive

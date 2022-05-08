@@ -1,11 +1,6 @@
 # assets
 assets/*
-!assets/pigz_2.4_x86_64.tgz
-
-# bin
-bin/*
-!bin/if_tar_exists_xzf_rm_mv_assets
-runtime/*.tar
+!assets/zip_3.0_x86_64.tgz
 
 # hack
 hack/geocloud/*
@@ -33,6 +28,4 @@ hack/rabbitmq/log/*
 
 # vscode
 .vscode/
-
-# rust
-janitor/target
+.idea/
