@@ -33,6 +33,7 @@ jobs:
         with:
           cache-from: type=registry,ref=logsquaredn/geocloud:latest
           push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:
