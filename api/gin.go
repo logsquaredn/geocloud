@@ -73,8 +73,8 @@ func (a *ginAPI) Serve(l net.Listener) error {
 
 const (
 	apiKeyQueryParam = "api-key"
-	apiKeyHeader = "X-API-Key"
-	apiKeyCookie = apiKeyHeader
+	apiKeyHeader     = "X-API-Key"
+	apiKeyCookie     = apiKeyHeader
 )
 
 func (a *ginAPI) middleware(ctx *gin.Context) {
@@ -89,7 +89,7 @@ func (a *ginAPI) middleware(ctx *gin.Context) {
 	if _, err := a.ds.GetCustomer(apiKey); err != nil {
 		if err == sql.ErrNoRows {
 			log.Err(err).Msgf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)
-			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: fmt.Sprintf("header '%s', header '%s' cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)})
+			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: fmt.Sprintf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)})
 			return
 		}
 
