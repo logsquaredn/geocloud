@@ -82,7 +82,7 @@ func (a *ginAPI) middleware(ctx *gin.Context) {
 		}
 
 		log.Err(err).Msgf("failed to retrieve customer information")
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retreive customer information"})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to retrieve customer information"})
 		return
 	}
 
