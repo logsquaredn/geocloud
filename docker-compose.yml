@@ -9,7 +9,7 @@ networks:
 services:
   api:
     build: .
-    image: &image logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    image: &image ghcr.io/logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
     command: a
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
