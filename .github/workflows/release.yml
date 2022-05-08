@@ -16,6 +16,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: get-short-sha
         id: get-short-sha
         run: echo "::set-output name=short-sha::$(git rev-parse --short ${{ github.sha }})"
       - name: get-tag
