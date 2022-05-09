@@ -255,7 +255,6 @@ func (a *ginAPI) status(ctx *gin.Context) {
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/status got 0 results querying for id: %s", id)
-		// TODO add message
 		ctx.JSON(http.StatusNotFound, &geocloud.ErrorResponse{Error: "query parameter 'id' must be a valid job ID"})
 		return
 	} else if err != nil {
@@ -294,26 +293,22 @@ func (a *ginAPI) result(ctx *gin.Context) {
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/result got 0 results querying for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusNotFound)
+		ctx.JSON(http.StatusNotFound, &geocloud.ErrorResponse{Error: fmt.Sprintf("id: %s not found", id)})
 		return
 	} else if err != nil {
 		log.Err(err).Msgf("/result failed to query for status for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to find results for id: %s", id)})
 		return
 	} else if job.Status != geocloud.Complete {
 		log.Error().Msgf("/result results requested but id: %s is of status: %s", id, job.Status)
-		// TODO add message
-		ctx.Status(http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: fmt.Sprintf("id: %s not complete. status: %s", id, job.Status)})
 		return
 	}
 
 	vol, err := a.os.GetOutput(m)
 	if err != nil {
 		log.Error().Msgf("/result failed to get result from s3 for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to find results for id: %s", id)})
 		return
 	}
 
@@ -340,13 +335,11 @@ func (a *ginAPI) result(ctx *gin.Context) {
 	})
 	if err != nil {
 		log.Err(err).Msgf("/result failed to download result from s3 for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to get results for id: %s", id)})
 		return
 	} else if len(buf) < 1 {
 		log.Error().Msgf("/result downloaded no data from s3 for id: %s", id)
-		// TODO add message
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("got no results for id: %s", id)})
 		return
 	}
 
@@ -357,8 +350,7 @@ func (a *ginAPI) result(ctx *gin.Context) {
 		json.Unmarshal(buf, &js)
 		if js == nil {
 			log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
-			// TODO add message
-			ctx.Status(http.StatusInternalServerError)
+			ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create json result for id: %s", id)})
 			return
 		}
 
