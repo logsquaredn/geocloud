@@ -335,6 +335,7 @@ func (p *postgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 			&j.StartTime, &endTime,
 			pq.Array(&j.Args),
 			&j.CustomerID,
+			&j.CustomerName,
 		)
 		if err != nil {
 			return nil, err

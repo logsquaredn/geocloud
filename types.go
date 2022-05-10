@@ -60,14 +60,15 @@ func (s JobStatus) String() string {
 
 // Job ...
 type Job struct {
-	ID         string
-	TaskType   TaskType
-	Status     JobStatus
-	Err        error
-	StartTime  time.Time
-	EndTime    time.Time
-	Args       []string
-	CustomerID string
+	ID           string
+	TaskType     TaskType
+	Status       JobStatus
+	Err          error
+	StartTime    time.Time
+	EndTime      time.Time
+	Args         []string
+	CustomerID   string
+	CustomerName string
 }
 
 var _ Message = (*Job)(nil)
