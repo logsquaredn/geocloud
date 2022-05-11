@@ -41,7 +41,15 @@ services:
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [secretary]
     depends_on: [datastore, objectstore]
-    environment: *environment
+    environment:
+      <<: *environment
+      GEOCLOUD_S3_ARCHIVE_BUCKET: geocloud-archive
+      GEOCLOUD_S3_ARCHIVE_ENDPOINT: http://objectstore:9000
+      GEOCLOUD_S3_ARCHIVE_DISABLE_SSL: t
+      GEOCLOUD_S3_ARCHIVE_FORCE_PATH_STYLE: t
+      GEOCLOUD_ACCESS_KEY_ID_ARCHIVE: ${AWS_ACCESS_KEY_ID:-geocloud}
+      GEOCLOUD_SECRET_ACCESS_KEY_ARCHIVE: ${AWS_SECRET_ACCESS_KEY:-geocloud}
+
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
