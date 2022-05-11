@@ -36,6 +36,11 @@ func (o *osRuntime) Send(m geocloud.Message) error {
 		return err
 	}
 
+	switch j.Status {
+	case geocloud.Complete, geocloud.InProgress:
+		return nil
+	}
+
 	stderr := new(bytes.Buffer)
 	defer func() {
 		j.EndTime = time.Now()

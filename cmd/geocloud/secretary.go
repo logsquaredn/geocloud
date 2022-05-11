@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/logsquaredn/geocloud/datastore"
@@ -34,10 +36,12 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		getPostgresOpts(),
 	)
 	if err != nil {
+		log.Err(err).Msg("creating datastore")
 		return err
 	}
 
 	if err = ds.Prepare(); err != nil {
+		log.Err(err).Msg("preparing datastore")
 		return err
 	}
 
@@ -45,6 +49,15 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		getS3Opts(),
 	)
 	if err != nil {
+		log.Err(err).Msg("creating object store")
+		return err
+	}
+
+	osa, err := objectstore.NewS3(
+		getS3ArchiveOpts(),
+	)
+	if err != nil {
+		log.Err(err).Msg("creating archive object store")
 		return err
 	}
 
@@ -67,6 +80,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var archive strings.Builder
 	log.Info().Msg("processing jobs")
 	for _, j := range jobs {
 		c, err := customer.Get(j.CustomerID, nil)
@@ -102,6 +116,19 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		err = ds.DeleteJob(j)
 		if err != nil {
 			log.Err(err).Msgf("deleting data for customer '%s'", j.CustomerID)
+			return err
+		}
+
+		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Err.Error(), j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, j.CustomerName))
+	}
+
+	if len(archive.String()) > 0 {
+		err = osa.Put(
+			fmt.Sprintf("%d/archive.csv", time.Now().Unix()),
+			strings.NewReader(archive.String()),
+		)
+		if err != nil {
+			log.Err(err).Msg("putting archive to s3")
 			return err
 		}
 	}
