@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 			}
 
 			OGRGeometryH rebuiltBufferedGeometry = OGR_G_CreateGeometry(wkbMultiPolygon);
-			OGRGeometryH splitGeoms[2048];
+			OGRGeometryH splitGeoms[4096];
 			int geomsCount = splitGeometries(splitGeoms, 0, inputGeometry);
 			for(int i = 0; i < geomsCount; ++i) {
 				OGRGeometryH bufferedGeometry = OGR_G_Buffer(splitGeoms[i], bufferDistanceDouble, quadSegCountInt);
