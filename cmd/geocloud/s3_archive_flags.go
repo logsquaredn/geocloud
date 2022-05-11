@@ -52,19 +52,19 @@ func init() {
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&s3ArchiveOpts.AccessKeyID,
-		"s3-access-key-id-archive",
+		"s3-archive-access-key-id",
 		coalesceString(
-			os.Getenv("GEOCLOUD_ACCESS_KEY_ID_ARCHIVE"),
-			os.Getenv("GEOCLOUD_AWS_ACCESS_KEY_ID_ARCHIVE"),
+			os.Getenv("GEOCLOUD_S3_ARCHIVE_ACCESS_KEY_ID"),
+			os.Getenv("GEOCLOUD_ACCESS_KEY_ID"),
 		),
 		"S3 access key ID",
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&s3ArchiveOpts.SecretAccessKey,
-		"s3-secret-access-key-archive",
+		"s3-archive-secret-access-key",
 		coalesceString(
-			os.Getenv("GEOCLOUD_SECRET_ACCESS_KEY_ARCHIVE"),
-			os.Getenv("GEOCLOUD_AWS_SECRET_ACCESS_KEY_ARCHIVE"),
+			os.Getenv("GEOCLOUD_S3_ARCHIVE_SECRET_ACCESS_KEY"),
+			os.Getenv("GEOCLOUD_SECRET_ACCESS_KEY"),
 		),
 		"S3 secret access key",
 	)

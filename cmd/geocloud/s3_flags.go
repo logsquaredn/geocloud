@@ -54,8 +54,8 @@ func init() {
 		&s3Opts.AccessKeyID,
 		"s3-access-key-id",
 		coalesceString(
+			os.Getenv("GEOCLOUD_S3_ACCESS_KEY_ID"),
 			os.Getenv("GEOCLOUD_ACCESS_KEY_ID"),
-			os.Getenv("GEOCLOUD_AWS_ACCESS_KEY_ID"),
 		),
 		"S3 access key ID",
 	)
@@ -63,8 +63,8 @@ func init() {
 		&s3Opts.SecretAccessKey,
 		"s3-secret-access-key",
 		coalesceString(
+			os.Getenv("GEOCLOUD_S3_SECRET_ACCESS_KEY"),
 			os.Getenv("GEOCLOUD_SECRET_ACCESS_KEY"),
-			os.Getenv("GEOCLOUD_AWS_SECRET_ACCESS_KEY"),
 		),
 		"S3 secret access key",
 	)
