@@ -335,6 +335,7 @@ func (p *postgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 			&j.StartTime, &endTime,
 			pq.Array(&j.Args),
 			&j.CustomerID,
+			&j.CustomerName,
 		)
 		if err != nil {
 			return nil, err
@@ -465,8 +466,8 @@ func (p *postgresDatastore) GetCustomer(customerID string) (*geocloud.Customer, 
 //go:embed psql/execs/create_customer.sql
 var createCustomerSQL string
 
-func (p *postgresDatastore) CreateCustomer(customerID string, customer_name string) error {
-	_, err := p.stmt.createCustomer.Exec(customerID, customer_name)
+func (p *postgresDatastore) CreateCustomer(customerID string, customerName string) error {
+	_, err := p.stmt.createCustomer.Exec(customerID, customerName)
 	if err != nil {
 		return err
 	}

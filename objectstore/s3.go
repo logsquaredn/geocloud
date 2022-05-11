@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -165,6 +166,16 @@ func (s *s3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 	return s.upldr.UploadWithIterator(aws.BackgroundContext(), &s3manager.UploadObjectsIterator{
 		Objects: objs,
 	})
+}
+
+func (s *s3Objectstore) Put(key string, body io.Reader) error {
+	_, err := s.upldr.Upload(&s3manager.UploadInput{
+		Bucket: &s.bucket,
+		Key:    &key,
+		Body:   body,
+	})
+
+	return err
 }
 
 func (s *s3Objectstore) DeleteRecursive(prefix string) error {
