@@ -13,12 +13,6 @@ sudo apt-get install gdal-bin
 sudo apt-get install libgdal-dev
 export C_INCLUDE_PATH=/usr/include/gdal
 ```
-
-### TODO
-- Fix bad geometries
-- dissolve
-- point in poly and poly in poly lookups
-
 ### Examples
 ```sh
 # reproject:

@@ -54,19 +54,31 @@ int main(int argc, char *argv[]) {
 				fatalError();	
 			}
 
-			OGRGeometryH bufferedGeometry = OGR_G_Buffer(inputGeometry, bufferDistanceDouble, quadSegCountInt);
-			if(bufferedGeometry == NULL) {
-				error("failed to buffer input geometry", __FILE__, __LINE__);
+			OGRGeometryH rebuiltBufferedGeometry = OGR_G_CreateGeometry(wkbMultiPolygon);
+			OGRGeometryH splitGeoms[4096];
+			int geomsCount = splitGeometries(splitGeoms, 0, inputGeometry);
+			for(int i = 0; i < geomsCount; ++i) {
+				OGRGeometryH bufferedGeometry = OGR_G_Buffer(splitGeoms[i], bufferDistanceDouble, quadSegCountInt);
+				if(bufferedGeometry == NULL) {
+					error("failed to buffer input geometry", __FILE__, __LINE__);
+					fatalError();
+				}
+
+				if(OGR_G_AddGeometry(rebuiltBufferedGeometry, bufferedGeometry) != OGRERR_NONE) {
+					error("failed to add buffered geometry to rebuilt geometry", __FILE__, __LINE__);
+					fatalError();
+				}
+				
+				OGR_G_DestroyGeometry(splitGeoms[i]);
+				OGR_G_DestroyGeometry(bufferedGeometry);
+			}
+
+			if(buildOutputVectorFeature(&gdalHandles, &rebuiltBufferedGeometry, &inputFeature)) {
+				error("failed to build output vector feature", __FILE__, __LINE__);
 				fatalError();
 			}
 
-			if(buildOutputVectorFeature(&gdalHandles, &bufferedGeometry, &inputFeature)) {
-				error(" failed to build output vector feature", __FILE__, __LINE__);
-				fatalError();
-			}
-
-			OGR_G_DestroyGeometry(inputGeometry);
-			OGR_G_DestroyGeometry(bufferedGeometry);
+			OGR_G_DestroyGeometry(rebuiltBufferedGeometry);
 		}
 
 		OGR_F_Destroy(inputFeature);

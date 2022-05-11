@@ -347,9 +347,9 @@ func (a *ginAPI) result(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "application/zip", buf)
 	} else {
 		var js map[string]interface{}
-		json.Unmarshal(buf, &js)
-		if js == nil {
-			log.Error().Msgf("/result failed to convert result to valid json for id: %s", id)
+		err = json.Unmarshal(buf, &js)
+		if err != nil || js == nil {
+			log.Err(err).Msgf("/result failed to convert result to valid json for id: %s", id)
 			ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create json result for id: %s", id)})
 			return
 		}

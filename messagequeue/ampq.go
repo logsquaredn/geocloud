@@ -73,13 +73,13 @@ func (a *amqpMessageQueue) Poll(f func(geocloud.Message) error) error {
 	}
 
 	for m := range msgs {
-		if err := f(&message{
-			id: string(m.Body),
-		}); err == nil {
-			if err = m.Ack(false); err != nil {
-				return err
+		go func(m amqp.Delivery) {
+			if err := f(&message{
+				id: string(m.Body),
+			}); err == nil {
+				m.Ack(false)
 			}
-		}
+		}(m)
 	}
 
 	return nil
