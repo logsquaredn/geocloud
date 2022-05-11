@@ -6,39 +6,32 @@ GO ?= go
 BIN ?= bin
 ASSETS ?= assets
 
+REGISTRY ?= ghcr.io
 REPOSITORY ?= logsquaredn/geocloud
-TAG ?= $(REPOSITORY):latest
-
-TASKS-TAR ?= runtime/tasks.tar
-TASKS-REPOSITORY ?= $(REPOSITORY)
-TASKS-TAGS ?= $(TASKS-REPOSITORY):task-removebadgeometry $(TASKS-REPOSITORY):task-buffer $(TASKS-REPOSITORY):task-filter $(TASKS-REPOSITORY):task-reproject
-TASKS-DIR ?= tasks
-
-GCC-ARGS ?= -Wall
+TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
 .PHONY: fallthrough
-fallthrough: save-tasks infra up
+fallthrough: fmt infra up
 
-.PHONY: build-tasks
-build-tasks:
-	@$(DOCKER-COMPOSE) -f $(TASKS-DIR)/docker-compose.yml build
-
-.PHONY: push-tasks
-push-tasks: build-tasks
-	@$(DOCKER-COMPOSE) -f $(TASKS-DIR)/docker-compose.yml push
-
-.PHONY: tasks save-tasks
-tasks save-tasks: build-tasks
-	@$(DOCKER) save -o $(TASKS-TAR) $(TASKS-TAGS)
+.PHONY: fmt
+fmt:
+	@$(GO) fmt ./...
 
 .PHONY: services
 services:
 	@$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
 
+.PHONY: build
+build:
+	@$(DOCKER-COMPOSE) build
+
+.PHONY: secretary
+secretary:
+	$(DOCKER-COMPOSE) up --build secretary
+
 .PHONY: migrate migrations
 migrate migrations:
-	@$(DOCKER-COMPOSE) up --build coremigrate 
-	@$(DOCKER-COMPOSE) up --build externalmigrate
+	@$(DOCKER-COMPOSE) up --build migrate
 
 .PHONY: infra infrastructure
 infra infrastructure: services sleep migrate secretary
@@ -52,27 +45,11 @@ restart:
 	@$(DOCKER-COMPOSE) stop worker api
 	@$(DOCKER-COMPOSE) up --build worker api
 
-.PHONY: build
-build:
-	@$(DOCKER-COMPOSE) build
-
-.PHONY: secretary
-secretary:
-	$(DOCKER-COMPOSE) up --build secretary
-
-.PHONY: scan
-scan: build
-	@$(DOCKER) scan -f Dockerfile $(TAG)
-
-.PHONY: push
-push: build
-	@$(DOCKER-COMPOSE) push
-
 .PHONY: down
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/* $(TASKS-TAR)
+CLEAN ?= hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down
@@ -83,12 +60,11 @@ prune: clean
 	@$(DOCKER) system prune --volumes -a
 
 .PHONY: test
-test: save-tasks
+test:
 	@$(GO) test -test.v -race ./...
 
 .PHONY: vet
-vet: save-tasks
-	@$(GO) fmt ./...
+vet: fmt
 	@$(GO) vet ./...
 
 .PHONY: sleep

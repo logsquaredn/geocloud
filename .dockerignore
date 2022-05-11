@@ -1,8 +1,8 @@
 **/.*
 **/*.md
 
-**/Dockerfile
-**/docker-compose.yml
-
-hack/**
-testdata/**
+Dockerfile
+Makefile
+docker-compose.yml
+hack/
+testdata/

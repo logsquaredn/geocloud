@@ -2,43 +2,67 @@ package objectstore
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/logsquaredn/geocloud"
-	"github.com/tedsuo/ifrit"
 )
 
-type S3Objectstore struct {
-	Enabled        bool   `long:"enabled" description:"Whether or not the S3 objectstore is enabled"`
-	Bucket         string `long:"bucket" env:"GEOCLOUD_S3_BUCKET" description:"S3 bucket"`
-	Prefix         string `long:"prefix" default:"jobs" description:"Prefix to apply to keys"`
-	Endpoint       string `long:"endpoint" env:"GEOCLOUD_S3_ENDPOINT" description:"Endpoint to target"`
-	DisableSSL     bool   `long:"disable-ssl" description:"Disable SSL"`
-	ForcePathStyle bool   `long:"force-path-style" description:"Force S3 path style"`
+type s3Objectstore struct {
+	prefix string
+	bucket string
 
-	cfg    *aws.Config
 	svc    *s3.S3
 	upldr  *s3manager.Uploader
 	dwnldr *s3manager.Downloader
 }
 
-var _ geocloud.Objectstore = (*S3Objectstore)(nil)
-var _ geocloud.AWSComponent = (*S3Objectstore)(nil)
+var _ geocloud.Objectstore = (*s3Objectstore)(nil)
 
-func (s *S3Objectstore) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
-	cfg := aws.NewConfig().WithDisableSSL(s.DisableSSL).WithS3ForcePathStyle(s.ForcePathStyle)
-	if s.Endpoint != "" {
-		cfg.WithEndpoint(s.Endpoint)
+func NewS3(opts *S3ObjectstoreOpts) (*s3Objectstore, error) {
+	var (
+		s = &s3Objectstore{
+			prefix: opts.Prefix,
+			bucket: opts.Bucket,
+		}
+		creds = credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.StaticProvider{
+					Value: credentials.Value{
+						AccessKeyID:     opts.AccessKeyID,
+						SecretAccessKey: opts.SecretAccessKey,
+					},
+				},
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{
+					Filename: "~/.aws/creds",
+					Profile:  "default",
+				},
+			},
+		)
+		cfg = aws.NewConfig().
+			WithDisableSSL(opts.DisableSSL).
+			WithS3ForcePathStyle(opts.ForcePathStyle).
+			WithRegion(opts.Region).
+			WithCredentials(creds)
+	)
+	if s.bucket == "" {
+		return nil, fmt.Errorf("Bucket is required")
 	}
-	sess, err := session.NewSession(s.cfg, cfg)
+
+	if opts.Endpoint != "" {
+		cfg.WithEndpoint(opts.Endpoint)
+	}
+
+	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
 	s.svc = s3.New(sess)
 	s.upldr = s3manager.NewUploader(sess, func(u *s3manager.Uploader) {
 		u.S3 = s.svc
@@ -47,32 +71,13 @@ func (s *S3Objectstore) Run(signals <-chan os.Signal, ready chan<- struct{}) err
 		d.S3 = s.svc
 	})
 
-	close(ready)
-	<-signals
-	return nil
+	return s, nil
 }
 
-func (s *S3Objectstore) Execute(_ []string) error {
-	return <-ifrit.Invoke(s).Wait()
-}
-
-func (s *S3Objectstore) Name() string {
-	return "s3"
-}
-
-func (s *S3Objectstore) IsEnabled() bool {
-	return s.Enabled
-}
-
-func (s *S3Objectstore) WithConfig(cfg *aws.Config) geocloud.AWSComponent {
-	s.cfg = cfg
-	return s
-}
-
-func (s *S3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.Prefix, m.ID(), "input")
+func (s *s3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
+	prefix := filepath.Join(s.prefix, m.GetID(), "input")
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: &s.Bucket,
+		Bucket: &s.bucket,
 		Prefix: &prefix,
 	})
 	if err != nil {
@@ -85,16 +90,16 @@ func (s *S3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
 
 	return &s3Volume{
 		objs:   o.Contents,
-		bucket: s.Bucket,
+		bucket: s.bucket,
 		prefix: prefix,
 		dwnldr: s.dwnldr,
 	}, nil
 }
 
-func (s *S3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.Prefix, m.ID(), "output")
+func (s *s3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
+	prefix := filepath.Join(s.prefix, m.GetID(), "output")
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: &s.Bucket,
+		Bucket: &s.bucket,
 		Prefix: &prefix,
 	})
 	if err != nil {
@@ -105,19 +110,19 @@ func (s *S3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
 
 	return &s3Volume{
 		objs:   o.Contents,
-		bucket: s.Bucket,
+		bucket: s.bucket,
 		prefix: prefix,
 		dwnldr: s.dwnldr,
 	}, nil
 }
 
-func (s *S3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
+func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 	var objs []s3manager.BatchUploadObject
 	if err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.Prefix, m.ID(), "input", f.Name())
+		key := filepath.Join(s.prefix, m.GetID(), "input", f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
-				Bucket: &s.Bucket,
+				Bucket: &s.bucket,
 				Key:    &key,
 				Body:   f,
 			},
@@ -136,13 +141,13 @@ func (s *S3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 	})
 }
 
-func (s *S3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
+func (s *s3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 	var objs []s3manager.BatchUploadObject
 	err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.Prefix, m.ID(), "output", f.Name())
+		key := filepath.Join(s.prefix, m.GetID(), "output", f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
-				Bucket: &s.Bucket,
+				Bucket: &s.bucket,
 				Key:    &key,
 				Body:   f,
 			},
@@ -162,10 +167,11 @@ func (s *S3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
 	})
 }
 
-func (s *S3Objectstore) DeleteRecursive(prefix string) error {
+func (s *s3Objectstore) DeleteRecursive(prefix string) error {
+	p := filepath.Join(s.prefix, prefix)
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: &s.Bucket,
-		Prefix: &prefix,
+		Bucket: &s.bucket,
+		Prefix: &p,
 	})
 	if err != nil {
 		return err
@@ -173,7 +179,7 @@ func (s *S3Objectstore) DeleteRecursive(prefix string) error {
 
 	for _, s3Obj := range o.Contents {
 		_, err = s.svc.DeleteObject(&s3.DeleteObjectInput{
-			Bucket: &s.Bucket,
+			Bucket: &s.bucket,
 			Key:    s3Obj.Key,
 		})
 		if err != nil {
@@ -181,10 +187,9 @@ func (s *S3Objectstore) DeleteRecursive(prefix string) error {
 		}
 	}
 
-	s.svc.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: &s.Bucket,
+	_, err = s.svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: &s.bucket,
 		Key:    &prefix,
 	})
-
-	return nil
+	return err
 }

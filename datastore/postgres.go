@@ -5,35 +5,31 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	// postgres must be imported to inject the postgres driver
-	// into the database/sql module
-
+	// into the database/sql package
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/logsquaredn/geocloud"
-	"github.com/tedsuo/ifrit"
 )
 
-type PostgresDatastore struct {
-	Enabled    bool          `long:"enabled" description:"Whether or not the Postgres datastore is enabled"`
-	Address    string        `long:"addr" default:":5432" env:"GEOCLOUD_POSTGRES_ADDRESS" description:"Postgres address"`
-	User       string        `long:"user" default:"geocloud" env:"GEOCLOUD_POSTGRES_USER" description:"Postgres user"`
-	Password   string        `long:"password" env:"GEOCLOUD_POSTGRES_PASSWORD" description:"Postgres password"`
-	SSLMode    string        `long:"sslmode" default:"disable" choice:"disable" description:"Postgres SSL mode"`
-	Retries    int64         `long:"retries" default:"5" description:"Number of times to retry connecting to Postgres. 0 is infinity"`
-	RetryDelay time.Duration `long:"retry-delay" default:"5s" description:"Time to wait between attempts at connecting to Postgres"`
+//go:embed psql/migrations/core/*.up.sql
+var coreMigrations embed.FS
 
+//go:embed psql/migrations/external/*.up.sql
+var externalMigrations embed.FS
+
+type postgresDatastore struct {
 	db   *sql.DB
-	stmt struct {
+	mgrt *struct {
+		core     *migrate.Migrate
+		external *migrate.Migrate
+	}
+	stmt *struct {
 		createJob                *sql.Stmt
 		createJobCustomerMapping *sql.Stmt
 		createCustomer           *sql.Stmt
@@ -48,27 +44,82 @@ type PostgresDatastore struct {
 	}
 }
 
-var _ geocloud.Datastore = (*PostgresDatastore)(nil)
+var _ geocloud.Datastore = (*postgresDatastore)(nil)
 
-func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+func NewPostgres(opts *PostgresDatastoreOpts) (*postgresDatastore, error) {
 	var (
+		p = &postgresDatastore{
+			mgrt: &struct {
+				core     *migrate.Migrate
+				external *migrate.Migrate
+			}{},
+			stmt: &struct {
+				createJob                *sql.Stmt
+				createJobCustomerMapping *sql.Stmt
+				createCustomer           *sql.Stmt
+				updateJob                *sql.Stmt
+				getJobByID               *sql.Stmt
+				getJobsBefore            *sql.Stmt
+				deleteJob                *sql.Stmt
+				getTaskByJobID           *sql.Stmt
+				getTaskByType            *sql.Stmt
+				getTasksByTypes          *sql.Stmt
+				getCustomerByCustomerID  *sql.Stmt
+			}{},
+		}
 		err error
 		i   int64 = 1
 	)
-	for p.db, err = sql.Open("postgres", p.connectionString()); err != nil; i++ {
-		if i >= p.Retries && p.Retries > 0 {
-			return fmt.Errorf("failed to connect to db after %d attempts: %w", i, err)
+	for p.db, err = sql.Open("postgres", opts.connectionString()); err != nil; i++ {
+		if i >= opts.Retries && opts.Retries > 0 {
+			return nil, fmt.Errorf("failed to connect to db after %d attempts: %w", i, err)
 		}
-		time.Sleep(p.RetryDelay)
+		time.Sleep(opts.RetryDelay)
 	}
 
 	i = 1
 	for err = p.db.Ping(); err != nil; i++ {
-		if i >= p.Retries && p.Retries > 0 {
-			return fmt.Errorf("failed to ping db after %d attempts: %w", i, err)
+		if i >= opts.Retries && opts.Retries > 0 {
+			return nil, fmt.Errorf("failed to ping db after %d attempts: %w", i, err)
 		}
-		time.Sleep(p.RetryDelay)
+		time.Sleep(opts.RetryDelay)
 	}
+
+	coreSrc, err := iofs.New(coreMigrations, "psql/migrations/core")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read migrations: %w", err)
+	}
+
+	for p.mgrt.core, err = migrate.NewWithSourceInstance(
+		"core", coreSrc,
+		fmt.Sprintf("%s&x-migrations-table=core_migrations", opts.connectionString()),
+	); err != nil; i++ {
+		if i >= opts.Retries && opts.Retries > 0 {
+			return nil, fmt.Errorf("failed to create migrations after %d attempts: %w", i, err)
+		}
+		time.Sleep(opts.RetryDelay)
+	}
+
+	externalSrc, err := iofs.New(externalMigrations, "psql/migrations/external")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read migrations: %w", err)
+	}
+
+	for p.mgrt.external, err = migrate.NewWithSourceInstance(
+		"external", externalSrc,
+		fmt.Sprintf("%s&x-migrations-table=external_migrations", opts.connectionString()),
+	); err != nil; i++ {
+		if i >= opts.Retries && opts.Retries > 0 {
+			return nil, fmt.Errorf("failed to create migrations after %d attempts: %w", i, err)
+		}
+		time.Sleep(opts.RetryDelay)
+	}
+
+	return p, nil
+}
+
+func (p *postgresDatastore) Prepare() error {
+	var err error
 
 	if p.stmt.createJob, err = p.db.Prepare(createJobSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
@@ -114,14 +165,7 @@ func (p *PostgresDatastore) Run(signals <-chan os.Signal, ready chan<- struct{})
 		return fmt.Errorf("failed to prepare statement; %w", err)
 	}
 
-	defer p.close()
-	close(ready)
-	<-signals
 	return nil
-}
-
-func (p *PostgresDatastore) Execute(_ []string) error {
-	return <-ifrit.Invoke(p).Wait()
 }
 
 //go:embed psql/execs/create_job.sql
@@ -130,7 +174,7 @@ var createJobSQL string
 //go:embed psql/execs/create_job_customer_mapping.sql
 var createJobCustomerMappingSQL string
 
-func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
+func (p *postgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
 		id        = uuid.New().String()
 		jobErr    sql.NullString
@@ -143,7 +187,7 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		id, j.TaskType.String(),
 		pq.Array(j.Args),
 	).Scan(
-		&j.Id, &taskType,
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -165,11 +209,13 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		return j, err
 	}
 
-	err = p.stmt.createJobCustomerMapping.QueryRow(
-		id, j.CustomerID,
-	).Scan(&j.CustomerID)
-	if err != nil {
-		return j, err
+	if j.CustomerID != "" {
+		err = p.stmt.createJobCustomerMapping.QueryRow(
+			id, j.CustomerID,
+		).Scan(&j.CustomerID)
+		if err != nil {
+			return j, err
+		}
 	}
 
 	return j, nil
@@ -178,26 +224,27 @@ func (p *PostgresDatastore) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 //go:embed psql/execs/update_job.sql
 var updateJobSQL string
 
-func (p *PostgresDatastore) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
+func (p *postgresDatastore) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
-		jobErr    sql.NullString
-		jobStatus string
-		endTime   sql.NullTime
-		taskType  string
+		jobErr      sql.NullString
+		jobStatus   string
+		endTime     sql.NullTime
+		taskType    string
+		jobErrError = ""
 	)
 
 	// avoid nil pointer dereference on j.Err.Error()
-	if j.Err == nil {
-		j.Err = fmt.Errorf("")
+	if j.Err != nil {
+		jobErrError = j.Err.Error()
 	}
 
 	err := p.stmt.updateJob.QueryRow(
-		j.ID(), j.TaskType.String(),
-		j.Status.String(), j.Err.Error(),
+		j.GetID(), j.TaskType.String(),
+		j.Status.String(), jobErrError,
 		j.StartTime, j.EndTime,
 		pq.Array(j.Args),
 	).Scan(
-		&j.Id, &taskType,
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -225,7 +272,7 @@ func (p *PostgresDatastore) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 //go:embed psql/queries/get_job_by_id.sql
 var getJobByIDSQL string
 
-func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
+func (p *postgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	var (
 		j         = &geocloud.Job{}
 		jobErr    sql.NullString
@@ -234,8 +281,8 @@ func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 		taskType  string
 	)
 
-	err := p.stmt.getJobByID.QueryRow(m.ID()).Scan(
-		&j.Id, &taskType,
+	err := p.stmt.getJobByID.QueryRow(m.GetID()).Scan(
+		&j.ID, &taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
@@ -263,9 +310,9 @@ func (p *PostgresDatastore) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 //go:embed psql/queries/get_jobs_before.sql
 var getJobsBeforeSQL string
 
-func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
-	before_timestamp := time.Now().Add(-before)
-	rows, err := p.stmt.getJobsBefore.Query(before_timestamp)
+func (p *postgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
+	beforeTimestamp := time.Now().Add(-before)
+	rows, err := p.stmt.getJobsBefore.Query(beforeTimestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +330,7 @@ func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 		)
 
 		err = rows.Scan(
-			&j.Id, &taskType,
+			&j.ID, &taskType,
 			&jobStatus, &jobErr,
 			&j.StartTime, &endTime,
 			pq.Array(&j.Args),
@@ -315,8 +362,8 @@ func (p *PostgresDatastore) GetJobs(before time.Duration) ([]*geocloud.Job, erro
 //go:embed psql/execs/delete_job.sql
 var deleteJobSQL string
 
-func (p *PostgresDatastore) DeleteJob(j *geocloud.Job) error {
-	_, err := p.stmt.deleteJob.Exec(j.Id)
+func (p *postgresDatastore) DeleteJob(j *geocloud.Job) error {
+	_, err := p.stmt.deleteJob.Exec(j.ID)
 	if err != nil {
 		return err
 	}
@@ -327,14 +374,14 @@ func (p *PostgresDatastore) DeleteJob(j *geocloud.Job) error {
 //go:embed psql/queries/get_task_by_job_id.sql
 var getTaskByJobIDSQL string
 
-func (p *PostgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
+func (p *postgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 	var (
 		t        = &geocloud.Task{}
 		queueID  sql.NullString
 		taskType string
 	)
 
-	err := p.stmt.getTaskByJobID.QueryRow(m.ID()).Scan(&taskType, pq.Array(&t.Params), &queueID, &t.Ref)
+	err := p.stmt.getTaskByJobID.QueryRow(m.GetID()).Scan(&taskType, pq.Array(&t.Params), &queueID)
 	if err != nil {
 		return t, err
 	}
@@ -347,13 +394,13 @@ func (p *PostgresDatastore) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, 
 //go:embed psql/queries/get_task_by_type.sql
 var getTaskByTypeSQL string
 
-func (p *PostgresDatastore) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
+func (p *postgresDatastore) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	var (
 		t        = &geocloud.Task{}
 		queueID  sql.NullString
 		taskType string
 	)
-	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &queueID, &t.Ref)
+	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &queueID)
 	if err != nil {
 		return t, err
 	}
@@ -366,7 +413,7 @@ func (p *PostgresDatastore) GetTask(tt geocloud.TaskType) (*geocloud.Task, error
 //go:embed psql/queries/get_tasks_by_types.sql
 var getTasksByTypesSQL string
 
-func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.Task, err error) {
+func (p *postgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.Task, err error) {
 	ttss := make([]string, len(tts))
 	for i, tt := range tts {
 		ttss[i] = tt.String()
@@ -385,7 +432,7 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 			taskType string
 		)
 
-		err = rows.Scan(&taskType, pq.Array(&task.Params), &queueID, &task.Ref)
+		err = rows.Scan(&taskType, pq.Array(&task.Params), &queueID)
 		if err != nil {
 			return
 		}
@@ -405,9 +452,9 @@ func (p *PostgresDatastore) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.T
 //go:embed psql/queries/get_customer_by_customer_id.sql
 var getCustomerByCustomerIDSQL string
 
-func (p *PostgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer, error) {
+func (p *postgresDatastore) GetCustomer(customerID string) (*geocloud.Customer, error) {
 	c := &geocloud.Customer{}
-	err := p.stmt.getCustomerByCustomerID.QueryRow(customer_id).Scan(&c.Id, &c.Name)
+	err := p.stmt.getCustomerByCustomerID.QueryRow(customerID).Scan(&c.ID, &c.Name)
 	if err != nil {
 		return c, err
 	}
@@ -418,8 +465,8 @@ func (p *PostgresDatastore) GetCustomer(customer_id string) (*geocloud.Customer,
 //go:embed psql/execs/create_customer.sql
 var createCustomerSQL string
 
-func (p *PostgresDatastore) CreateCustomer(customer_id string, customer_name string) error {
-	_, err := p.stmt.createCustomer.Exec(customer_id, customer_name)
+func (p *postgresDatastore) CreateCustomer(customerID string, customer_name string) error {
+	_, err := p.stmt.createCustomer.Exec(customerID, customer_name)
 	if err != nil {
 		return err
 	}
@@ -427,28 +474,7 @@ func (p *PostgresDatastore) CreateCustomer(customer_id string, customer_name str
 	return nil
 }
 
-func (p *PostgresDatastore) host() string {
-	delimiter := strings.Index(p.Address, ":")
-	if delimiter < 0 {
-		return p.Address
-	}
-	return p.Address[:delimiter]
-}
-
-func (p *PostgresDatastore) port() int64 {
-	delimiter := strings.Index(p.Address, ":")
-	if delimiter < 0 {
-		return 5432
-	}
-	port, _ := strconv.Atoi(p.Address[delimiter+1:])
-	return int64(port)
-}
-
-func (p *PostgresDatastore) connectionString() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d?sslmode=%s", p.User, p.Password, p.host(), p.port(), p.SSLMode)
-}
-
-func (p *PostgresDatastore) close() error {
+func (p *postgresDatastore) Close() error {
 	defer p.stmt.createJob.Close()
 	defer p.stmt.createJobCustomerMapping.Close()
 	defer p.stmt.updateJob.Close()
@@ -457,56 +483,20 @@ func (p *PostgresDatastore) close() error {
 	defer p.stmt.getTaskByJobID.Close()
 	defer p.stmt.getTaskByType.Close()
 	defer p.stmt.getTasksByTypes.Close()
+	defer p.stmt.createJobCustomerMapping.Close()
 	return p.db.Close()
 }
 
-func (p *PostgresDatastore) Name() string {
-	return "postgres"
-}
-
-func (p *PostgresDatastore) IsEnabled() bool {
-	return p.Enabled
-}
-
-func (p *PostgresDatastore) WithDB(db *sql.DB) *PostgresDatastore {
-	p.db = db
-	return p
-}
-
-//go:embed psql/coremigrations/*.up.sql
-var coremigrations embed.FS
-
-//go:embed psql/externalmigrations/*.up.sql
-var externalmigrations embed.FS
-
-func (p *PostgresDatastore) Migrate(folder_name string) error {
-	var src source.Driver
-	var err error
-	if strings.Contains(folder_name, "core") {
-		src, err = iofs.New(coremigrations, fmt.Sprintf("psql/%s", folder_name))
-	} else {
-		src, err = iofs.New(externalmigrations, fmt.Sprintf("psql/%s", folder_name))
-	}
-	if err != nil {
-		return fmt.Errorf("failed to read migrations: %w", err)
+func (p *postgresDatastore) MigrateCore() error {
+	if err := p.mgrt.core.Up(); !errors.Is(err, migrate.ErrNoChange) {
+		return err
 	}
 
-	var (
-		m *migrate.Migrate
-		i int64 = 1
-	)
+	return nil
+}
 
-	for m, err = migrate.NewWithSourceInstance(
-		folder_name, src,
-		fmt.Sprintf("%s&%s%s", p.connectionString(), "x-migrations-table=", folder_name),
-	); err != nil; i++ {
-		if i >= p.Retries && p.Retries > 0 {
-			return fmt.Errorf("failed to apply migrations after %d attempts: %w", i, err)
-		}
-		time.Sleep(p.RetryDelay)
-	}
-
-	if err = m.Up(); !errors.Is(err, migrate.ErrNoChange) {
+func (p *postgresDatastore) MigrateExternal() error {
+	if err := p.mgrt.external.Up(); !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 

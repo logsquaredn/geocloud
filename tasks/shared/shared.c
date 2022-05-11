@@ -8,7 +8,6 @@ void fatalError() {
 	exit(1);
 }
 
-
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geometry, OGRFeatureH *inputFeature) {
     OGRFeatureH outputFeature =  OGR_F_Create(gdalHandles->outputFeatureDefn);
     if(outputFeature == NULL) {
@@ -113,10 +112,11 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
 char *getOutputFilePath(const char *outputDir) {
     int size = 0;
     while(outputDir[size] != '\0') ++size;
-    char filename[11] = "/output.shp";
+    ++size;
+    char filename[12] = "/output.shp";
     size += strlen(filename);
-    char *outputFilePath = (char*) malloc(size + 1);
-    snprintf(outputFilePath, size + 1, "%s%s", outputDir, filename);
+    char *outputFilePath = (char*) malloc(size);
+    snprintf(outputFilePath, size, "%s%s", outputDir, filename);
 
     return outputFilePath;
 }

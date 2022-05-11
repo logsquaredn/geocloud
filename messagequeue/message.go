@@ -8,6 +8,6 @@ type message struct {
 
 var _ geocloud.Message = (*message)(nil)
 
-func (m *message) ID() string {
+func (m *message) GetID() string {
 	return m.id
 }
