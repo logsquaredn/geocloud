@@ -472,7 +472,6 @@ int splitGeometries(OGRGeometryH splitGeoms[], int seed, OGRGeometryH inputGeome
         fatalError();
     }
 
-
     seed = splitGeometries(splitGeoms, seed, topLeftIntersection);
     seed = splitGeometries(splitGeoms, seed, topRightIntersection);
     seed = splitGeometries(splitGeoms, seed, bottomRightIntersection);
