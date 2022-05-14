@@ -16,7 +16,7 @@ var (
 
 func (p *Postgres) GetCustomer(customerID string) (*geocloud.Customer, error) {
 	c := &geocloud.Customer{}
-	err := p.stmt.getCustomerByCustomerID.QueryRow(customerID).Scan(&c.ID, &c.Name)
+	err := p.stmt.getCustomerByID.QueryRow(customerID).Scan(&c.ID, &c.Name)
 	if err != nil {
 		return c, err
 	}

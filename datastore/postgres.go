@@ -21,20 +21,22 @@ type Postgres struct {
 	db   *sql.DB
 	mgrt *migrate.Migrate
 	stmt *struct {
-		createJob               *sql.Stmt
-		createCustomer          *sql.Stmt
-		updateJob               *sql.Stmt
-		getJobByID              *sql.Stmt
-		getJobsBefore           *sql.Stmt
-		deleteJob               *sql.Stmt
-		getTaskByJobID          *sql.Stmt
-		getTaskByType           *sql.Stmt
-		getTasksByTypes         *sql.Stmt
-		getCustomerByCustomerID *sql.Stmt
-		getStorage              *sql.Stmt
-		createStorage           *sql.Stmt
-		deleteStorage           *sql.Stmt
-		updateStorage           *sql.Stmt
+		createJob              *sql.Stmt
+		createCustomer         *sql.Stmt
+		updateJob              *sql.Stmt
+		getJobByID             *sql.Stmt
+		getJobsBefore          *sql.Stmt
+		deleteJob              *sql.Stmt
+		getTaskByJobID         *sql.Stmt
+		getTaskByType          *sql.Stmt
+		getTasksByTypes        *sql.Stmt
+		getCustomerByID        *sql.Stmt
+		getStorage             *sql.Stmt
+		createStorage          *sql.Stmt
+		deleteStorage          *sql.Stmt
+		updateStorage          *sql.Stmt
+		getStorageByCustomerID *sql.Stmt
+		getJobsByCustomerID    *sql.Stmt
 	}
 }
 
@@ -42,20 +44,22 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 	var (
 		p = &Postgres{
 			stmt: &struct {
-				createJob               *sql.Stmt
-				createCustomer          *sql.Stmt
-				updateJob               *sql.Stmt
-				getJobByID              *sql.Stmt
-				getJobsBefore           *sql.Stmt
-				deleteJob               *sql.Stmt
-				getTaskByJobID          *sql.Stmt
-				getTaskByType           *sql.Stmt
-				getTasksByTypes         *sql.Stmt
-				getCustomerByCustomerID *sql.Stmt
-				getStorage              *sql.Stmt
-				createStorage           *sql.Stmt
-				deleteStorage           *sql.Stmt
-				updateStorage           *sql.Stmt
+				createJob              *sql.Stmt
+				createCustomer         *sql.Stmt
+				updateJob              *sql.Stmt
+				getJobByID             *sql.Stmt
+				getJobsBefore          *sql.Stmt
+				deleteJob              *sql.Stmt
+				getTaskByJobID         *sql.Stmt
+				getTaskByType          *sql.Stmt
+				getTasksByTypes        *sql.Stmt
+				getCustomerByID        *sql.Stmt
+				getStorage             *sql.Stmt
+				createStorage          *sql.Stmt
+				deleteStorage          *sql.Stmt
+				updateStorage          *sql.Stmt
+				getStorageByCustomerID *sql.Stmt
+				getJobsByCustomerID    *sql.Stmt
 			}{},
 		}
 		err error
@@ -133,7 +137,7 @@ func (p *Postgres) Prepare() error {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if p.stmt.getCustomerByCustomerID, err = p.db.Prepare(getCustomerByIDSQL); err != nil {
+	if p.stmt.getCustomerByID, err = p.db.Prepare(getCustomerByIDSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement; %w", err)
 	}
 
@@ -150,6 +154,14 @@ func (p *Postgres) Prepare() error {
 	}
 
 	if p.stmt.updateStorage, err = p.db.Prepare(updateStorageSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if p.stmt.getJobsByCustomerID, err = p.db.Prepare(getJobsByCustomerIDSQL); err != nil {
+		return fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if p.stmt.getStorageByCustomerID, err = p.db.Prepare(getStorgageByCustomerIDSQL); err != nil {
 		return fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

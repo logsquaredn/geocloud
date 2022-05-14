@@ -28,7 +28,7 @@ var (
 	getJobByIDSQL string
 
 	//go:embed psql/queries/get_job_by_customer_id.sql
-	getJobByCustomerIDSQL string
+	getJobsByCustomerIDSQL string
 )
 
 func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
@@ -162,8 +162,8 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	return j, nil
 }
 
-func (p *Postgres) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
-	beforeTimestamp := time.Now().Add(-before)
+func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
+	beforeTimestamp := time.Now().Add(-d)
 	rows, err := p.stmt.getJobsBefore.Query(beforeTimestamp)
 	if err != nil {
 		return nil, err
@@ -217,4 +217,55 @@ func (p *Postgres) GetJobs(before time.Duration) ([]*geocloud.Job, error) {
 func (p *Postgres) DeleteJob(m geocloud.Message) error {
 	_, err := p.stmt.deleteJob.Exec(m.GetID())
 	return err
+}
+
+func (p *Postgres) GetCustomerJobs(m geocloud.Message) ([]*geocloud.Job, error) {
+	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jobs []*geocloud.Job
+
+	for rows.Next() {
+		var (
+			j         = &geocloud.Job{}
+			jobErr    sql.NullString
+			jobStatus string
+			endTime   sql.NullTime
+			taskType  string
+		)
+
+		err = rows.Scan(
+			&j.ID, &j.CustomerID,
+			&j.InputID, &j.OutputID,
+			&taskType,
+			&jobStatus, &jobErr,
+			&j.StartTime, &endTime,
+			pq.Array(&j.Args),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if jobErr.String != "" {
+			j.Err = fmt.Errorf(jobErr.String)
+		}
+		j.EndTime = endTime.Time
+
+		j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+		if err != nil {
+			return nil, err
+		}
+
+		j.Status, err = geocloud.JobStatusFrom(jobStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, j)
+	}
+
+	return jobs, nil
 }
