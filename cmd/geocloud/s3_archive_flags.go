@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	s3ArchiveOpts = &objectstore.S3ObjectstoreOpts{}
+	s3ArchiveOpts = &objectstore.S3Opts{}
 )
 
 func init() {
@@ -70,6 +70,6 @@ func init() {
 	)
 }
 
-func getS3ArchiveOpts() *objectstore.S3ObjectstoreOpts {
+func getS3ArchiveOpts() *objectstore.S3Opts {
 	return s3ArchiveOpts
 }

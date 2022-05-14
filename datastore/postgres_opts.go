@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type PostgresDatastoreOpts struct {
+type PostgresOpts struct {
 	Host       string
 	Port       int64
 	User       string
@@ -15,7 +15,7 @@ type PostgresDatastoreOpts struct {
 	RetryDelay time.Duration
 }
 
-func (o *PostgresDatastoreOpts) connectionString() string {
+func (o *PostgresOpts) connectionString() string {
 	sslmode := "disable"
 	if o.SSLMode != "" {
 		sslmode = o.SSLMode

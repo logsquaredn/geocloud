@@ -21,7 +21,7 @@ type S3 struct {
 	dwnldr *s3manager.Downloader
 }
 
-func NewS3(opts *S3ObjectstoreOpts) (*S3, error) {
+func NewS3(opts *S3Opts) (*S3, error) {
 	var (
 		s = &S3{
 			prefix: opts.Prefix,

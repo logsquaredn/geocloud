@@ -5,7 +5,7 @@ import (
 	"github.com/logsquaredn/geocloud/objectstore"
 )
 
-type OSRuntimeOpts struct {
+type OSOpts struct {
 	Datastore   *datastore.Postgres
 	Objectstore *objectstore.S3
 	WorkDir     string

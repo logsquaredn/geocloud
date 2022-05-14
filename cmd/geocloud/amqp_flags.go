@@ -10,7 +10,7 @@ import (
 
 var (
 	amqpAddress string
-	amqpOpts    = &messagequeue.AMQPMessageQueueOpts{}
+	amqpOpts    = &messagequeue.AMQPOpts{}
 )
 
 func init() {
@@ -61,7 +61,7 @@ func init() {
 	)
 }
 
-func getAMQPOpts() *messagequeue.AMQPMessageQueueOpts {
+func getAMQPOpts() *messagequeue.AMQPOpts {
 	delimiter := strings.Index(amqpAddress, ":")
 	if delimiter < 0 {
 		amqpOpts.Host = amqpAddress

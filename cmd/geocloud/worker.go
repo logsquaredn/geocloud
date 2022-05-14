@@ -42,7 +42,7 @@ func runWorker(cmd *cobra.Command, args []string) error {
 	}
 
 	rt, err := runtime.NewOS(
-		&runtime.OSRuntimeOpts{
+		&runtime.OSOpts{
 			Datastore:   ds,
 			Objectstore: os,
 			WorkDir:     workDir,

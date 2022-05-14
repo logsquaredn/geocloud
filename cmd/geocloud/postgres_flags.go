@@ -10,7 +10,7 @@ import (
 
 var (
 	postgresAddress string
-	postgresOpts    = &datastore.PostgresDatastoreOpts{}
+	postgresOpts    = &datastore.PostgresOpts{}
 )
 
 func init() {
@@ -58,7 +58,7 @@ func init() {
 	)
 }
 
-func getPostgresOpts() *datastore.PostgresDatastoreOpts {
+func getPostgresOpts() *datastore.PostgresOpts {
 	delimiter := strings.Index(postgresAddress, ":")
 	if delimiter < 0 {
 		postgresOpts.Host = postgresAddress

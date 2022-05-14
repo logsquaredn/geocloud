@@ -1,6 +1,6 @@
 package objectstore
 
-type S3ObjectstoreOpts struct {
+type S3Opts struct {
 	Bucket          string
 	Prefix          string
 	Endpoint        string
