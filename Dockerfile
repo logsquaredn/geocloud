@@ -24,12 +24,12 @@ RUN apk add --no-cache gcc libc-dev
 COPY tasks/ .
 
 FROM build_tasks_image AS build_tasks
-RUN mkdir -p /assets/removebadgeometry /assets/buffer /assets/filter /assets/reproject
-RUN gcc -Wall removebadgeometry/removebadgeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry/task
-RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer/task
-RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter/task
-RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject/task
-RUN gcc -Wall lookup/vectorlookup.c shared/shared.c -l gdal -o /assets/lookup/vectorlookup
+RUN mkdir -p /assets
+RUN gcc -Wall removebadgeometry/removebadgeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry
+RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer
+RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter
+RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
+RUN gcc -Wall lookup/vectorlookup.c shared/shared.c -l gdal -o /assets/vectorlookup
 
 FROM build_image AS build
 ARG version=0.0.0

@@ -114,6 +114,7 @@ const (
 	Filter
 	RemoveBadGeometry
 	Reproject
+	Vectorlookup
 )
 
 // Type returns the string representation of a geocloud Task's type
@@ -127,6 +128,8 @@ func (t TaskType) Type() string {
 		return "removebadgeometry"
 	case Reproject:
 		return "reproject"
+	case Vectorlookup:
+		return "vectorlookup"
 	}
 	return "unknown"
 }
@@ -152,6 +155,8 @@ func TaskTypeFrom(taskType string) (TaskType, error) {
 		return RemoveBadGeometry, nil
 	case strings.EqualFold(Reproject.Name(), taskType):
 		return Reproject, nil
+	case strings.EqualFold(Vectorlookup.Name(), taskType):
+		return Vectorlookup, nil
 	}
 	return -1, fmt.Errorf("unknown task type %s", taskType)
 }
