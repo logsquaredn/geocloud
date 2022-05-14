@@ -16,8 +16,7 @@ var (
 
 func (p *Postgres) GetCustomer(m geocloud.Message) (*geocloud.Customer, error) {
 	c := &geocloud.Customer{}
-	err := p.stmt.getCustomerByID.QueryRow(m.GetID()).Scan(&c.ID)
-	if err != nil {
+	if err := p.stmt.getCustomerByID.QueryRow(m.GetID()).Scan(&c.ID); err != nil {
 		return c, err
 	}
 
@@ -25,11 +24,11 @@ func (p *Postgres) GetCustomer(m geocloud.Message) (*geocloud.Customer, error) {
 }
 
 func (p *Postgres) CreateCustomer(m geocloud.Message) (*geocloud.Customer, error) {
-	c := &geocloud.Customer{}
-	err := p.stmt.createCustomer.QueryRow(m.GetID()).Scan(&c.ID)
-	if err != nil {
+	if _, err := p.stmt.createCustomer.Exec(m.GetID()); err != nil {
 		return nil, err
 	}
 
-	return c, nil
+	return &geocloud.Customer{
+		ID: m.GetID(),
+	}, nil
 }

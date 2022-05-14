@@ -39,9 +39,10 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		endTime   sql.NullTime
 		taskType  string
 		outputID  sql.NullString
+		err       error
 	)
 
-	err := p.stmt.createJob.QueryRow(
+	if err := p.stmt.createJob.QueryRow(
 		id, j.CustomerID,
 		j.InputID,
 		j.TaskType.String(),
@@ -53,8 +54,7 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
-	)
-	if err != nil {
+	); err != nil {
 		return j, err
 	}
 
@@ -85,27 +85,43 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		taskType    string
 		jobErrError = ""
 		outputID    sql.NullString
+		err         error
 	)
 
-	// avoid nil pointer dereference on j.Err.Error()
 	if j.Err != nil {
 		jobErrError = j.Err.Error()
 	}
 
-	err := p.stmt.updateJob.QueryRow(
-		j.GetID(), j.OutputID,
-		j.Status.String(), jobErrError,
-		j.StartTime, j.EndTime,
-	).Scan(
-		&j.ID, &j.CustomerID,
-		&j.InputID, &outputID,
-		&taskType,
-		&jobStatus, &jobErr,
-		&j.StartTime, &endTime,
-		pq.Array(&j.Args),
-	)
-	if err != nil {
-		return j, err
+	if j.OutputID != "" {
+		if err := p.stmt.updateJob.QueryRow(
+			j.GetID(), j.OutputID,
+			j.Status.String(), jobErrError,
+			j.StartTime, j.EndTime,
+		).Scan(
+			&j.ID, &j.CustomerID,
+			&j.InputID, &outputID,
+			&taskType,
+			&jobStatus, &jobErr,
+			&j.StartTime, &endTime,
+			pq.Array(&j.Args),
+		); err != nil {
+			return j, err
+		}
+	} else {
+		if err := p.stmt.updateJob.QueryRow(
+			j.GetID(), nil,
+			j.Status.String(), jobErrError,
+			j.StartTime, j.EndTime,
+		).Scan(
+			&j.ID, &j.CustomerID,
+			&j.InputID, &outputID,
+			&taskType,
+			&jobStatus, &jobErr,
+			&j.StartTime, &endTime,
+			pq.Array(&j.Args),
+		); err != nil {
+			return j, err
+		}
 	}
 
 	if jobErr.String != "" {
@@ -114,13 +130,11 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	j.TaskType, err = geocloud.TaskTypeFrom(taskType)
-	if err != nil {
+	if j.TaskType, err = geocloud.TaskTypeFrom(taskType); err != nil {
 		return j, err
 	}
 
-	j.Status, err = geocloud.JobStatusFrom(jobStatus)
-	if err != nil {
+	if j.Status, err = geocloud.JobStatusFrom(jobStatus); err != nil {
 		return j, err
 	}
 
@@ -135,17 +149,17 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 		endTime   sql.NullTime
 		taskType  string
 		outputID  sql.NullString
+		err       error
 	)
 
-	err := p.stmt.getJobByID.QueryRow(m.GetID()).Scan(
+	if err = p.stmt.getJobByID.QueryRow(m.GetID()).Scan(
 		&j.ID, &j.CustomerID,
 		&j.InputID, &outputID,
 		&taskType,
 		&jobStatus, &jobErr,
 		&j.StartTime, &endTime,
 		pq.Array(&j.Args),
-	)
-	if err != nil {
+	); err != nil {
 		return j, err
 	}
 
@@ -155,13 +169,11 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	j.TaskType, err = geocloud.TaskTypeFrom(taskType)
-	if err != nil {
+	if j.TaskType, err = geocloud.TaskTypeFrom(taskType); err != nil {
 		return j, err
 	}
 
-	j.Status, err = geocloud.JobStatusFrom(jobStatus)
-	if err != nil {
+	if j.Status, err = geocloud.JobStatusFrom(jobStatus); err != nil {
 		return j, err
 	}
 

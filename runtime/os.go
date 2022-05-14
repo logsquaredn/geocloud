@@ -43,7 +43,10 @@ func (o *OS) Send(m geocloud.Message) error {
 		return nil
 	}
 
-	stderr := new(bytes.Buffer)
+	var (
+		stderr   = new(bytes.Buffer)
+		outputID = ""
+	)
 	defer func() {
 		j.EndTime = time.Now()
 		jobErr := stderr.Bytes()
@@ -55,6 +58,7 @@ func (o *OS) Send(m geocloud.Message) error {
 			j.Status = geocloud.Error
 		} else {
 			j.Status = geocloud.Complete
+			j.OutputID = outputID
 		}
 		log.Err(j.Err).Str(k, v).Msgf("job finished with status %s", j.Status.Status())
 		o.ds.UpdateJob(j)
@@ -134,7 +138,7 @@ func (o *OS) Send(m geocloud.Message) error {
 		return err
 	}
 
-	log.Debug().Str(k, v).Msg("creating output storage")
+	log.Trace().Str(k, v).Msg("creating output storage")
 	ost, err := o.ds.CreateStorage(&geocloud.Storage{
 		CustomerID: j.CustomerID,
 	})
@@ -142,6 +146,7 @@ func (o *OS) Send(m geocloud.Message) error {
 		return err
 	}
 
+	outputID = ost.ID
 	j.OutputID = ost.ID
 	log.Trace().Str(k, v).Msgf("updating job output")
 	j, err = o.ds.UpdateJob(j)

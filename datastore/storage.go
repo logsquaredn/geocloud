@@ -51,7 +51,6 @@ func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		lastUsed sql.NullTime
 	)
 
-	s.LastUsed = time.Now()
 	if err := p.stmt.createStorage.QueryRow(
 		id, s.CustomerID, s.Name,
 	).Scan(
