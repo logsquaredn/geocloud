@@ -21,6 +21,9 @@ var (
 
 	//go:embed psql/execs/update_storage.sql
 	updateStorageSQL string
+
+	//go:embed psql/queries/get_storage_by_customer_id.sql
+	getStorgageByCustomerIDSQL string
 )
 
 func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
@@ -48,7 +51,6 @@ func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		lastUsed sql.NullTime
 	)
 
-	s.LastUsed = time.Now()
 	if err := p.stmt.createStorage.QueryRow(
 		id, s.CustomerID, s.Name,
 	).Scan(
@@ -84,4 +86,34 @@ func (p *Postgres) GetStorage(m geocloud.Message) (*geocloud.Storage, error) {
 func (p *Postgres) DeleteStorage(m geocloud.Message) error {
 	_, err := p.stmt.deleteStorage.Exec(m.GetID())
 	return err
+}
+
+func (p *Postgres) GetCustomerStorage(m geocloud.Message) ([]*geocloud.Storage, error) {
+	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var storage []*geocloud.Storage
+
+	for rows.Next() {
+		var (
+			s        = &geocloud.Storage{}
+			lastUsed sql.NullTime
+		)
+
+		err = rows.Scan(
+			&s.ID, &s.CustomerID,
+			&s.Name, &lastUsed,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		s.LastUsed = lastUsed.Time
+		storage = append(storage, s)
+	}
+
+	return storage, nil
 }

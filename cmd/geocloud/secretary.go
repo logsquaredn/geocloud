@@ -41,11 +41,6 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = ds.Prepare(); err != nil {
-		log.Err(err).Msg("preparing datastore")
-		return err
-	}
-
 	os, err := objectstore.NewS3(
 		getS3Opts(),
 	)
@@ -68,9 +63,8 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	i := customer.List(&stripe.CustomerListParams{})
 	for i.Next() {
 		c := i.Customer()
-		if err := ds.CreateCustomer(&geocloud.Customer{
-			ID:   c.ID,
-			Name: c.Name,
+		if _, err := ds.CreateCustomer(&geocloud.Customer{
+			ID: c.ID,
 		}); err != nil {
 			log.Err(err).Msgf("creating customer '%s' '%s'", c.ID, c.Name)
 			return err
@@ -78,7 +72,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Info().Msg("getting jobs")
-	jobs, err := ds.GetJobs(workJobsBefore)
+	jobs, err := ds.GetJobsBefore(workJobsBefore)
 	if err != nil {
 		log.Err(err).Msg("getting jobs")
 		return err

@@ -11,106 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/docs"
-	"github.com/logsquaredn/geocloud/messagequeue"
-	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
-
-func init() {
-	gin.SetMode(gin.ReleaseMode)
-}
-
-// @contact.name logsquaredn
-// @contact.url https://logsquaredn.io
-// @contact.email logsquaredn@gmail.com
-
-// @license.name logsquaredn
-
-type API struct {
-	ds     *datastore.Postgres
-	mq     *messagequeue.AMQP
-	os     *objectstore.S3
-	router *gin.Engine
-}
-
-func init() {
-	docs.SwaggerInfo.Title = "Geocloud"
-	docs.SwaggerInfo.Description = "Geocloud"
-	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
-	docs.SwaggerInfo.BasePath = "/api/v1/job"
-	docs.SwaggerInfo.Schemes = []string{"https"}
-}
-
-func NewServer(opts *APIOpts) (*API, error) {
-	var (
-		a = &API{
-			ds:     opts.Datastore,
-			os:     opts.Objectstore,
-			mq:     opts.MessageQueue,
-			router: gin.Default(),
-		}
-	)
-
-	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	a.router.Use(a.middleware)
-
-	v1Job := a.router.Group("/api/v1/job")
-	{
-		v1Job.POST("/create/buffer", a.createBuffer)
-		v1Job.POST("/create/removebadgeometry", a.createRemovebadgeometry)
-		v1Job.POST("/create/reproject", a.createReproject)
-		v1Job.POST("/create/filter", a.createFilter)
-		v1Job.POST("/create/vectorlookup", a.createVectorlookup)
-		v1Job.GET("/status", a.status)
-		v1Job.GET("/result", a.result)
-	}
-
-	return a, nil
-}
-
-func (a *API) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	a.router.ServeHTTP(w, req)
-}
-
-const (
-	apiKeyQueryParam = "api-key"
-	apiKeyHeader     = "X-API-Key"
-	apiKeyCookie     = apiKeyHeader
-)
-
-func (a *API) middleware(ctx *gin.Context) {
-	apiKey := getCustomerID(ctx)
-	if _, err := a.ds.GetCustomer(apiKey); err != nil {
-		if err == sql.ErrNoRows {
-			log.Err(err).Msgf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)
-			ctx.AbortWithStatusJSON(http.StatusForbidden, &geocloud.ErrorResponse{Error: fmt.Sprintf("header '%s', header '%s' cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)})
-			return
-		}
-
-		log.Err(err).Msgf("failed to get user information")
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to get user information"})
-		return
-	}
-
-	ctx.Next()
-}
-
-func getCustomerID(ctx *gin.Context) string {
-	apiKey := ctx.Query(apiKeyQueryParam)
-	if apiKey == "" {
-		apiKey = ctx.GetHeader(apiKeyHeader)
-		if apiKey == "" {
-			apiKey, _ = ctx.Cookie(apiKeyCookie)
-		}
-	}
-	return apiKey
-}
 
 func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 	jobArgs := make([]string, len(taskParams))
@@ -303,20 +205,10 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 		return
 	}
 
-	ost, err := a.ds.CreateStorage(&geocloud.Storage{
-		CustomerID: customerID,
-	})
-	if err != nil {
-		log.Err(err).Msg("/create failed to output storage for job")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("/create failed to output storage for job")})
-		return
-	}
-
 	job := &geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
 		CustomerID: customerID,
-		OutputID:   ost.ID,
 		InputID:    ist.ID,
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
@@ -467,13 +359,4 @@ func (a *API) result(ctx *gin.Context) {
 
 		ctx.JSON(http.StatusOK, js)
 	}
-}
-
-func isJSON(jsBytes []byte) bool {
-	var js map[string]interface{}
-	return json.Unmarshal(jsBytes, &js) == nil
-}
-
-func isZIP(zipBytes []byte) bool {
-	return http.DetectContentType(zipBytes) == "application/zip"
 }

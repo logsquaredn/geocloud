@@ -34,10 +34,6 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = ds.Prepare(); err != nil {
-		return err
-	}
-
 	os, err := objectstore.NewS3(
 		getS3Opts(),
 	)
