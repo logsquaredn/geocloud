@@ -67,6 +67,13 @@ type Customer struct {
 	Name string
 }
 
+var _ Message = (*Customer)(nil)
+
+// GetID returns a Customer's id
+func (c *Customer) GetID() string {
+	return c.ID
+}
+
 // TaskType is a enum representing different types for geocloud Tasks
 type TaskType string
 
