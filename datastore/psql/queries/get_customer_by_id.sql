@@ -1,1 +1,1 @@
-SELECT customer_id, customer_name FROM customer WHERE customer_id = $1;
+SELECT customer_id FROM customer WHERE customer_id = $1;

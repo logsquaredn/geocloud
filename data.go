@@ -63,8 +63,7 @@ func (j *Job) GetID() string {
 }
 
 type Customer struct {
-	ID   string
-	Name string
+	ID string
 }
 
 var _ Message = (*Customer)(nil)

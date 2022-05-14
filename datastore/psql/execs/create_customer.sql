@@ -1,7 +1,5 @@
 INSERT INTO customer (
-    customer_id,
-    customer_name
+    customer_id
 ) VALUES (
-    $1,
-    $2
-) ON CONFLICT DO NOTHING RETURNING customer_id, customer_name;
+    $1
+) ON CONFLICT DO NOTHING RETURNING customer_id;
