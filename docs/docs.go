@@ -23,25 +23,218 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/create/{type}": {
+        "/create/buffer": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a job\u003c/u\u003e\u003c/b\u003e\n\u003cb\u003e1. {type}: buffer {params}: distance, quadSegCount\u003c/b\u003e\n\u0026emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u003cbr\u003e\n\u003cb\u003e2. {type}: filter {params}: filterColumn, filterValue\u003c/b\u003e\n\u003cbr\u003e\n\u003cb\u003e3. {type}: reproject {params}: targetProjection\u003c/b\u003e\n\u0026emsp; - targetProjection should be an EPSG code\n\u003cbr\u003e\n\u003cb\u003e4. {type}: removebadgeometry\u003c/b\u003e\n\u0026emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH\n\u003cbr\u003e\nPass the geojson to be processed in the body.",
+                "description": "\u003cb\u003e\u003cu\u003eCreate a buffer job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u0026emsp; - Pass the geospatial data to be processed in the request body.",
                 "consumes": [
-                    "application/json"
+                    "application/json",
+                    " application/zip"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "create"
+                    "createBuffer"
                 ],
-                "summary": "Create a job",
+                "summary": "Create a buffer job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Buffer distance",
+                        "name": "distance",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Segment count",
+                        "name": "segmentCount",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create/filter": {
+            "post": {
+                "description": "\u003cb\u003e\u003cu\u003eCreate a filter job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Pass the geospatial data to be processed in the request body.",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "createFilter"
+                ],
+                "summary": "Create a filter job",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Job Type",
-                        "name": "type",
-                        "in": "path",
+                        "description": "Column to filter on",
+                        "name": "filterColumn",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Value to filter on",
+                        "name": "filterValue",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create/removebadgeometry": {
+            "post": {
+                "description": "\u003cb\u003e\u003cu\u003eCreate a remove bad geometry job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Pass the geospatial data to be processed in the request body.",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "createRemovebadgeometry"
+                ],
+                "summary": "Create a remove bad geometry job",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create/reproject": {
+            "post": {
+                "description": "\u003cb\u003e\u003cu\u003eCreate a reproject job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Pass the geospatial data to be processed in the request body.",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "createReproject"
+                ],
+                "summary": "Create a reproject job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Target projection EPSG",
+                        "name": "targetProjection",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/geocloud.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/create/vectorlookup": {
+            "post": {
+                "description": "\u003cb\u003e\u003cu\u003eCreate a vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Pass the geospatial data to be processed in the request body.",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "createVectorlookup"
+                ],
+                "summary": "Create a vector lookup job",
+                "parameters": [
+                    {
+                        "type": "number",
+                        "description": "Longitude",
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Latitude",
+                        "name": "latitude",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -69,6 +262,7 @@ var doc = `{
         },
         "/result": {
             "get": {
+                "description": "Results are downloadable as geojson or zip. The zip will contain the files that comprise an ESRI shapefile.",
                 "produces": [
                     "application/json",
                     " application/zip"

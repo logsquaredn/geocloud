@@ -59,7 +59,11 @@ func NewServer(opts *GinOpts) (*ginAPI, error) {
 
 	v1Job := a.router.Group("/api/v1/job")
 	{
-		v1Job.POST("/create/:type", a.create)
+		v1Job.POST("/create/buffer", a.createBuffer)
+		v1Job.POST("/create/removebadgeometry", a.createRemovebadgeometry)
+		v1Job.POST("/create/reproject", a.createReproject)
+		v1Job.POST("/create/filter", a.createFilter)
+		v1Job.POST("/create/vectorlookup", a.createVectorlookup)
 		v1Job.GET("/status", a.status)
 		v1Job.GET("/result", a.result)
 	}
@@ -105,16 +109,6 @@ func getCustomerID(ctx *gin.Context) string {
 	return apiKey
 }
 
-func validateParamsPassed(ctx *gin.Context, taskParams []string) (missingParams []string) {
-	for _, param := range taskParams {
-		if len(ctx.Query(param)) < 1 {
-			missingParams = append(missingParams, param)
-		}
-	}
-
-	return
-}
-
 func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 	jobArgs := make([]string, len(taskParams))
 	for i, param := range taskParams {
@@ -123,30 +117,133 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 	return jobArgs
 }
 
-// @Summary Create a job
-// @Description <b><u>Create a job</u></b>
-// @Description <b>1. {type}: buffer {params}: distance, quadSegCount</b>
-// @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
-// @Description <br>
-// @Description <b>2. {type}: filter {params}: filterColumn, filterValue</b>
-// @Description <br>
-// @Description <b>3. {type}: reproject {params}: targetProjection</b>
-// @Description &emsp; - targetProjection should be an EPSG code
-// @Description <br>
-// @Description <b>4. {type}: removebadgeometry</b>
-// @Description &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
-// @Description <br>
-// @Description Pass the geojson to be processed in the body.
-// @Tags create
-// @Accept json
-// @Produce json
-// @Param type path string true "Job Type"
+type BufferParams struct {
+	Distance     int `form:"distance"`
+	SegmentCount int `form:"segmentCount"`
+}
+
+// @Summary Create a buffer job
+// @Description <b><u>Create a buffer job</u></b>
+// @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createBuffer
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param distance query integer true "Buffer distance"
+// @Param segmentCount query integer true "Segment count"
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/{type} [post]
-func (a *ginAPI) create(ctx *gin.Context) {
-	taskType, err := geocloud.TaskTypeFrom(ctx.Param("type"))
+// @Router /create/buffer [post]
+func (a *ginAPI) createBuffer(ctx *gin.Context) {
+	var p BufferParams
+	if err := ctx.ShouldBindQuery(&p); err != nil {
+		log.Err(err).Msg("/createBuffer invalid query parameter(s)")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
+		return
+	}
+
+	a.create(ctx, "buffer")
+}
+
+// @Summary Create a remove bad geometry job
+// @Description <b><u>Create a remove bad geometry job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createRemovebadgeometry
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Success 200 {object} geocloud.CreateResponse
+// @Failure 400 {object} geocloud.ErrorResponse
+// @Failure 500 {object} geocloud.ErrorResponse
+// @Router /create/removebadgeometry [post]
+func (a *ginAPI) createRemovebadgeometry(ctx *gin.Context) {
+	a.create(ctx, "removebadgeometry")
+}
+
+type ReprojectParams struct {
+	TargetProjection int `form:"targetProjection"`
+}
+
+// @Summary Create a reproject job
+// @Description <b><u>Create a reproject job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createReproject
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param targetProjection query integer true "Target projection EPSG"
+// @Success 200 {object} geocloud.CreateResponse
+// @Failure 400 {object} geocloud.ErrorResponse
+// @Failure 500 {object} geocloud.ErrorResponse
+// @Router /create/reproject [post]
+func (a *ginAPI) createReproject(ctx *gin.Context) {
+	var p ReprojectParams
+	if err := ctx.ShouldBindQuery(&p); err != nil {
+		log.Err(err).Msg("/createReproject invalid query parameter(s)")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
+		return
+	}
+
+	a.create(ctx, "reproject")
+}
+
+type FilterParams struct {
+	FilterColumn string `json:"filterColumn"`
+	FilterValue  string `json:"filterValue"`
+}
+
+// @Summary Create a filter job
+// @Description <b><u>Create a filter job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createFilter
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param filterColumn query string true "Column to filter on"
+// @Param filterValue query string true "Value to filter on"
+// @Success 200 {object} geocloud.CreateResponse
+// @Failure 400 {object} geocloud.ErrorResponse
+// @Failure 500 {object} geocloud.ErrorResponse
+// @Router /create/filter [post]
+func (a *ginAPI) createFilter(ctx *gin.Context) {
+	var p FilterParams
+	if err := ctx.ShouldBindQuery(&p); err != nil {
+		log.Err(err).Msg("/createFilter invalid query parameter(s)")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
+		return
+	}
+
+	a.create(ctx, "filter")
+}
+
+type VectorlookupParams struct {
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+}
+
+// @Summary Create a vector lookup job
+// @Description <b><u>Create a vector lookup job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createVectorlookup
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param longitude query number true "Longitude"
+// @Param latitude query number true "Latitude"
+// @Success 200 {object} geocloud.CreateResponse
+// @Failure 400 {object} geocloud.ErrorResponse
+// @Failure 500 {object} geocloud.ErrorResponse
+// @Router /create/vectorlookup [post]
+func (a *ginAPI) createVectorlookup(ctx *gin.Context) {
+	var p VectorlookupParams
+	if err := ctx.ShouldBindQuery(&p); err != nil {
+		log.Err(err).Msg("/createVectorlookup invalid query parameter(s)")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
+		return
+	}
+
+	a.create(ctx, "vectorlookup")
+}
+
+func (a *ginAPI) create(ctx *gin.Context, whichTask string) {
+	taskType, err := geocloud.TaskTypeFrom(whichTask)
 	if err != nil {
 		log.Err(err).Msgf("/create invalid task type requested: %s", taskType)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid task type: %s", taskType)})
@@ -161,13 +258,6 @@ func (a *ginAPI) create(ctx *gin.Context) {
 	} else if err != nil {
 		log.Err(err).Msgf("/create failed to query for params for type: %s", taskType)
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create job of type %s", taskType)})
-		return
-	}
-
-	missingParams := validateParamsPassed(ctx, task.Params)
-	if len(missingParams) > 0 {
-		log.Error().Msgf("/create missing parameters: %v", missingParams)
-		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: fmt.Sprintf("missing parameters: %v", missingParams)})
 		return
 	}
 

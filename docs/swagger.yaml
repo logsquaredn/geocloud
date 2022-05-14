@@ -19,28 +19,61 @@ definitions:
 info:
   contact: {}
 paths:
-  /create/{type}:
+  /create/buffer:
     post:
       consumes:
       - application/json
+      - ' application/zip'
       description: |-
-        <b><u>Create a job</u></b>
-        <b>1. {type}: buffer {params}: distance, quadSegCount</b>
-        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
-        <br>
-        <b>2. {type}: filter {params}: filterColumn, filterValue</b>
-        <br>
-        <b>3. {type}: reproject {params}: targetProjection</b>
-        &emsp; - targetProjection should be an EPSG code
-        <br>
-        <b>4. {type}: removebadgeometry</b>
-        &emsp; - For info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
-        <br>
-        Pass the geojson to be processed in the body.
+        <b><u>Create a buffer job</u></b>
+        &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+        &emsp; - Pass the geospatial data to be processed in the request body.
       parameters:
-      - description: Job Type
-        in: path
-        name: type
+      - description: Buffer distance
+        in: query
+        name: distance
+        required: true
+        type: integer
+      - description: Segment count
+        in: query
+        name: segmentCount
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a buffer job
+      tags:
+      - createBuffer
+  /create/filter:
+    post:
+      consumes:
+      - application/json
+      - ' application/zip'
+      description: |-
+        <b><u>Create a filter job</u></b>
+        &emsp; - Pass the geospatial data to be processed in the request body.
+      parameters:
+      - description: Column to filter on
+        in: query
+        name: filterColumn
+        required: true
+        type: string
+      - description: Value to filter on
+        in: query
+        name: filterValue
         required: true
         type: string
       produces:
@@ -58,11 +91,108 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/geocloud.ErrorResponse'
-      summary: Create a job
+      summary: Create a filter job
       tags:
-      - create
+      - createFilter
+  /create/removebadgeometry:
+    post:
+      consumes:
+      - application/json
+      - ' application/zip'
+      description: |-
+        <b><u>Create a remove bad geometry job</u></b>
+        &emsp; - Pass the geospatial data to be processed in the request body.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a remove bad geometry job
+      tags:
+      - createRemovebadgeometry
+  /create/reproject:
+    post:
+      consumes:
+      - application/json
+      - ' application/zip'
+      description: |-
+        <b><u>Create a reproject job</u></b>
+        &emsp; - Pass the geospatial data to be processed in the request body.
+      parameters:
+      - description: Target projection EPSG
+        in: query
+        name: targetProjection
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a reproject job
+      tags:
+      - createReproject
+  /create/vectorlookup:
+    post:
+      consumes:
+      - application/json
+      - ' application/zip'
+      description: |-
+        <b><u>Create a vector lookup job</u></b>
+        &emsp; - Pass the geospatial data to be processed in the request body.
+      parameters:
+      - description: Longitude
+        in: query
+        name: longitude
+        required: true
+        type: number
+      - description: Latitude
+        in: query
+        name: latitude
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/geocloud.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/geocloud.ErrorResponse'
+      summary: Create a vector lookup job
+      tags:
+      - createVectorlookup
   /result:
     get:
+      description: Results are downloadable as geojson or zip. The zip will contain
+        the files that comprise an ESRI shapefile.
       parameters:
       - description: Job ID
         in: query
