@@ -75,6 +75,7 @@ const (
 	Filter            TaskType = "filter"
 	RemoveBadGeometry TaskType = "removebadgeometry"
 	Reproject         TaskType = "reproject"
+	VectorLookup      TaskType = "vectorlookup"
 )
 
 // Type returns the string representation of a geocloud Task's type
