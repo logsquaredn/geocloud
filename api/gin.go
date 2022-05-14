@@ -148,7 +148,7 @@ func (a *ginAPI) createBuffer(ctx *gin.Context) {
 
 // @Summary Create a remove bad geometry job
 // @Description <b><u>Create a remove bad geometry job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
 // @Tags createRemovebadgeometry
 // @Accept application/json, application/zip
 // @Produce application/json
@@ -166,7 +166,7 @@ type ReprojectParams struct {
 
 // @Summary Create a reproject job
 // @Description <b><u>Create a reproject job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
 // @Tags createReproject
 // @Accept application/json, application/zip
 // @Produce application/json
@@ -193,7 +193,7 @@ type FilterParams struct {
 
 // @Summary Create a filter job
 // @Description <b><u>Create a filter job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
 // @Tags createFilter
 // @Accept application/json, application/zip
 // @Produce application/json
@@ -221,7 +221,7 @@ type VectorlookupParams struct {
 
 // @Summary Create a vector lookup job
 // @Description <b><u>Create a vector lookup job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
 // @Tags createVectorlookup
 // @Accept application/json, application/zip
 // @Produce application/json
@@ -245,8 +245,8 @@ func (a *ginAPI) createVectorlookup(ctx *gin.Context) {
 func (a *ginAPI) create(ctx *gin.Context, whichTask string) {
 	taskType, err := geocloud.TaskTypeFrom(whichTask)
 	if err != nil {
-		log.Err(err).Msgf("/create invalid task type requested: %s", taskType)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid task type: %s", taskType)})
+		log.Err(err).Msgf("/create invalid task type requested: %s", whichTask)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid task type: %s", whichTask)})
 		return
 	}
 
