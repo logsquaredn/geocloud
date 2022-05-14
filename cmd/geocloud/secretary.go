@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
@@ -67,7 +68,10 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	i := customer.List(&stripe.CustomerListParams{})
 	for i.Next() {
 		c := i.Customer()
-		if err := ds.CreateCustomer(c.ID, c.Name); err != nil {
+		if err := ds.CreateCustomer(&geocloud.Customer{
+			ID:   c.ID,
+			Name: c.Name,
+		}); err != nil {
 			log.Err(err).Msgf("creating customer '%s' '%s'", c.ID, c.Name)
 			return err
 		}
@@ -106,7 +110,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		}
 
 		log.Debug().Msgf("deleting objects for customer '%s'", j.CustomerID)
-		err = os.DeleteRecursive(j.ID)
+		err = os.DeleteObject(j.ID)
 		if err != nil {
 			log.Err(err).Msgf("deleting objects for customer '%s'", j.CustomerID)
 			return err
@@ -119,13 +123,13 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Err.Error(), j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, j.CustomerName))
+		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Err.Error(), j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, c.Name))
 	}
 
 	if len(archive.String()) > 0 {
-		err = osa.Put(
-			fmt.Sprintf("%d/archive.csv", time.Now().Unix()),
-			strings.NewReader(archive.String()),
+		err = osa.PutObject(
+			geocloud.NewMessage(fmt.Sprint(time.Now().Unix())),
+			geocloud.NewBytesVolume("archive.csv", []byte(archive.String())),
 		)
 		if err != nil {
 			log.Err(err).Msg("putting archive to s3")

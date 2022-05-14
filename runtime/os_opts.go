@@ -1,9 +1,12 @@
 package runtime
 
-import "github.com/logsquaredn/geocloud"
+import (
+	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/objectstore"
+)
 
 type OSRuntimeOpts struct {
-	Datastore   geocloud.Datastore
-	Objectstore geocloud.Objectstore
+	Datastore   *datastore.Postgres
+	Objectstore *objectstore.S3
 	WorkDir     string
 }

@@ -81,24 +81,24 @@ services:
   removebadgeometry:
     build: .
     image: *image
-    entrypoint: /usr/local/geocloud/bin/removebadgeometry/task
+    entrypoint: removebadgeometry
     command: /tmp/input/input.geojson /tmp
     volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
   buffer:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
-    entrypoint: /usr/local/geocloud/bin/buffer/task
+    entrypoint: buffer
     command: /tmp/input/input.geojson /tmp 2
   filter:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
-    entrypoint: /usr/local/geocloud/bin/filter/task
+    entrypoint: filter
     command: /tmp/input/input.geojson /tmp prop0 value0
   reproject:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
-    entrypoint: /usr/local/geocloud/bin/reproject/task
+    entrypoint: reproject
     command: /tmp/input/input.geojson /tmp 2000

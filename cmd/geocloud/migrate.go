@@ -11,13 +11,6 @@ var migrateCmd = &cobra.Command{
 	RunE:    runMigrate,
 }
 
-func init() {
-	migrateCmd.AddCommand(
-		coreMigrateCmd,
-		externalMigrateCmd,
-	)
-}
-
 func runMigrate(cmd *cobra.Command, args []string) error {
 	ds, err := datastore.NewPostgres(
 		getPostgresOpts(),
@@ -26,9 +19,5 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := ds.MigrateCore(); err != nil {
-		return err
-	}
-
-	return ds.MigrateExternal()
+	return ds.Migrate()
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -13,11 +12,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/docs"
+	"github.com/logsquaredn/geocloud/messagequeue"
+	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
+
+func init() {
+	gin.SetMode(gin.ReleaseMode)
+}
 
 // @contact.name logsquaredn
 // @contact.url https://logsquaredn.io
@@ -26,13 +32,11 @@ import (
 // @license.name logsquaredn
 
 type ginAPI struct {
-	ds     geocloud.Datastore
-	os     geocloud.Objectstore
-	mq     geocloud.MessageRecipient
+	ds     *datastore.Postgres
+	mq     *messagequeue.AMQP
+	os     *objectstore.S3
 	router *gin.Engine
 }
-
-var _ geocloud.API = (*ginAPI)(nil)
 
 func init() {
 	docs.SwaggerInfo.Title = "Geocloud"
@@ -200,10 +204,22 @@ func (a *ginAPI) create(ctx *gin.Context) {
 		return
 	}
 
+	customerID := getCustomerID(ctx)
+
+	ist, _ := a.ds.CreateStorage(&geocloud.Storage{
+		CustomerID: customerID,
+	})
+
+	ost, _ := a.ds.CreateStorage(&geocloud.Storage{
+		CustomerID: customerID,
+	})
+
 	job := &geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
-		CustomerID: getCustomerID(ctx),
+		CustomerID: customerID,
+		OutputID:   ost.ID,
+		InputID:    ist.ID,
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {
 		log.Err(err).Msgf("/create failed to create job of type: %s", taskType)
@@ -211,11 +227,8 @@ func (a *ginAPI) create(ctx *gin.Context) {
 		return
 	}
 
-	vol := &bytesVolume{
-		reader: bytes.NewReader(inputData),
-		name:   filename,
-	}
-	if err = a.os.PutInput(job, vol); err != nil {
+	vol := geocloud.NewBytesVolume(filename, inputData)
+	if err = a.os.PutObject(ist, vol); err != nil {
 		log.Err(err).Msgf("/create failed to write data to objectstore for id: %s", job.GetID())
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to create job of type %s", taskType)})
 		job.Err = err
@@ -251,7 +264,7 @@ func (a *ginAPI) status(ctx *gin.Context) {
 		return
 	}
 
-	m := &message{id: id}
+	m := geocloud.NewMessage(id)
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/status got 0 results querying for id: %s", id)
@@ -289,7 +302,7 @@ func (a *ginAPI) result(ctx *gin.Context) {
 		return
 	}
 
-	m := &message{id: id}
+	m := geocloud.NewMessage(id)
 	job, err := a.ds.GetJob(m)
 	if err == sql.ErrNoRows {
 		log.Err(err).Msgf("/result got 0 results querying for id: %s", id)
@@ -305,7 +318,7 @@ func (a *ginAPI) result(ctx *gin.Context) {
 		return
 	}
 
-	vol, err := a.os.GetOutput(m)
+	vol, err := a.os.GetObject(geocloud.NewMessage(job.OutputID))
 	if err != nil {
 		log.Error().Msgf("/result failed to get result from s3 for id: %s", id)
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed to find results for id: %s", id)})

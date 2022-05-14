@@ -1,5 +1,1 @@
-SELECT j.job_id, j.task_type, j.job_status, j.job_error, j.start_time, j.end_time, j.job_args, jcm.customer_id, c.customer_name
-FROM job j
-inner join job_customer_mapping jcm on j.job_id = jcm.job_id
-inner join customer c on jcm.customer_id = c.customer_id
-where j.end_time < $1;
+SELECT job_id, customer_id, input_id, output_id, task_type, job_status, job_error, start_time, end_time, job_args FROM job WHERE end_time < $1;

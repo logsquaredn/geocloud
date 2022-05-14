@@ -144,7 +144,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 	if(numberOfLayers > 0) {
 		OGRLayerH inputLayer = GDALDatasetGetLayer(inputDataset, 0);
 		if(inputLayer == NULL) {
-			error("failed to get layer from intput dataset", __FILE__, __LINE__);
+			error("failed to get layer from input dataset", __FILE__, __LINE__);
 			return 1;
 		}  
         gdalHandles->inputLayer = inputLayer;

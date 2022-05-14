@@ -2,7 +2,6 @@ package objectstore
 
 import (
 	"fmt"
-	"io"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,7 +12,7 @@ import (
 	"github.com/logsquaredn/geocloud"
 )
 
-type s3Objectstore struct {
+type S3 struct {
 	prefix string
 	bucket string
 
@@ -22,11 +21,9 @@ type s3Objectstore struct {
 	dwnldr *s3manager.Downloader
 }
 
-var _ geocloud.Objectstore = (*s3Objectstore)(nil)
-
-func NewS3(opts *S3ObjectstoreOpts) (*s3Objectstore, error) {
+func NewS3(opts *S3ObjectstoreOpts) (*S3, error) {
 	var (
-		s = &s3Objectstore{
+		s = &S3{
 			prefix: opts.Prefix,
 			bucket: opts.Bucket,
 		}
@@ -75,18 +72,16 @@ func NewS3(opts *S3ObjectstoreOpts) (*s3Objectstore, error) {
 	return s, nil
 }
 
-func (s *s3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.prefix, m.GetID(), "input")
+func (s *S3) GetObject(m geocloud.Message) (geocloud.Volume, error) {
+	prefix := filepath.Join(s.prefix, m.GetID())
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
 		Prefix: &prefix,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error listing objects: %w", err)
-	} else if len(o.Contents) > 1 {
-		return nil, fmt.Errorf("multiple inputs found")
 	} else if len(o.Contents) == 0 {
-		return nil, fmt.Errorf("zero inputs found")
+		return nil, fmt.Errorf("zero objects found")
 	}
 
 	return &s3Volume{
@@ -97,30 +92,10 @@ func (s *s3Objectstore) GetInput(m geocloud.Message) (geocloud.Volume, error) {
 	}, nil
 }
 
-func (s *s3Objectstore) GetOutput(m geocloud.Message) (geocloud.Volume, error) {
-	prefix := filepath.Join(s.prefix, m.GetID(), "output")
-	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
-		Bucket: &s.bucket,
-		Prefix: &prefix,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error listing objects: %w", err)
-	} else if len(o.Contents) == 0 {
-		return nil, fmt.Errorf("zero outputs found")
-	}
-
-	return &s3Volume{
-		objs:   o.Contents,
-		bucket: s.bucket,
-		prefix: prefix,
-		dwnldr: s.dwnldr,
-	}, nil
-}
-
-func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
+func (s *S3) PutObject(m geocloud.Message, v geocloud.Volume) error {
 	var objs []s3manager.BatchUploadObject
 	if err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.prefix, m.GetID(), "input", f.Name())
+		key := filepath.Join(s.prefix, m.GetID(), f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{
 				Bucket: &s.bucket,
@@ -134,7 +109,7 @@ func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 	}
 
 	if len(objs) == 0 {
-		return fmt.Errorf("no inputs found")
+		return fmt.Errorf("no objects found")
 	}
 
 	return s.upldr.UploadWithIterator(aws.BackgroundContext(), &s3manager.UploadObjectsIterator{
@@ -142,43 +117,7 @@ func (s *s3Objectstore) PutInput(m geocloud.Message, v geocloud.Volume) error {
 	})
 }
 
-func (s *s3Objectstore) PutOutput(m geocloud.Message, v geocloud.Volume) error {
-	var objs []s3manager.BatchUploadObject
-	err := v.Walk(func(_ string, f geocloud.File, err error) error {
-		key := filepath.Join(s.prefix, m.GetID(), "output", f.Name())
-		objs = append(objs, s3manager.BatchUploadObject{
-			Object: &s3manager.UploadInput{
-				Bucket: &s.bucket,
-				Key:    &key,
-				Body:   f,
-			},
-		})
-		return err
-	})
-	if err != nil {
-		return err
-	}
-
-	if len(objs) == 0 {
-		return fmt.Errorf("no outputs found")
-	}
-
-	return s.upldr.UploadWithIterator(aws.BackgroundContext(), &s3manager.UploadObjectsIterator{
-		Objects: objs,
-	})
-}
-
-func (s *s3Objectstore) Put(key string, body io.Reader) error {
-	_, err := s.upldr.Upload(&s3manager.UploadInput{
-		Bucket: &s.bucket,
-		Key:    &key,
-		Body:   body,
-	})
-
-	return err
-}
-
-func (s *s3Objectstore) DeleteRecursive(prefix string) error {
+func (s *S3) DeleteObject(prefix string) error {
 	p := filepath.Join(s.prefix, prefix)
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
