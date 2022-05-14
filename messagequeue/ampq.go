@@ -8,17 +8,15 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type amqpMessageQueue struct {
+type AMQP struct {
 	queueName string
 	conn      *amqp.Connection
 	ch        *amqp.Channel
 }
 
-var _ geocloud.MessageQueue = (*amqpMessageQueue)(nil)
-
-func NewAMQP(opts *AMQPMessageQueueOpts) (*amqpMessageQueue, error) {
+func NewAMQP(opts *AMQPMessageQueueOpts) (*AMQP, error) {
 	var (
-		q = &amqpMessageQueue{
+		q = &AMQP{
 			queueName: opts.QueueName,
 		}
 		err error
@@ -42,14 +40,14 @@ func NewAMQP(opts *AMQPMessageQueueOpts) (*amqpMessageQueue, error) {
 	return q, nil
 }
 
-func (a *amqpMessageQueue) Send(m geocloud.Message) error {
+func (a *AMQP) Send(m geocloud.Message) error {
 	return a.ch.Publish("", a.queueName, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte(m.GetID()),
 	})
 }
 
-func (a *amqpMessageQueue) Poll(f func(geocloud.Message) error) error {
+func (a *AMQP) Poll(f func(geocloud.Message) error) error {
 	queue, _ := a.ch.QueueDeclare(
 		a.queueName,
 		false,
@@ -74,9 +72,7 @@ func (a *amqpMessageQueue) Poll(f func(geocloud.Message) error) error {
 
 	for m := range msgs {
 		go func(m amqp.Delivery) {
-			if err := f(&message{
-				id: string(m.Body),
-			}); err == nil {
+			if err := f(message(string(m.Body))); err == nil {
 				m.Ack(false)
 			}
 		}(m)

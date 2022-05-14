@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
 
 	"github.com/logsquaredn/geocloud/api"
 	"github.com/logsquaredn/geocloud/datastore"
@@ -65,5 +66,5 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return srv.Serve(l)
+	return http.Serve(l, srv)
 }

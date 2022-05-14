@@ -1,9 +1,13 @@
 package api
 
-import "github.com/logsquaredn/geocloud"
+import (
+	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/messagequeue"
+	"github.com/logsquaredn/geocloud/objectstore"
+)
 
 type GinOpts struct {
-	Datastore    geocloud.Datastore
-	Objectstore  geocloud.Objectstore
-	MessageQueue geocloud.MessageRecipient
+	Datastore    *datastore.Postgres
+	MessageQueue *messagequeue.AMQP
+	Objectstore  *objectstore.S3
 }
