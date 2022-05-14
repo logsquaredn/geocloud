@@ -205,20 +205,10 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 		return
 	}
 
-	ost, err := a.ds.CreateStorage(&geocloud.Storage{
-		CustomerID: customerID,
-	})
-	if err != nil {
-		log.Err(err).Msg("/create failed to output storage for job")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("/create failed to output storage for job")})
-		return
-	}
-
 	job := &geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
 		CustomerID: customerID,
-		OutputID:   ost.ID,
 		InputID:    ist.ID,
 	}
 	if job, err = a.ds.CreateJob(job); err != nil {

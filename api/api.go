@@ -22,7 +22,6 @@ type API struct {
 	router *gin.Engine
 }
 
-
 func NewServer(opts *APIOpts) (*API, error) {
 	var (
 		a = &API{

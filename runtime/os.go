@@ -67,13 +67,6 @@ func (o *OS) Send(m geocloud.Message) error {
 		o.ds.UpdateStorage(ist)
 	}()
 
-	go func() {
-		log.Debug().Str(k, v).Msg("getting output storage")
-		ost, _ := o.ds.GetStorage(geocloud.NewMessage(j.OutputID))
-		log.Debug().Str(k, v).Msg("updating output storage")
-		o.ds.UpdateStorage(ost)
-	}()
-
 	j.Status = geocloud.InProgress
 	log.Trace().Str(k, v).Msgf("setting job to %s", j.Status.Status())
 	j, err = o.ds.UpdateJob(j)
@@ -138,6 +131,21 @@ func (o *OS) Send(m geocloud.Message) error {
 
 	log.Info().Str(k, v).Msgf("running task %s", task.Path)
 	if err := task.Run(); err != nil {
+		return err
+	}
+
+	log.Debug().Str(k, v).Msg("creating output storage")
+	ost, err := o.ds.CreateStorage(&geocloud.Storage{
+		CustomerID: j.CustomerID,
+	})
+	if err != nil {
+		return err
+	}
+
+	j.OutputID = ost.ID
+	log.Trace().Str(k, v).Msgf("updating job output")
+	j, err = o.ds.UpdateJob(j)
+	if err != nil {
 		return err
 	}
 
