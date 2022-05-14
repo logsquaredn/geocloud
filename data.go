@@ -43,16 +43,16 @@ func (s JobStatus) String() string {
 
 // Job ...
 type Job struct {
-	ID         string
-	CustomerID string
-	InputID    string
-	OutputID   string
-	TaskType   TaskType
-	Status     JobStatus
-	Err        error
-	StartTime  time.Time
-	EndTime    time.Time
-	Args       []string
+	ID         string    `json:"id,omitempty"`
+	CustomerID string    `json:"-"`
+	InputID    string    `json:"input_id,omitempty"`
+	OutputID   string    `json:"output_id,omitempty"`
+	TaskType   TaskType  `json:"task_type,omitempty"`
+	Status     JobStatus `json:"status,omitempty"`
+	Err        error     `json:"error,omitempty"`
+	StartTime  time.Time `json:"start_time,omitempty"`
+	EndTime    time.Time `json:"end_time,omitempty"`
+	Args       []string  `json:"args,omitempty"`
 }
 
 var _ Message = (*Job)(nil)
@@ -63,7 +63,7 @@ func (j *Job) GetID() string {
 }
 
 type Customer struct {
-	ID string
+	ID string `json:"id,omitempty"`
 }
 
 var _ Message = (*Customer)(nil)
@@ -116,17 +116,17 @@ func TaskTypeFrom(taskType string) (TaskType, error) {
 
 // Task ...
 type Task struct {
-	Type    TaskType
-	Params  []string
-	QueueID string
+	Type    TaskType `json:"type,omitempty"`
+	Params  []string `json:"params,omitempty"`
+	QueueID string   `json:"-"`
 }
 
 // Job ...
 type Storage struct {
-	ID         string
-	CustomerID string
-	Name       string
-	LastUsed   time.Time
+	ID         string    `json:"id,omitempty"`
+	CustomerID string    `json:"-"`
+	Name       string    `json:"name,omitempty"`
+	LastUsed   time.Time `json:"last_used,omitempty"`
 }
 
 var _ Message = (*Storage)(nil)
