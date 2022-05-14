@@ -21,6 +21,9 @@ var (
 
 	//go:embed psql/execs/update_storage.sql
 	updateStorageSQL string
+
+	//go:embed psql/queries/get_storage_by_customer_id.sql
+	getStorgageByCustomerIDSQL string
 )
 
 func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {

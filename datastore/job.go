@@ -26,6 +26,9 @@ var (
 
 	//go:embed psql/queries/get_job_by_id.sql
 	getJobByIDSQL string
+
+	//go:embed psql/queries/get_job_by_customer_id.sql
+	getJobByCustomerIDSQL string
 )
 
 func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
