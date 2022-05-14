@@ -14,21 +14,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type osRuntime struct {
+type OS struct {
 	ds      *datastore.Postgres
 	os      *objectstore.S3
 	workdir string
 }
 
-func NewOS(opts *OSRuntimeOpts) (*osRuntime, error) {
-	return &osRuntime{
+func NewOS(opts *OSRuntimeOpts) (*OS, error) {
+	return &OS{
 		ds:      opts.Datastore,
 		os:      opts.Objectstore,
 		workdir: opts.WorkDir,
 	}, nil
 }
 
-func (o *osRuntime) Send(m geocloud.Message) error {
+func (o *OS) Send(m geocloud.Message) error {
 	k, v := "id", m.GetID()
 	log.Info().Str(k, v).Msg("processing message")
 
@@ -64,14 +64,14 @@ func (o *osRuntime) Send(m geocloud.Message) error {
 		log.Debug().Str(k, v).Msg("getting input storage")
 		ist, _ := o.ds.GetStorage(geocloud.NewMessage(j.InputID))
 		log.Debug().Str(k, v).Msg("updating input storage")
-		ist, _ = o.ds.UpdateStorage(ist)
+		o.ds.UpdateStorage(ist)
 	}()
 
 	go func() {
 		log.Debug().Str(k, v).Msg("getting output storage")
 		ost, _ := o.ds.GetStorage(geocloud.NewMessage(j.OutputID))
 		log.Debug().Str(k, v).Msg("updating output storage")
-		ost, _ = o.ds.UpdateStorage(ost)
+		o.ds.UpdateStorage(ost)
 	}()
 
 	j.Status = geocloud.InProgress
@@ -153,18 +153,18 @@ func volume(path string) (*dirVolume, error) {
 	return &dirVolume{path: path}, os.MkdirAll(path, 0755)
 }
 
-func (o *osRuntime) involume(m geocloud.Message) (*dirVolume, error) {
+func (o *OS) involume(m geocloud.Message) (*dirVolume, error) {
 	return volume(filepath.Join(o.jobdir(m), "input"))
 }
 
-func (o *osRuntime) outvolume(m geocloud.Message) (*dirVolume, error) {
+func (o *OS) outvolume(m geocloud.Message) (*dirVolume, error) {
 	return volume(filepath.Join(o.jobdir(m), "output"))
 }
 
-func (o *osRuntime) jobdir(m geocloud.Message) string {
+func (o *OS) jobdir(m geocloud.Message) string {
 	return filepath.Join(o.jobsdir(), m.GetID())
 }
 
-func (o *osRuntime) jobsdir() string {
+func (o *OS) jobsdir() string {
 	return filepath.Join(o.workdir, "jobs")
 }

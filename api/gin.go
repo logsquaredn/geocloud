@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -31,7 +30,7 @@ func init() {
 
 // @license.name logsquaredn
 
-type ginAPI struct {
+type API struct {
 	ds     *datastore.Postgres
 	mq     *messagequeue.AMQP
 	os     *objectstore.S3
@@ -47,9 +46,9 @@ func init() {
 	docs.SwaggerInfo.Schemes = []string{"https"}
 }
 
-func NewServer(opts *GinOpts) (*ginAPI, error) {
+func NewServer(opts *GinOpts) (*API, error) {
 	var (
-		a = &ginAPI{
+		a = &API{
 			ds:     opts.Datastore,
 			os:     opts.Objectstore,
 			mq:     opts.MessageQueue,
@@ -75,8 +74,8 @@ func NewServer(opts *GinOpts) (*ginAPI, error) {
 	return a, nil
 }
 
-func (a *ginAPI) Serve(l net.Listener) error {
-	return a.router.RunListener(l)
+func (a *API) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	a.router.ServeHTTP(w, req)
 }
 
 const (
@@ -85,7 +84,7 @@ const (
 	apiKeyCookie     = apiKeyHeader
 )
 
-func (a *ginAPI) middleware(ctx *gin.Context) {
+func (a *API) middleware(ctx *gin.Context) {
 	apiKey := getCustomerID(ctx)
 	if _, err := a.ds.GetCustomer(apiKey); err != nil {
 		if err == sql.ErrNoRows {
@@ -139,7 +138,7 @@ type BufferParams struct {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/buffer [post]
-func (a *ginAPI) createBuffer(ctx *gin.Context) {
+func (a *API) createBuffer(ctx *gin.Context) {
 	var p BufferParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
 		log.Err(err).Msg("/createBuffer invalid query parameter(s)")
@@ -160,7 +159,7 @@ func (a *ginAPI) createBuffer(ctx *gin.Context) {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/removebadgeometry [post]
-func (a *ginAPI) createRemovebadgeometry(ctx *gin.Context) {
+func (a *API) createRemovebadgeometry(ctx *gin.Context) {
 	a.create(ctx, "removebadgeometry")
 }
 
@@ -179,7 +178,7 @@ type ReprojectParams struct {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/reproject [post]
-func (a *ginAPI) createReproject(ctx *gin.Context) {
+func (a *API) createReproject(ctx *gin.Context) {
 	var p ReprojectParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
 		log.Err(err).Msg("/createReproject invalid query parameter(s)")
@@ -207,7 +206,7 @@ type FilterParams struct {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/filter [post]
-func (a *ginAPI) createFilter(ctx *gin.Context) {
+func (a *API) createFilter(ctx *gin.Context) {
 	var p FilterParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
 		log.Err(err).Msg("/createFilter invalid query parameter(s)")
@@ -235,7 +234,7 @@ type VectorlookupParams struct {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /create/vectorlookup [post]
-func (a *ginAPI) createVectorlookup(ctx *gin.Context) {
+func (a *API) createVectorlookup(ctx *gin.Context) {
 	var p VectorlookupParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
 		log.Err(err).Msg("/createVectorlookup invalid query parameter(s)")
@@ -246,7 +245,7 @@ func (a *ginAPI) createVectorlookup(ctx *gin.Context) {
 	a.create(ctx, "vectorlookup")
 }
 
-func (a *ginAPI) create(ctx *gin.Context, whichTask string) {
+func (a *API) create(ctx *gin.Context, whichTask string) {
 	taskType, err := geocloud.TaskTypeFrom(whichTask)
 	if err != nil {
 		log.Err(err).Msgf("/create invalid task type requested: %s", whichTask)
@@ -355,7 +354,7 @@ func (a *ginAPI) create(ctx *gin.Context, whichTask string) {
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /status [get]
-func (a *ginAPI) status(ctx *gin.Context) {
+func (a *API) status(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/status query parameter 'id' not passed or empty")
@@ -393,7 +392,7 @@ func (a *ginAPI) status(ctx *gin.Context) {
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
 // @Router /result [get]
-func (a *ginAPI) result(ctx *gin.Context) {
+func (a *API) result(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
 		log.Error().Msg("/result query parameter 'id' not passed or empty")
