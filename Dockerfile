@@ -29,6 +29,7 @@ RUN gcc -Wall removebadgeometry/removebadgeometry.c shared/shared.c -l gdal -o /
 RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer/task
 RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter/task
 RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject/task
+RUN gcc -Wall lookup/vectorlookup.c shared/shared.c -l gdal -o /assets/lookup/vectorlookup
 
 FROM build_image AS build
 ARG version=0.0.0
