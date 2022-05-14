@@ -38,7 +38,7 @@ type Postgres struct {
 	}
 }
 
-func NewPostgres(opts *PostgresDatastoreOpts) (*Postgres, error) {
+func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 	var (
 		p = &Postgres{
 			stmt: &struct {

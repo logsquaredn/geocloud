@@ -46,7 +46,7 @@ func init() {
 	docs.SwaggerInfo.Schemes = []string{"https"}
 }
 
-func NewServer(opts *GinOpts) (*API, error) {
+func NewServer(opts *APIOpts) (*API, error) {
 	var (
 		a = &API{
 			ds:     opts.Datastore,

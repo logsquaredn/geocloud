@@ -14,7 +14,7 @@ type AMQP struct {
 	ch        *amqp.Channel
 }
 
-func NewAMQP(opts *AMQPMessageQueueOpts) (*AMQP, error) {
+func NewAMQP(opts *AMQPOpts) (*AMQP, error) {
 	var (
 		q = &AMQP{
 			queueName: opts.QueueName,

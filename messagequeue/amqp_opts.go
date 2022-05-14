@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type AMQPMessageQueueOpts struct {
+type AMQPOpts struct {
 	Host       string
 	Port       int64
 	User       string
@@ -15,6 +15,6 @@ type AMQPMessageQueueOpts struct {
 	QueueName  string
 }
 
-func (q *AMQPMessageQueueOpts) connectionString() string {
+func (q *AMQPOpts) connectionString() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%d/", q.User, q.Password, q.Host, q.Port)
 }

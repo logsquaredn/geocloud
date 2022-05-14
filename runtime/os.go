@@ -20,7 +20,7 @@ type OS struct {
 	workdir string
 }
 
-func NewOS(opts *OSRuntimeOpts) (*OS, error) {
+func NewOS(opts *OSOpts) (*OS, error) {
 	return &OS{
 		ds:      opts.Datastore,
 		os:      opts.Objectstore,
