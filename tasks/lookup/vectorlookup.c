@@ -3,8 +3,8 @@
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
-	if(argc != 3) {
-		error("remove bad geometry requires two arguments. Input file and output directory", __FILE__, __LINE__);
+	if(argc != 5) {
+		error("vector lookup requires four arguments. Input file, output directory, longitude, and latitude", __FILE__, __LINE__);
 		fatalError();
 	}
 
@@ -13,6 +13,20 @@ int main(int argc, char *argv[]) {
 	
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
+
+    const char* lonArg = argv[3];
+    double lon = strtod(lonArg, NULL);
+    if(lon == 0 || lon > 180 || lon < -180) {
+        error("longitude must be a valid double between -180 & 180", __FILE__, __LINE__);
+		fatalError();
+    }
+
+    const char* latArg = argv[4];
+    double lat = strtod(latArg, NULL);
+    if(lat == 0 || lat > 90 || lat < -90) {
+        error("latitude must be a valid double between -90 & 90", __FILE__, __LINE__);
+		fatalError();
+    }
 
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
@@ -30,15 +44,27 @@ int main(int argc, char *argv[]) {
 	free(inputGeoFilePath);
 
 	if(gdalHandles.inputLayer != NULL) {
+        OGRGeometryH point = OGR_G_CreateGeometry(wkbPoint);
+        if(point == NULL) {
+            error("failed to create point geometry", __FILE__, __LINE__);
+            fatalError();
+        }
+        OGR_G_AddPoint_2D(point, lon, lat);
+
 		OGRFeatureH inputFeature;
 		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
             OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-			if(OGR_G_IsValid(inputGeometry)) {	
-				if(buildOutputVectorFeature(&gdalHandles, &inputGeometry, &inputFeature)) {
-					error("failed to build output vector feature", __FILE__, __LINE__);
-					fatalError();
-				}
-			}
+            if(OGR_G_Intersects(inputGeometry, point)) {
+                OGRGeometryH intersection = OGR_G_Intersection(inputGeometry, point);
+                if(intersection != NULL) {
+                    if(buildOutputVectorFeature(&gdalHandles, &intersection, &inputFeature)) {
+                        error("failed to build output vector feature", __FILE__, __LINE__);
+                        fatalError();     
+                    }
+                }
+
+                OGR_G_DestroyGeometry(intersection);
+            }
 
 			OGR_G_DestroyGeometry(inputGeometry);
 		}
@@ -68,6 +94,6 @@ int main(int argc, char *argv[]) {
 		fatalError();
 	}
 
-	fprintf(stdout, "removed bad geometry completed successfully\n");
+	fprintf(stdout, "vector lookup completed successfully\n");
 	return 0;
 }
