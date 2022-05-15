@@ -42,7 +42,7 @@ func init() {
 	docs.SwaggerInfo.Description = "Geocloud"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
-	docs.SwaggerInfo.BasePath = "/api/v1/job"
+	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Schemes = []string{"https"}
 }
 
@@ -68,7 +68,19 @@ func NewServer(opts *GinOpts) (*API, error) {
 		v1Job.POST("/filter", a.filter)
 		v1Job.POST("/vectorlookup", a.vectorlookup)
 		v1Job.GET("/:id", a.status)
+		v1Job.GET("/:id/input", a.getInputStorage)
+		v1Job.GET("/:id/output", a.getOutputStorage)
+		v1Job.GET("/:id/input/content", a.getInputStorageContent)
+		v1Job.GET("/:id/output/content", a.getOutputStorageContent)
 		v1Job.GET("/result", a.result)
+	}
+
+	v1Storage := a.router.Group("/api/v1/storage")
+	{
+		v1Storage.POST("", a.createStorage)
+		v1Storage.GET("", a.listStorage)
+		v1Storage.GET("/:id", a.getStorage)
+		v1Storage.GET("/:id/content", a.getStorageContent)
 	}
 
 	return a, nil
@@ -137,7 +149,7 @@ type BufferParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /buffer [post]
+// @Router /job/buffer [post]
 func (a *API) buffer(ctx *gin.Context) {
 	var p BufferParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
@@ -158,7 +170,7 @@ func (a *API) buffer(ctx *gin.Context) {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /removebadgeometry [post]
+// @Router /job/removebadgeometry [post]
 func (a *API) removebadgeometry(ctx *gin.Context) {
 	a.create(ctx, "removebadgeometry")
 }
@@ -465,6 +477,38 @@ func (a *API) result(ctx *gin.Context) {
 
 		ctx.JSON(http.StatusOK, js)
 	}
+}
+
+func (a *API) getInputStorage(ctx *gin.Context) {
+
+}
+
+func (a *API) getOutputStorage(ctx *gin.Context) {
+
+}
+
+func (a *API) getInputStorageContent(ctx *gin.Context) {
+
+}
+
+func (a *API) getOutputStorageContent(ctx *gin.Context) {
+
+}
+
+func (a *API) createStorage(ctx *gin.Context) {
+
+}
+
+func (a *API) listStorage(ctx *gin.Context) {
+
+}
+
+func (a *API) getStorage(ctx *gin.Context) {
+
+}
+
+func (a *API) getStorageContent(ctx *gin.Context) {
+
 }
 
 func isJSON(jsBytes []byte) bool {
