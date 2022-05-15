@@ -21,6 +21,16 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, jobs)
 }
 
+// @Summary Get a job
+// @Description
+// @Tags
+// @Produce json
+// @Param id path string true "Job ID"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/{id} [get]
 func (a *API) getJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -97,6 +107,16 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, storage)
 }
 
+// @Summary Download geojson result of job
+// @Description Results are downloadable as geojson or zip. The zip will contain the files that comprise an ESRI shapefile.
+// @Tags result
+// @Produce application/json, application/zip
+// @Param id path string true "Job ID"
+// @Success 200
+// @Failure 400 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/:id/output/content [get]
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -122,7 +142,31 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, contentType, b)
 }
 
+type bufferParams struct {
+	Distance     int `form:"distance"`
+	SegmentCount int `form:"segmentCount"`
+}
+
+// @Summary Create a buffer job
+// @Description <b><u>Create a buffer job</u></b>
+// @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+// @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Tags createBuffer
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param distance query integer true "Buffer distance"
+// @Param segmentCount query integer true "Segment count"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
+	if err := ctx.ShouldBindQuery(&bufferParams{}); err != nil {
+		log.Err(err).Msg("unable to bind query parameter(s)")
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeBuffer)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
@@ -133,7 +177,30 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+type filterParams struct {
+	FilterColumn string `json:"filterColumn"`
+	FilterValue  string `json:"filterValue"`
+}
+
+// @Summary Create a filter job
+// @Description <b><u>Create a filter job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Tags createFilter
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param filterColumn query string true "Column to filter on"
+// @Param filterValue query string true "Value to filter on"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
+	if err := ctx.ShouldBindQuery(&filterParams{}); err != nil {
+		log.Err(err).Msg("unable to bind query parameter(s)")
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeFilter)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
@@ -144,6 +211,17 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+// @Summary Create a reproject job
+// @Description <b><u>Create a reproject job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Tags createReproject
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param targetProjection query integer true "Target projection EPSG"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/reproject [post]
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeReproject)
 	if err != nil {
@@ -155,6 +233,16 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+// @Summary Create a remove bad geometry job
+// @Description <b><u>Create a remove bad geometry job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Tags createRemovebadgeometry
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/removebadgeometry [post]
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
 	if err != nil {
@@ -166,7 +254,30 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+type vectorlookupParams struct {
+	Longitude float64 `form:"longitude"`
+	Latitude  float64 `form:"latitude"`
+}
+
+// @Summary Create a vector lookup job
+// @Description <b><u>Create a vector lookup job</u></b>
+// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Tags createVectorlookup
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param longitude query number true "Longitude"
+// @Param latitude query number true "Latitude"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
+	if err := ctx.ShouldBindQuery(&vectorlookupParams{}); err != nil {
+		log.Err(err).Msg("unable to bind query parameter(s)")
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")

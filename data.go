@@ -121,7 +121,7 @@ type Task struct {
 	QueueID string   `json:"-"`
 }
 
-// Job ...
+// Storage ...
 type Storage struct {
 	ID         string    `json:"id,omitempty"`
 	CustomerID string    `json:"-"`
@@ -134,4 +134,8 @@ var _ Message = (*Storage)(nil)
 // GetID returns a Storage's id
 func (s *Storage) GetID() string {
 	return s.ID
+}
+
+type Error struct {
+	Message string `json:"message,omitempty"`
 }
