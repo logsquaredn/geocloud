@@ -83,6 +83,12 @@ func NewServer(opts *GinOpts) (*API, error) {
 		v1Storage.GET("/:id/content", a.getStorageContent)
 	}
 
+	v1Task := a.router.Group("/api/v1/task")
+	{
+		v1Task.GET("", a.listTasks)
+		v1Task.GET("/:type", a.getTask)
+	}
+
 	return a, nil
 }
 
@@ -508,6 +514,14 @@ func (a *API) getStorage(ctx *gin.Context) {
 }
 
 func (a *API) getStorageContent(ctx *gin.Context) {
+
+}
+
+func (a *API) listTasks(ctx *gin.Context) {
+
+}
+
+func (a *API) getTask(ctx *gin.Context) {
 
 }
 
