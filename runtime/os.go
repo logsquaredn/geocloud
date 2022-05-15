@@ -39,7 +39,7 @@ func (o *OS) Send(m geocloud.Message) error {
 	}
 
 	switch j.Status {
-	case geocloud.Complete, geocloud.InProgress:
+	case geocloud.JobStatusComplete, geocloud.JobStatusInProgress:
 		return nil
 	}
 
@@ -52,12 +52,12 @@ func (o *OS) Send(m geocloud.Message) error {
 		jobErr := stderr.Bytes()
 		if len(jobErr) > 0 {
 			j.Err = fmt.Errorf("%s", jobErr)
-			j.Status = geocloud.Error
+			j.Status = geocloud.JobStatusError
 		} else if err != nil {
 			j.Err = err
-			j.Status = geocloud.Error
+			j.Status = geocloud.JobStatusError
 		} else {
-			j.Status = geocloud.Complete
+			j.Status = geocloud.JobStatusComplete
 			j.OutputID = outputID
 		}
 		log.Err(j.Err).Str(k, v).Msgf("job finished with status %s", j.Status.Status())
@@ -71,7 +71,7 @@ func (o *OS) Send(m geocloud.Message) error {
 		o.ds.UpdateStorage(ist)
 	}()
 
-	j.Status = geocloud.InProgress
+	j.Status = geocloud.JobStatusInProgress
 	log.Trace().Str(k, v).Msgf("setting job to %s", j.Status.Status())
 	j, err = o.ds.UpdateJob(j)
 	if err != nil {

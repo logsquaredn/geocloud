@@ -10,10 +10,10 @@ import (
 type JobStatus string
 
 const (
-	Waiting    JobStatus = "waiting"
-	InProgress JobStatus = "inprogress"
-	Complete   JobStatus = "complete"
-	Error      JobStatus = "error"
+	JobStatusWaiting    JobStatus = "waiting"
+	JobStatusInProgress JobStatus = "inprogress"
+	JobStatusComplete   JobStatus = "complete"
+	JobStatusError      JobStatus = "error"
 )
 
 // Status returns the string representation of a geocloud Job's status
@@ -23,15 +23,13 @@ func (s JobStatus) Status() string {
 
 // JobStatusFrom creates a JobStatus from that JobStatus' string representation
 func JobStatusFrom(jobStatus string) (JobStatus, error) {
-	switch {
-	case strings.EqualFold(Waiting.Status(), jobStatus):
-		return Waiting, nil
-	case strings.EqualFold(InProgress.Status(), jobStatus):
-		return InProgress, nil
-	case strings.EqualFold(Complete.Status(), jobStatus):
-		return Complete, nil
-	case strings.EqualFold(Error.Status(), jobStatus):
-		return Error, nil
+	for _, j := range []JobStatus{
+		JobStatusWaiting, JobStatusInProgress,
+		JobStatusComplete, JobStatusError,
+	} {
+		if strings.EqualFold(jobStatus, j.String()) {
+			return j, nil
+		}
 	}
 	return "", fmt.Errorf("unknown job status %s", jobStatus)
 }
@@ -77,17 +75,17 @@ func (c *Customer) GetID() string {
 type TaskType string
 
 const (
-	Buffer            TaskType = "buffer"
-	Filter            TaskType = "filter"
-	RemoveBadGeometry TaskType = "removebadgeometry"
-	Reproject         TaskType = "reproject"
-	VectorLookup      TaskType = "vectorlookup"
+	TaskTypeBuffer            TaskType = "buffer"
+	TaskTypeFilter            TaskType = "filter"
+	TaskTypeRemoveBadGeometry TaskType = "removebadgeometry"
+	TaskTypeReproject         TaskType = "reproject"
+	TaskTypeVectorLookup      TaskType = "vectorlookup"
 )
 
 var (
 	AllTaskTypes []TaskType = []TaskType{
-		Buffer, Filter, RemoveBadGeometry,
-		Reproject, VectorLookup,
+		TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
+		TaskTypeReproject, TaskTypeVectorLookup,
 	}
 )
 
@@ -108,17 +106,10 @@ func (t TaskType) String() string {
 
 // TaskTypeFrom creates a TaskType from that TaskType's string representation
 func TaskTypeFrom(taskType string) (TaskType, error) {
-	switch {
-	case strings.EqualFold(Buffer.Name(), taskType):
-		return Buffer, nil
-	case strings.EqualFold(Filter.Name(), taskType):
-		return Filter, nil
-	case strings.EqualFold(RemoveBadGeometry.Name(), taskType):
-		return RemoveBadGeometry, nil
-	case strings.EqualFold(Reproject.Name(), taskType):
-		return Reproject, nil
-	case strings.EqualFold(VectorLookup.Name(), taskType):
-		return VectorLookup, nil
+	for _, t := range AllTaskTypes {
+		if strings.EqualFold(taskType, t.String()) {
+			return t, nil
+		}
 	}
 	return "", fmt.Errorf("unknown task type %s", taskType)
 }

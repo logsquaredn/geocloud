@@ -123,7 +123,7 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 }
 
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.Buffer)
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeBuffer)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
 		ctx.AbortWithStatus(statusCode)
@@ -134,7 +134,7 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.Filter)
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeFilter)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
 		ctx.AbortWithStatus(statusCode)
@@ -145,7 +145,7 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 }
 
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.Reproject)
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeReproject)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
 		ctx.AbortWithStatus(statusCode)
@@ -156,7 +156,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 }
 
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.RemoveBadGeometry)
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
 		ctx.AbortWithStatus(statusCode)
@@ -167,7 +167,7 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 }
 
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.VectorLookup)
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
 	if err != nil {
 		log.Err(err).Msg("unable to create job")
 		ctx.AbortWithStatus(statusCode)
