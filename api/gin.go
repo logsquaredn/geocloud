@@ -195,7 +195,7 @@ type ReprojectParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /reproject [post]
+// @Router /job/reproject [post]
 func (a *API) reproject(ctx *gin.Context) {
 	var p ReprojectParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
@@ -223,7 +223,7 @@ type FilterParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /filter [post]
+// @Router /job/filter [post]
 func (a *API) filter(ctx *gin.Context) {
 	var p FilterParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
@@ -251,7 +251,7 @@ type VectorlookupParams struct {
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /vectorlookup [post]
+// @Router /job/vectorlookup [post]
 func (a *API) vectorlookup(ctx *gin.Context) {
 	var p VectorlookupParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
@@ -374,7 +374,7 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /{id} [get]
+// @Router /job/{id} [get]
 func (a *API) status(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if len(id) < 1 {
@@ -407,7 +407,7 @@ func (a *API) status(ctx *gin.Context) {
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /result [get]
+// @Router /job/result [get]
 func (a *API) result(ctx *gin.Context) {
 	id := ctx.Query("id")
 	if len(id) < 1 {
