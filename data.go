@@ -84,6 +84,13 @@ const (
 	VectorLookup      TaskType = "vectorlookup"
 )
 
+var (
+	AllTaskTypes []TaskType = []TaskType{
+		Buffer, Filter, RemoveBadGeometry,
+		Reproject, VectorLookup,
+	}
+)
+
 // Type returns the string representation of a geocloud Task's type
 func (t TaskType) Type() string {
 	return string(t)
@@ -110,6 +117,8 @@ func TaskTypeFrom(taskType string) (TaskType, error) {
 		return RemoveBadGeometry, nil
 	case strings.EqualFold(Reproject.Name(), taskType):
 		return Reproject, nil
+	case strings.EqualFold(VectorLookup.Name(), taskType):
+		return VectorLookup, nil
 	}
 	return "", fmt.Errorf("unknown task type %s", taskType)
 }
