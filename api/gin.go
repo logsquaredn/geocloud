@@ -62,12 +62,12 @@ func NewServer(opts *GinOpts) (*API, error) {
 
 	v1Job := a.router.Group("/api/v1/job")
 	{
-		v1Job.POST("/create/buffer", a.createBuffer)
-		v1Job.POST("/create/removebadgeometry", a.createRemovebadgeometry)
-		v1Job.POST("/create/reproject", a.createReproject)
-		v1Job.POST("/create/filter", a.createFilter)
-		v1Job.POST("/create/vectorlookup", a.createVectorlookup)
-		v1Job.GET("/status", a.status)
+		v1Job.POST("/buffer", a.buffer)
+		v1Job.POST("/removebadgeometry", a.removebadgeometry)
+		v1Job.POST("/reproject", a.reproject)
+		v1Job.POST("/filter", a.filter)
+		v1Job.POST("/vectorlookup", a.vectorlookup)
+		v1Job.GET("/:id", a.status)
 		v1Job.GET("/result", a.result)
 	}
 
@@ -137,11 +137,11 @@ type BufferParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/buffer [post]
-func (a *API) createBuffer(ctx *gin.Context) {
+// @Router /buffer [post]
+func (a *API) buffer(ctx *gin.Context) {
 	var p BufferParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
-		log.Err(err).Msg("/createBuffer invalid query parameter(s)")
+		log.Err(err).Msg("/buffer invalid query parameter(s)")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
 		return
 	}
@@ -158,8 +158,8 @@ func (a *API) createBuffer(ctx *gin.Context) {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/removebadgeometry [post]
-func (a *API) createRemovebadgeometry(ctx *gin.Context) {
+// @Router /removebadgeometry [post]
+func (a *API) removebadgeometry(ctx *gin.Context) {
 	a.create(ctx, "removebadgeometry")
 }
 
@@ -177,11 +177,11 @@ type ReprojectParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/reproject [post]
-func (a *API) createReproject(ctx *gin.Context) {
+// @Router /reproject [post]
+func (a *API) reproject(ctx *gin.Context) {
 	var p ReprojectParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
-		log.Err(err).Msg("/createReproject invalid query parameter(s)")
+		log.Err(err).Msg("/reproject invalid query parameter(s)")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
 		return
 	}
@@ -205,11 +205,11 @@ type FilterParams struct {
 // @Success 200 {object} geocloud.CreateResponse
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/filter [post]
-func (a *API) createFilter(ctx *gin.Context) {
+// @Router /filter [post]
+func (a *API) filter(ctx *gin.Context) {
 	var p FilterParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
-		log.Err(err).Msg("/createFilter invalid query parameter(s)")
+		log.Err(err).Msg("/filter invalid query parameter(s)")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
 		return
 	}
@@ -230,14 +230,14 @@ type VectorlookupParams struct {
 // @Produce application/json
 // @Param longitude query number true "Longitude"
 // @Param latitude query number true "Latitude"
-// @Success 200 {object} geocloud.CreateResponse
+// @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /create/vectorlookup [post]
-func (a *API) createVectorlookup(ctx *gin.Context) {
+// @Router /vectorlookup [post]
+func (a *API) vectorlookup(ctx *gin.Context) {
 	var p VectorlookupParams
 	if err := ctx.ShouldBindQuery(&p); err != nil {
-		log.Err(err).Msg("/createVectorlookup invalid query parameter(s)")
+		log.Err(err).Msg("/vectorlookup invalid query parameter(s)")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid query parameter(s): %s", err.Error())})
 		return
 	}
@@ -299,7 +299,7 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 	})
 	if err != nil {
 		log.Err(err).Msg("/create failed to input storage for job")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("/create failed to input storage for job")})
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to create input storage for job"})
 		return
 	}
 
@@ -308,7 +308,7 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 	})
 	if err != nil {
 		log.Err(err).Msg("/create failed to output storage for job")
-		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("/create failed to output storage for job")})
+		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: "failed to create output storage for job"})
 		return
 	}
 
@@ -338,27 +338,30 @@ func (a *API) create(ctx *gin.Context, whichTask string) {
 	if err = a.mq.Send(job); err != nil {
 		log.Err(err).Msgf("/create failed to send message to messagequeue for id: %s", job.GetID())
 		ctx.JSON(http.StatusInternalServerError, &geocloud.ErrorResponse{Error: fmt.Sprintf("failed send message for id %s with type %s", job.GetID(), taskType)})
+		job.Err = err
+		job.Status = geocloud.Error
+		a.ds.UpdateJob(job)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &geocloud.CreateResponse{ID: job.GetID()})
+	ctx.JSON(http.StatusOK, job)
 }
 
 // @Summary Get status of a job
 // @Description
 // @Tags status
 // @Produce json
-// @Param id query string true "Job ID"
-// @Success 200 {object} geocloud.StatusResponse
+// @Param id path string true "Job ID"
+// @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.ErrorResponse
 // @Failure 404 {object} geocloud.ErrorResponse
 // @Failure 500 {object} geocloud.ErrorResponse
-// @Router /status [get]
+// @Router /{id} [get]
 func (a *API) status(ctx *gin.Context) {
-	id := ctx.Query("id")
+	id := ctx.Param("id")
 	if len(id) < 1 {
-		log.Error().Msg("/status query parameter 'id' not passed or empty")
-		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "query parameter 'id' required"})
+		log.Error().Msg("/status path variable 'id' not passed or empty")
+		ctx.JSON(http.StatusBadRequest, &geocloud.ErrorResponse{Error: "path variable 'id' required"})
 		return
 	}
 
@@ -374,12 +377,7 @@ func (a *API) status(ctx *gin.Context) {
 		return
 	}
 
-	sr := &geocloud.StatusResponse{Status: job.Status.String()}
-	if job.Status == geocloud.Error {
-		sr.Error = job.Err.Error()
-	}
-
-	ctx.JSON(http.StatusOK, sr)
+	ctx.JSON(http.StatusOK, job)
 }
 
 // @Summary Download geojson result of job

@@ -43,16 +43,16 @@ func (s JobStatus) String() string {
 
 // Job ...
 type Job struct {
-	ID         string
-	CustomerID string
-	InputID    string
-	OutputID   string
-	TaskType   TaskType
-	Status     JobStatus
-	Err        error
-	StartTime  time.Time
-	EndTime    time.Time
-	Args       []string
+	ID         string    `json:"id"`
+	CustomerID string    `json:"-"`
+	InputID    string    `json:"input_id"`
+	OutputID   string    `json:"output_id"`
+	TaskType   TaskType  `json:"task_type"`
+	Status     JobStatus `json:"status"`
+	Err        error     `json:"error"`
+	StartTime  time.Time `json:"start_time"`
+	EndTime    time.Time `json:"end_time"`
+	Args       []string  `json:"args"`
 }
 
 var _ Message = (*Job)(nil)
