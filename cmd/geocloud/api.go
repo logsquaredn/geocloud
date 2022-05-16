@@ -9,6 +9,7 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +49,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	srv, err := api.NewServer(&api.APIOpts{
+	srv, err := api.NewServer(&api.ServerOpts{
 		Datastore:    ds,
 		Objectstore:  os,
 		MessageQueue: mq,
@@ -57,10 +58,12 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	addr := fmt.Sprintf(":%d", port)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 
+	log.Info().Msgf("serving on %s", addr)
 	return http.Serve(l, srv)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/logsquaredn/geocloud/objectstore"
 )
 
-type APIOpts struct {
+type ServerOpts struct {
 	Datastore    *datastore.Postgres
 	MessageQueue *messagequeue.AMQP
 	Objectstore  *objectstore.S3

@@ -26,6 +26,8 @@ func (f *s3File) Name() string {
 	return name
 }
 
+// TODO this doesn't actually implement io.Reader properly
+// as it only works if len(p) >= size of object
 func (f *s3File) Read(p []byte) (int, error) {
 	w := aws.NewWriteAtBuffer(p)
 	n, err := f.dwnldr.Download(w, &s3.GetObjectInput{

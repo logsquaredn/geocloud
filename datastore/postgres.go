@@ -17,22 +17,24 @@ var migrations embed.FS
 type Postgres struct {
 	db   *sql.DB
 	stmt *struct {
-		createJob              *sql.Stmt
-		createCustomer         *sql.Stmt
-		updateJob              *sql.Stmt
-		getJobByID             *sql.Stmt
-		getJobsBefore          *sql.Stmt
-		deleteJob              *sql.Stmt
-		getTaskByJobID         *sql.Stmt
-		getTaskByType          *sql.Stmt
-		getTasksByTypes        *sql.Stmt
-		getCustomerByID        *sql.Stmt
-		getStorage             *sql.Stmt
-		createStorage          *sql.Stmt
-		deleteStorage          *sql.Stmt
-		updateStorage          *sql.Stmt
-		getStorageByCustomerID *sql.Stmt
-		getJobsByCustomerID    *sql.Stmt
+		createJob               *sql.Stmt
+		createCustomer          *sql.Stmt
+		updateJob               *sql.Stmt
+		getJobByID              *sql.Stmt
+		getJobsBefore           *sql.Stmt
+		deleteJob               *sql.Stmt
+		getTaskByJobID          *sql.Stmt
+		getTaskByType           *sql.Stmt
+		getTasksByTypes         *sql.Stmt
+		getCustomerByID         *sql.Stmt
+		getStorage              *sql.Stmt
+		createStorage           *sql.Stmt
+		deleteStorage           *sql.Stmt
+		updateStorage           *sql.Stmt
+		getStorageByCustomerID  *sql.Stmt
+		getJobsByCustomerID     *sql.Stmt
+		getOutputStorageByJobID *sql.Stmt
+		getInputStorageByJobID  *sql.Stmt
 	}
 }
 
@@ -40,22 +42,24 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 	var (
 		p = &Postgres{
 			stmt: &struct {
-				createJob              *sql.Stmt
-				createCustomer         *sql.Stmt
-				updateJob              *sql.Stmt
-				getJobByID             *sql.Stmt
-				getJobsBefore          *sql.Stmt
-				deleteJob              *sql.Stmt
-				getTaskByJobID         *sql.Stmt
-				getTaskByType          *sql.Stmt
-				getTasksByTypes        *sql.Stmt
-				getCustomerByID        *sql.Stmt
-				getStorage             *sql.Stmt
-				createStorage          *sql.Stmt
-				deleteStorage          *sql.Stmt
-				updateStorage          *sql.Stmt
-				getStorageByCustomerID *sql.Stmt
-				getJobsByCustomerID    *sql.Stmt
+				createJob               *sql.Stmt
+				createCustomer          *sql.Stmt
+				updateJob               *sql.Stmt
+				getJobByID              *sql.Stmt
+				getJobsBefore           *sql.Stmt
+				deleteJob               *sql.Stmt
+				getTaskByJobID          *sql.Stmt
+				getTaskByType           *sql.Stmt
+				getTasksByTypes         *sql.Stmt
+				getCustomerByID         *sql.Stmt
+				getStorage              *sql.Stmt
+				createStorage           *sql.Stmt
+				deleteStorage           *sql.Stmt
+				updateStorage           *sql.Stmt
+				getStorageByCustomerID  *sql.Stmt
+				getJobsByCustomerID     *sql.Stmt
+				getOutputStorageByJobID *sql.Stmt
+				getInputStorageByJobID  *sql.Stmt
 			}{},
 		}
 		err error
@@ -137,6 +141,14 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 	}
 
 	if p.stmt.getStorageByCustomerID, err = p.db.Prepare(getStorgageByCustomerIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if p.stmt.getOutputStorageByJobID, err = p.db.Prepare(getOutputStorageByJobIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if p.stmt.getInputStorageByJobID, err = p.db.Prepare(getInputStorageByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

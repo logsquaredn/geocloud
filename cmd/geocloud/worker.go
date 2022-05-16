@@ -5,6 +5,7 @@ import (
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/logsquaredn/geocloud/runtime"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -55,5 +56,6 @@ func runWorker(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	log.Info().Msg("polling for messages")
 	return mq.Poll(rt.Send)
 }
