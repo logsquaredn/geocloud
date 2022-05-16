@@ -11,7 +11,7 @@ import (
 func (a *API) getTask(ctx *gin.Context, rawTaskType string) (*geocloud.Task, int, error) {
 	taskType, err := geocloud.TaskTypeFrom(rawTaskType)
 	if err != nil {
-		return nil, http.StatusNotFound, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	return a.getTaskType(ctx, taskType)
@@ -21,7 +21,7 @@ func (a *API) getTaskType(ctx *gin.Context, taskType geocloud.TaskType) (*geoclo
 	task, err := a.ds.GetTask(taskType)
 	switch {
 	case err == sql.ErrNoRows:
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusNotFound, err
 	case err != nil:
 		return nil, http.StatusInternalServerError, err
 	}

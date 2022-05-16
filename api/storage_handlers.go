@@ -33,6 +33,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 // @Success 200 {object} geocloud.Storage
 // @Failure 401 {object} geocloud.Error
 // @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /storage/{id} [get]
 func (a *API) getStorageHandler(ctx *gin.Context) {
@@ -93,6 +94,7 @@ func (a *API) createStorageHandler(ctx *gin.Context) {
 // @Failure 400 {object} geocloud.Error
 // @Failure 401 {object} geocloud.Error
 // @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /storage/{id}/content [get]
 func (a *API) getStorageContentHandler(ctx *gin.Context) {
