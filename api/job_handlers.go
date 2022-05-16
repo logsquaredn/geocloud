@@ -8,6 +8,15 @@ import (
 	"github.com/logsquaredn/geocloud"
 )
 
+// @Summary Get a list of jobs
+// @Description
+// @Tags
+// @Produce application/json
+// @Success 200 {object} []geocloud.Job
+// @Failure 401 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx))
 	switch {
@@ -23,10 +32,11 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 // @Summary Get a job
 // @Description
 // @Tags
-// @Produce json
+// @Produce application/json
 // @Param id path string true "Job ID"
 // @Success 200 {object} geocloud.Job
-// @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 404 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/{id} [get]
@@ -40,6 +50,17 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+// @Summary Get a job's task
+// @Description
+// @Tags
+// @Produce application/json
+// @Param id path string true "Job ID"
+// @Success 200 {object} geocloud.Task
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/{id}/task [get]
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -56,6 +77,17 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, task)
 }
 
+// @Summary Get a job's input
+// @Description
+// @Tags
+// @Produce application/json
+// @Param id path string true "Job ID"
+// @Success 200 {object} geocloud.Storage
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/{id}/input [get]
 func (a *API) getJobInputHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -66,6 +98,17 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, storage)
 }
 
+// @Summary Get a job's input content
+// @Description
+// @Tags
+// @Produce application/json, application/zip
+// @Param id path string true "Job ID"
+// @Success 200
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/{id}/input/content [get]
 func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -88,6 +131,17 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, contentType, b)
 }
 
+// @Summary Get a job's output
+// @Description
+// @Tags
+// @Produce application/json
+// @Param id path string true "Job ID"
+// @Success 200 {object} geocloud.Storage
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
+// @Failure 404 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/{id}/output [get]
 func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -98,16 +152,17 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, storage)
 }
 
-// @Summary Download geojson result of job
-// @Description Results are downloadable as geojson or zip. The zip will contain the files that comprise an ESRI shapefile.
-// @Tags result
+// @Summary Get a job's output content
+// @Description
+// @Tags
 // @Produce application/json, application/zip
 // @Param id path string true "Job ID"
 // @Success 200
-// @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 404 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
-// @Router /job/:id/output/content [get]
+// @Router /job/{id}/output/content [get]
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
@@ -130,7 +185,7 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, contentType, b)
 }
 
-type bufferParams struct {
+type bufferQuery struct {
 	Distance     int `form:"distance"`
 	SegmentCount int `form:"segmentCount"`
 }
@@ -146,10 +201,12 @@ type bufferParams struct {
 // @Param segmentCount query integer true "Segment count"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&bufferParams{}); err != nil {
+	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
@@ -163,7 +220,7 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type filterParams struct {
+type filterQuery struct {
 	FilterColumn string `json:"filterColumn"`
 	FilterValue  string `json:"filterValue"`
 }
@@ -178,10 +235,12 @@ type filterParams struct {
 // @Param filterValue query string true "Value to filter on"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&filterParams{}); err != nil {
+	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
@@ -195,6 +254,10 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
+type reprojectQuery struct {
+	TargetProjection int `form:"targetProjection"`
+}
+
 // @Summary Create a reproject job
 // @Description <b><u>Create a reproject job</u></b>
 // @Description &emsp; - Pass the geospatial data to be processed in the request body
@@ -204,9 +267,16 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 // @Param targetProjection query integer true "Target projection EPSG"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/reproject [post]
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
+	if err := ctx.ShouldBindQuery(&reprojectQuery{}); err != nil {
+		a.err(ctx, http.StatusBadRequest, err)
+		return
+	}
+
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeReproject)
 	if err != nil {
 		a.err(ctx, statusCode, err)
@@ -224,6 +294,8 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Produce application/json
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/removebadgeometry [post]
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
@@ -236,7 +308,7 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type vectorlookupParams struct {
+type vectorlookupQuery struct {
 	Longitude float64 `form:"longitude"`
 	Latitude  float64 `form:"latitude"`
 }
@@ -251,10 +323,12 @@ type vectorlookupParams struct {
 // @Param latitude query number true "Latitude"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&vectorlookupParams{}); err != nil {
+	if err := ctx.ShouldBindQuery(&vectorlookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}

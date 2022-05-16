@@ -1,12 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
-	"github.com/rs/zerolog/log"
 )
 
 // getCustomer actually checks the database for the customer
@@ -32,8 +32,7 @@ func (a *API) getAssumedCustomer(ctx *gin.Context) *geocloud.Customer {
 // and returns a 401 if not found
 func (a *API) customerMiddleware(ctx *gin.Context) {
 	if _, statusCode, err := a.getCustomer(ctx); err != nil {
-		log.Err(err).Msgf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie)
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, fmt.Errorf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie))
 		return
 	}
 
