@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
-	"github.com/rs/zerolog/log"
 )
 
 func (a *API) listJobHandler(ctx *gin.Context) {
@@ -34,8 +33,7 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 func (a *API) getJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -45,15 +43,13 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
 	task, statusCode, err := a.getTaskType(ctx, job.TaskType)
 	if err != nil {
-		log.Err(err).Msg("unable to task")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -63,8 +59,7 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 func (a *API) getJobInputHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to job input storage")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -74,22 +69,19 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to get storage")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
 	volume, err := a.os.GetObject(storage)
 	if err != nil {
-		log.Err(err).Msg("unable to get object")
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
 	b, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
 	if err != nil {
-		log.Err(err).Msg("unable to get volume content")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -99,8 +91,7 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to job output storage")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -120,22 +111,19 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
 	if err != nil {
-		log.Err(err).Msg("unable to get storage")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
 	volume, err := a.os.GetObject(storage)
 	if err != nil {
-		log.Err(err).Msg("unable to get object")
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
 	b, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
 	if err != nil {
-		log.Err(err).Msg("unable to get volume content")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -162,15 +150,13 @@ type bufferParams struct {
 // @Router /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferParams{}); err != nil {
-		log.Err(err).Msg("unable to bind query parameter(s)")
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeBuffer)
 	if err != nil {
-		log.Err(err).Msg("unable to create job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -196,15 +182,13 @@ type filterParams struct {
 // @Router /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterParams{}); err != nil {
-		log.Err(err).Msg("unable to bind query parameter(s)")
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeFilter)
 	if err != nil {
-		log.Err(err).Msg("unable to create job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -225,8 +209,7 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeReproject)
 	if err != nil {
-		log.Err(err).Msg("unable to create job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -246,8 +229,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
 	if err != nil {
-		log.Err(err).Msg("unable to create job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
@@ -273,15 +255,13 @@ type vectorlookupParams struct {
 // @Router /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&vectorlookupParams{}); err != nil {
-		log.Err(err).Msg("unable to bind query parameter(s)")
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
 	if err != nil {
-		log.Err(err).Msg("unable to create job")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 

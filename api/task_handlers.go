@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
-	"github.com/rs/zerolog/log"
 )
 
 func (a *API) listTasksHandler(ctx *gin.Context) {
@@ -13,8 +12,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 		geocloud.AllTaskTypes...,
 	)
 	if err != nil {
-		log.Err(err).Msg("unable to get tasks")
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -24,8 +22,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 func (a *API) getTaskHandler(ctx *gin.Context) {
 	task, statusCode, err := a.getTask(ctx, ctx.Param("type"))
 	if err != nil {
-		log.Err(err).Msg("unable to get task")
-		ctx.AbortWithStatus(statusCode)
+		a.err(ctx, statusCode, err)
 		return
 	}
 
