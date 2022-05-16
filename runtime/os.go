@@ -50,13 +50,14 @@ func (o *OS) Send(m geocloud.Message) error {
 	defer func() {
 		j.EndTime = time.Now()
 		jobErr := stderr.Bytes()
-		if len(jobErr) > 0 {
+		switch {
+		case len(jobErr) > 0:
 			j.Err = fmt.Errorf("%s", jobErr)
 			j.Status = geocloud.JobStatusError
-		} else if err != nil {
+		case err != nil:
 			j.Err = err
 			j.Status = geocloud.JobStatusError
-		} else {
+		default:
 			j.Status = geocloud.JobStatusComplete
 			j.OutputID = outputID
 		}

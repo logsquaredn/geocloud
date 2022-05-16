@@ -66,10 +66,6 @@ func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *
 	return a.checkJobOwnershipForCustomer(ctx, job, customer)
 }
 
-func (a *API) checkJobOwnership(ctx *gin.Context, job *geocloud.Job) (*geocloud.Job, int, error) {
-	return a.checkJobOwnershipForCustomer(ctx, job, a.getAssumedCustomer(ctx))
-}
-
 func (a *API) checkJobOwnershipForCustomer(ctx *gin.Context, job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, int, error) {
 	if job.CustomerID != customer.ID {
 		// you could make an argument for 404 here

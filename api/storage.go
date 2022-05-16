@@ -8,10 +8,6 @@ import (
 	"github.com/logsquaredn/geocloud"
 )
 
-func (a *API) checkStorageOwnership(ctx *gin.Context, storage *geocloud.Storage) (*geocloud.Storage, int, error) {
-	return a.checkStorageOwnershipForCustomer(ctx, storage, a.getAssumedCustomer(ctx))
-}
-
 func (a *API) checkStorageOwnershipForCustomer(ctx *gin.Context, storage *geocloud.Storage, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	if storage.CustomerID != customer.ID {
 		// you could make an argument for 404 here
@@ -30,8 +26,7 @@ func (a *API) getStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storag
 
 func (a *API) getStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetStorage(m)
-	switch {
-	case err != nil:
+	if err != nil {
 		return nil, http.StatusNotFound, err
 	}
 

@@ -83,7 +83,7 @@ const (
 )
 
 var (
-	AllTaskTypes []TaskType = []TaskType{
+	AllTaskTypes = []TaskType{
 		TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
 		TaskTypeReproject, TaskTypeVectorLookup,
 	}

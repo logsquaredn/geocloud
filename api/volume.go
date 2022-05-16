@@ -11,10 +11,6 @@ import (
 	"github.com/logsquaredn/geocloud"
 )
 
-func (a *API) putRequestVolume(ctx *gin.Context) (*geocloud.Storage, int, error) {
-	return a.putRequestVolumeForCustomer(ctx, a.getAssumedCustomer(ctx))
-}
-
 func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	volume, statusCode, err := a.getRequestVolume(ctx)
 	if err != nil {
