@@ -16,7 +16,9 @@ WORKDIR $GOPATH/src/github.com/logsquaredn/geocloud
 COPY go.mod .
 COPY go.sum .
 RUN go mod download
+RUN go install github.com/swaggo/swag/cmd/swag@v1.7.8
 COPY . .
+RUN swag init -d ./api
 
 FROM ${build_tasks_image} AS build_tasks_image
 WORKDIR /src/github.com/logsquaredn/geocloud/tasks
