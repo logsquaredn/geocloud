@@ -2,11 +2,11 @@ package api
 
 import "github.com/logsquaredn/geocloud/docs"
 
-// @contact.name logsquaredn
-// @contact.url https://logsquaredn.io
-// @contact.email logsquaredn@gmail.com
+// @contact.name   logsquaredn
+// @contact.url    https://logsquaredn.io
+// @contact.email  logsquaredn@gmail.com
 
-// @license.name logsquaredn
+// @license.name  logsquaredn
 
 func init() {
 	docs.SwaggerInfo.Title = "Geocloud"
