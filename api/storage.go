@@ -47,7 +47,7 @@ func (a *API) createStorageForCustomer(ctx *gin.Context, customer *geocloud.Cust
 		CustomerID: customer.ID,
 	})
 	if err != nil {
-		return nil, 500, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return storage, 0, nil
