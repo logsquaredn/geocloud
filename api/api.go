@@ -22,7 +22,7 @@ type API struct {
 	router *gin.Engine
 }
 
-func NewServer(opts *APIOpts) (*API, error) {
+func NewServer(opts *Opts) (*API, error) {
 	var (
 		a = &API{
 			ds:     opts.Datastore,
