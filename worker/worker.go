@@ -98,7 +98,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}
 
 	log.Debug().Str(k, v).Msg("downloading input")
-	if err = input.Download(invol.path); err != nil {
+	if err = input.Download(o.involumePath(j)); err != nil {
 		return err
 	}
 
@@ -123,8 +123,8 @@ func (o *Worker) Send(m geocloud.Message) error {
 
 	args := append(
 		[]string{
-			filepath.Join(invol.path, filename),
-			outvol.path,
+			filepath.Join(o.involumePath(j), filename),
+			o.outvolumePath(j),
 		},
 		j.Args...,
 	)
@@ -163,16 +163,20 @@ func (o *Worker) Send(m geocloud.Message) error {
 	return nil
 }
 
-func volume(path string) (*dirVolume, error) {
-	return &dirVolume{path: path}, os.MkdirAll(path, 0755)
+func (o *Worker) involumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobdir(m), "input")
 }
 
-func (o *Worker) involume(m geocloud.Message) (*dirVolume, error) {
-	return volume(filepath.Join(o.jobdir(m), "input"))
+func (o *Worker) outvolumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobdir(m), "output")
 }
 
-func (o *Worker) outvolume(m geocloud.Message) (*dirVolume, error) {
-	return volume(filepath.Join(o.jobdir(m), "output"))
+func (o *Worker) involume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.involumePath(m))
+}
+
+func (o *Worker) outvolume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.outvolumePath(m))
 }
 
 func (o *Worker) jobdir(m geocloud.Message) string {
