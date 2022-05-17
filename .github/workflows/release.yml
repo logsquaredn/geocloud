@@ -73,7 +73,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/removebadgeometry/task
+          asset_path: /usr/local/bin/removebadgeometry
           asset_name: task_removebadgeometry_linux_amd64
           asset_content_type: application/octet-stream
       - name: upload-task-filter
@@ -82,7 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/filter/task
+          asset_path: /usr/local/bin/filter
           asset_name: task_filter_linux_amd64
           asset_content_type: application/octet-stream
       - name: upload-task-buffer
@@ -91,7 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/buffer/task
+          asset_path: /usr/local/bin/buffer
           asset_name: task_buffer_linux_amd64
           asset_content_type: application/octet-stream
       - name: upload-task-reproject
@@ -100,6 +100,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/reproject/task
+          asset_path: /usr/local/bin/reproject
           asset_name: task_reproject_linux_amd64
           asset_content_type: application/octet-stream
+      - name: upload-task-vectorlookup
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/bin/vectorlookup
+          asset_name: task_vectorlookup_linux_amd64
+          asset_content_type: application/octet-stream
+
