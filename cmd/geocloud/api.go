@@ -49,7 +49,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	srv, err := api.NewServer(&api.ServerOpts{
+	srv, err := api.NewServer(&api.Opts{
 		Datastore:    ds,
 		Objectstore:  os,
 		MessageQueue: mq,

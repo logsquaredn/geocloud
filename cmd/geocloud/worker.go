@@ -4,7 +4,7 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
-	"github.com/logsquaredn/geocloud/runtime"
+	"github.com/logsquaredn/geocloud/worker"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -38,8 +38,8 @@ func runWorker(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	rt, err := runtime.NewOS(
-		&runtime.OSOpts{
+	rt, err := worker.New(
+		&worker.Opts{
 			Datastore:   ds,
 			Objectstore: os,
 			WorkDir:     workDir,

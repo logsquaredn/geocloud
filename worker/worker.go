@@ -1,4 +1,4 @@
-package runtime
+package worker
 
 import (
 	"bytes"
@@ -14,21 +14,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type OS struct {
+type Worker struct {
 	ds      *datastore.Postgres
 	os      *objectstore.S3
 	workdir string
 }
 
-func NewOS(opts *OSOpts) (*OS, error) {
-	return &OS{
+func New(opts *Opts) (*Worker, error) {
+	return &Worker{
 		ds:      opts.Datastore,
 		os:      opts.Objectstore,
 		workdir: opts.WorkDir,
 	}, nil
 }
 
-func (o *OS) Send(m geocloud.Message) error {
+func (o *Worker) Send(m geocloud.Message) error {
 	k, v := "id", m.GetID()
 	log.Info().Str(k, v).Msg("processing message")
 
@@ -99,7 +99,7 @@ func (o *OS) Send(m geocloud.Message) error {
 	}
 
 	log.Debug().Str(k, v).Msg("downloading input")
-	if err = input.Download(invol.path); err != nil {
+	if err = input.Download(o.involumePath(j)); err != nil {
 		return err
 	}
 
@@ -124,12 +124,13 @@ func (o *OS) Send(m geocloud.Message) error {
 
 	args := append(
 		[]string{
-			filepath.Join(invol.path, filename),
-			outvol.path,
+			filepath.Join(o.involumePath(j), filename),
+			o.outvolumePath(j),
 		},
 		j.Args...,
 	)
 	task := exec.Command(t.Type.Name(), args...)
+	task.Env = []string{}
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
 	task.Stderr = stderr
@@ -163,22 +164,26 @@ func (o *OS) Send(m geocloud.Message) error {
 	return nil
 }
 
-func volume(path string) (*dirVolume, error) {
-	return &dirVolume{path: path}, os.MkdirAll(path, 0755)
+func (o *Worker) involumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobdir(m), "input")
 }
 
-func (o *OS) involume(m geocloud.Message) (*dirVolume, error) {
-	return volume(filepath.Join(o.jobdir(m), "input"))
+func (o *Worker) outvolumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobdir(m), "output")
 }
 
-func (o *OS) outvolume(m geocloud.Message) (*dirVolume, error) {
-	return volume(filepath.Join(o.jobdir(m), "output"))
+func (o *Worker) involume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.involumePath(m))
 }
 
-func (o *OS) jobdir(m geocloud.Message) string {
+func (o *Worker) outvolume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.outvolumePath(m))
+}
+
+func (o *Worker) jobdir(m geocloud.Message) string {
 	return filepath.Join(o.jobsdir(), m.GetID())
 }
 
-func (o *OS) jobsdir() string {
+func (o *Worker) jobsdir() string {
 	return filepath.Join(o.workdir, "jobs")
 }

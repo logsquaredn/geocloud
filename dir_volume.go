@@ -1,4 +1,4 @@
-package runtime
+package geocloud
 
 import (
 	"fmt"
@@ -6,16 +6,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/logsquaredn/geocloud"
 )
+
+func NewDirVolume(path string) (Volume, error) {
+	return &dirVolume{path: path}, os.MkdirAll(path, 0755)
+}
 
 type dirFile struct {
 	file    *os.File
 	volPath string
 }
 
-var _ geocloud.File = (*dirFile)(nil)
+var _ File = (*dirFile)(nil)
 
 func (f *dirFile) Name() string {
 	return strings.TrimPrefix(f.file.Name(), f.volPath)
@@ -34,9 +36,9 @@ type dirVolume struct {
 	path string
 }
 
-var _ geocloud.Volume = (*dirVolume)(nil)
+var _ Volume = (*dirVolume)(nil)
 
-func (v *dirVolume) Walk(fn geocloud.WalkVolFunc) error {
+func (v *dirVolume) Walk(fn WalkVolFunc) error {
 	return filepath.WalkDir(v.path, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
