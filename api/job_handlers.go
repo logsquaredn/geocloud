@@ -222,8 +222,8 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 type filterQuery struct {
-	FilterColumn string `json:"filterColumn"`
-	FilterValue  string `json:"filterValue"`
+	FilterColumn string `form:"filterColumn"`
+	FilterValue  string `form:"filterValue"`
 }
 
 // @Summary Create a filter job
