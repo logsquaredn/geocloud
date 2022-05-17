@@ -197,6 +197,7 @@ type bufferQuery struct {
 // @Tags createBuffer
 // @Accept application/json, application/zip
 // @Produce application/json
+// @Param input_id query string false "Optional ID of existing storage to use"
 // @Param distance query integer true "Buffer distance"
 // @Param segmentCount query integer true "Segment count"
 // @Success 200 {object} geocloud.Job
@@ -231,6 +232,7 @@ type filterQuery struct {
 // @Tags createFilter
 // @Accept application/json, application/zip
 // @Produce application/json
+// @Param input_id query string false "Optional ID of existing storage to use"
 // @Param filterColumn query string true "Column to filter on"
 // @Param filterValue query string true "Value to filter on"
 // @Success 200 {object} geocloud.Job
@@ -264,6 +266,7 @@ type reprojectQuery struct {
 // @Tags createReproject
 // @Accept application/json, application/zip
 // @Produce application/json
+// @Param input_id query string false "Optional ID of existing storage to use"
 // @Param targetProjection query integer true "Target projection EPSG"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
@@ -292,6 +295,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Tags createRemovebadgeometry
 // @Accept application/json, application/zip
 // @Produce application/json
+// @Param input_id query string false "Optional ID of existing storage to use"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
 // @Failure 401 {object} geocloud.Error
@@ -319,6 +323,7 @@ type vectorlookupQuery struct {
 // @Tags createVectorlookup
 // @Accept application/json, application/zip
 // @Produce application/json
+// @Param input_id query string false "Optional ID of existing storage to use"
 // @Param longitude query number true "Longitude"
 // @Param latitude query number true "Latitude"
 // @Success 200 {object} geocloud.Job
