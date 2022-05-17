@@ -26,11 +26,19 @@ func getAPIKey(ctx *gin.Context) string {
 	return apiKey
 }
 
-func isJSON(jsBytes []byte) bool {
-	var js map[string]interface{}
-	return json.Unmarshal(jsBytes, &js) == nil
+func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
+	jobArgs := make([]string, len(taskParams))
+	for i, param := range taskParams {
+		jobArgs[i] = ctx.Query(param)
+	}
+	return jobArgs
 }
 
-func isZIP(zipBytes []byte) bool {
-	return http.DetectContentType(zipBytes) == "application/zip"
+func isJSON(b []byte) bool {
+	var js map[string]interface{}
+	return json.Unmarshal(b, &js) == nil
+}
+
+func isZIP(b []byte) bool {
+	return http.DetectContentType(b) == "application/zip"
 }

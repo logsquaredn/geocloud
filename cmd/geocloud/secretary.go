@@ -123,7 +123,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	if len(archive.String()) > 0 {
 		err = osa.PutObject(
 			geocloud.NewMessage(fmt.Sprint(time.Now().Unix())),
-			geocloud.NewBytesVolume("archive.csv", []byte(archive.String())),
+			geocloud.NewSingleFileVolume("archive.csv", []byte(archive.String())),
 		)
 		if err != nil {
 			log.Err(err).Msg("putting archive to s3")

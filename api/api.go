@@ -7,13 +7,9 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
-
-func init() {
-	gin.SetMode(gin.ReleaseMode)
-}
 
 type API struct {
 	ds     *datastore.Postgres
@@ -32,19 +28,46 @@ func NewServer(opts *Opts) (*API, error) {
 		}
 	)
 
-	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	a.router.Use(a.middleware)
-
-	v1Job := a.router.Group("/api/v1/job")
+	swagger := a.router.Group("/swagger")
 	{
-		v1Job.POST("/create/buffer", a.createBuffer)
-		v1Job.POST("/create/removebadgeometry", a.createRemovebadgeometry)
-		v1Job.POST("/create/reproject", a.createReproject)
-		v1Job.POST("/create/filter", a.createFilter)
-		v1Job.POST("/create/vectorlookup", a.createVectorlookup)
-		v1Job.GET("/status", a.status)
-		v1Job.GET("/result", a.result)
+		swagger.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
+	api := a.router.Group("/api")
+	{
+		v1 := api.Group("/v1")
+		{
+			task := v1.Group("/task")
+			{
+				task.GET("/", a.listTasksHandler)
+				task.GET("/:type", a.getTaskHandler)
+			}
+			authenticated := v1.Group("/")
+			{
+				authenticated.Use(a.customerMiddleware)
+				storage := authenticated.Group("/storage")
+				{
+					storage.POST("/", a.createStorageHandler)
+					storage.GET("/", a.listStorageHandler)
+					storage.GET("/:id", a.getStorageHandler)
+					storage.GET("/:id/content", a.getStorageContentHandler)
+				}
+				job := authenticated.Group("/job")
+				{
+					job.POST("/buffer", a.createBufferJobHandler)
+					job.POST("/filter", a.createFilterJobHandler)
+					job.POST("/reproject", a.createReprojectJobHandler)
+					job.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
+					job.POST("/vectorlookup", a.createVectorLookupJobHandler)
+					job.GET("/", a.listJobHandler)
+					job.GET("/:id", a.getJobHandler)
+					job.GET("/:id/input", a.getJobInputHandler)
+					job.GET("/:id/output", a.getJobOutputHandler)
+					job.GET("/:id/input/content", a.getJobInputContentHandler)
+					job.GET("/:id/output/content", a.getJobOutputContentHandler)
+					job.GET("/:id/task", a.getJobTaskHandler)
+				}
+			}
+		}
 	}
 
 	return a, nil
