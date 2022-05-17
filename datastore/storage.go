@@ -24,6 +24,12 @@ var (
 
 	//go:embed psql/queries/get_storage_by_customer_id.sql
 	getStorgageByCustomerIDSQL string
+
+	//go:embed psql/queries/get_output_storage_by_job_id.sql
+	getOutputStorageByJobIDSQL string
+
+	//go:embed psql/queries/get_input_storage_by_job_id.sql
+	getInputStorageByJobIDSQL string
 )
 
 func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
@@ -116,4 +122,40 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message) ([]*geocloud.Storage, 
 	}
 
 	return storage, nil
+}
+
+func (p *Postgres) GetJobInputStorage(m geocloud.Message) (*geocloud.Storage, error) {
+	var (
+		s        = &geocloud.Storage{}
+		lastUsed sql.NullTime
+	)
+
+	if err := p.stmt.getInputStorageByJobID.QueryRow(m.GetID()).Scan(
+		&s.ID, &s.CustomerID,
+		&s.Name, &lastUsed,
+	); err != nil {
+		return s, err
+	}
+
+	s.LastUsed = lastUsed.Time
+
+	return s, nil
+}
+
+func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, error) {
+	var (
+		s        = &geocloud.Storage{}
+		lastUsed sql.NullTime
+	)
+
+	if err := p.stmt.getOutputStorageByJobID.QueryRow(m.GetID()).Scan(
+		&s.ID, &s.CustomerID,
+		&s.Name, &lastUsed,
+	); err != nil {
+		return s, err
+	}
+
+	s.LastUsed = lastUsed.Time
+
+	return s, nil
 }
