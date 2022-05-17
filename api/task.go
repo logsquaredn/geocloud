@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func (a *API) getTask(ctx *gin.Context, rawTaskType string) (*geocloud.Task, int
 func (a *API) getTaskType(ctx *gin.Context, taskType geocloud.TaskType) (*geocloud.Task, int, error) {
 	task, err := a.ds.GetTask(taskType)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, http.StatusNotFound, err
 	case err != nil:
 		return nil, http.StatusInternalServerError, err

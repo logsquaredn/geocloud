@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,9 +21,14 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 	tasks, err := a.ds.GetTasks(
 		geocloud.AllTaskTypes...,
 	)
-	if err != nil {
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		tasks = []*geocloud.Task{}
+	case err != nil:
 		a.err(ctx, http.StatusInternalServerError, err)
 		return
+	case tasks == nil:
+		tasks = []*geocloud.Task{}
 	}
 
 	ctx.JSON(http.StatusOK, tasks)

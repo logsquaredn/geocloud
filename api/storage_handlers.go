@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,16 +15,17 @@ import (
 // @Produce  application/json
 // @Success  200  {object}  []geocloud.Storage
 // @Failure  401  {object}  geocloud.Error
-// @Failure  404  {object}  geocloud.Error
 // @Failure  500  {object}  geocloud.Error
 // @Router   /storage [get]
 func (a *API) listStorageHandler(ctx *gin.Context) {
 	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomer(ctx))
 	switch {
-	case err == sql.ErrNoRows:
-		ctx.AbortWithStatus(http.StatusNotFound)
+	case errors.Is(err, sql.ErrNoRows):
+		storage = []*geocloud.Storage{}
 	case err != nil:
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, http.StatusInternalServerError, err)
+	case storage == nil:
+		storage = []*geocloud.Storage{}
 	}
 
 	ctx.JSON(http.StatusOK, storage)

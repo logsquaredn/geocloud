@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,16 +15,18 @@ import (
 // @Produce application/json
 // @Success 200 {object} []geocloud.Job
 // @Failure 401 {object} geocloud.Error
-// @Failure 404 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx))
 	switch {
-	case err == sql.ErrNoRows:
-		ctx.AbortWithStatus(http.StatusNotFound)
+	case errors.Is(err, sql.ErrNoRows):
+		jobs = []*geocloud.Job{}
 	case err != nil:
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, http.StatusInternalServerError, err)
+		return
+	case jobs == nil:
+		jobs = []*geocloud.Job{}
 	}
 
 	ctx.JSON(http.StatusOK, jobs)
@@ -222,8 +225,8 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 type filterQuery struct {
-	FilterColumn string `json:"filterColumn"`
-	FilterValue  string `json:"filterValue"`
+	FilterColumn string `form:"filterColumn"`
+	FilterValue  string `form:"filterValue"`
 }
 
 // @Summary Create a filter job

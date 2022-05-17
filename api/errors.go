@@ -8,7 +8,7 @@ import (
 
 func (a *API) err(ctx *gin.Context, statusCode int, err error) {
 	log.Err(err).Msgf("returning HTTP '%d'", statusCode)
-	ctx.AbortWithStatusJSON(statusCode, &geocloud.Error{
+	ctx.JSON(statusCode, &geocloud.Error{
 		Message: err.Error(),
 	})
 }

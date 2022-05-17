@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,11 +12,7 @@ import (
 
 func (a *API) checkStorageOwnershipForCustomer(ctx *gin.Context, storage *geocloud.Storage, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	if storage.CustomerID != customer.ID {
-		// you could make an argument for 404 here
-		// as "idk what storage you're talking about"
-		// is more secure than "there's definitely a storage here
-		// but you can't see it"
-		return nil, http.StatusForbidden, fmt.Errorf("customer does not own storage")
+		return nil, http.StatusForbidden, fmt.Errorf("customer does not own storage '%s'", storage.ID)
 	}
 
 	return storage, 0, nil
@@ -26,8 +24,11 @@ func (a *API) getStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storag
 
 func (a *API) getStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetStorage(m)
-	if err != nil {
-		return nil, http.StatusNotFound, err
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
@@ -54,8 +55,11 @@ func (a *API) getJobOutputStorage(ctx *gin.Context, m geocloud.Message) (*geoclo
 
 func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetJobOutputStorage(m)
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusNotFound)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
@@ -67,8 +71,11 @@ func (a *API) getJobInputStorage(ctx *gin.Context, m geocloud.Message) (*geoclou
 
 func (a *API) getJobInputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetJobInputStorage(m)
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusNotFound)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)

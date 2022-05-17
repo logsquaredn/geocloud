@@ -33,6 +33,7 @@ func (a *API) getAssumedCustomer(ctx *gin.Context) *geocloud.Customer {
 func (a *API) customerMiddleware(ctx *gin.Context) {
 	if _, statusCode, err := a.getCustomer(ctx); err != nil {
 		a.err(ctx, statusCode, fmt.Errorf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie))
+		ctx.Abort()
 		return
 	}
 
