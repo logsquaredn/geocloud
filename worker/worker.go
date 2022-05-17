@@ -52,7 +52,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		jobErr := stderr.Bytes()
 		switch {
 		case len(jobErr) > 0:
-			j.Error = fmt.Sprint(jobErr)
+			j.Error = string(jobErr)
 			j.Status = geocloud.JobStatusError
 		case err != nil:
 			j.Error = err.Error()
@@ -130,7 +130,6 @@ func (o *Worker) Send(m geocloud.Message) error {
 		j.Args...,
 	)
 	task := exec.Command(t.Type.Name(), args...)
-	task.Env = []string{}
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
 	task.Stderr = stderr
