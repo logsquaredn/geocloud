@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -57,7 +58,7 @@ func (a *API) getJob(ctx *gin.Context, m geocloud.Message) (*geocloud.Job, int, 
 func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Job, int, error) {
 	job, err := a.ds.GetJob(m)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return nil, http.StatusNotFound, fmt.Errorf("job '%s' not found", m.GetID())
 	case err != nil:
 		return nil, http.StatusInternalServerError, err
@@ -68,11 +69,7 @@ func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *
 
 func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, int, error) {
 	if job.CustomerID != customer.ID {
-		// you could make an argument for 404 here
-		// as "idk what storage you're talking about"
-		// is more secure than "there's definitely a storage here
-		// but you can't see it"
-		return nil, http.StatusForbidden, fmt.Errorf("customer does not own job")
+		return nil, http.StatusForbidden, fmt.Errorf("customer does not own job '%s'", job.ID)
 	}
 
 	return job, 0, nil
