@@ -21,9 +21,9 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx))
 	switch {
 	case err == sql.ErrNoRows:
-		ctx.AbortWithStatus(http.StatusNotFound)
+		a.err(ctx, http.StatusNotFound, err)
 	case err != nil:
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, http.StatusInsufficientStorage, err)
 	}
 
 	ctx.JSON(http.StatusOK, jobs)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -26,8 +27,11 @@ func (a *API) getStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storag
 
 func (a *API) getStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetStorage(m)
-	if err != nil {
-		return nil, http.StatusNotFound, err
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
@@ -54,8 +58,11 @@ func (a *API) getJobOutputStorage(ctx *gin.Context, m geocloud.Message) (*geoclo
 
 func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetJobOutputStorage(m)
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusNotFound)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
@@ -67,8 +74,11 @@ func (a *API) getJobInputStorage(ctx *gin.Context, m geocloud.Message) (*geoclou
 
 func (a *API) getJobInputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.GetJobInputStorage(m)
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusNotFound)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+	case err != nil:
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)

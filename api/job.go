@@ -58,9 +58,9 @@ func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *
 	job, err := a.ds.GetJob(m)
 	switch {
 	case err == sql.ErrNoRows:
-		ctx.AbortWithStatus(http.StatusNotFound)
+		return nil, http.StatusNotFound, fmt.Errorf("job '%s' not found", m.GetID())
 	case err != nil:
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return nil, http.StatusInternalServerError, err
 	}
 
 	return a.checkJobOwnershipForCustomer(job, customer)

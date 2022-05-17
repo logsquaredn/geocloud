@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,9 +22,9 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomer(ctx))
 	switch {
 	case err == sql.ErrNoRows:
-		ctx.AbortWithStatus(http.StatusNotFound)
+		a.err(ctx, http.StatusNotFound, fmt.Errorf("no storage found"))
 	case err != nil:
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		a.err(ctx, http.StatusInternalServerError, err)
 	}
 
 	ctx.JSON(http.StatusOK, storage)
