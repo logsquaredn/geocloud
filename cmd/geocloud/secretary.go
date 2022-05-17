@@ -117,7 +117,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Err.Error(), j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, c.Name))
+		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Error, j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, c.Name))
 	}
 
 	if len(archive.String()) > 0 {

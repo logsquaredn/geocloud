@@ -3,7 +3,6 @@ package datastore
 import (
 	"database/sql"
 	_ "embed"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -58,9 +57,7 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		return j, err
 	}
 
-	if jobErr.String != "" {
-		j.Err = fmt.Errorf(jobErr.String)
-	}
+	j.Error = jobErr.String
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
@@ -79,23 +76,18 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 
 func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	var (
-		jobErr      sql.NullString
-		jobStatus   string
-		endTime     sql.NullTime
-		taskType    string
-		jobErrError = ""
-		outputID    sql.NullString
-		err         error
+		jobErr    sql.NullString
+		jobStatus string
+		endTime   sql.NullTime
+		taskType  string
+		outputID  sql.NullString
+		err       error
 	)
-
-	if j.Err != nil {
-		jobErrError = j.Err.Error()
-	}
 
 	if j.OutputID != "" {
 		if err := p.stmt.updateJob.QueryRow(
 			j.GetID(), j.OutputID,
-			j.Status.String(), jobErrError,
+			j.Status.String(), j.Error,
 			j.StartTime, j.EndTime,
 		).Scan(
 			&j.ID, &j.CustomerID,
@@ -110,7 +102,7 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	} else {
 		if err := p.stmt.updateJob.QueryRow(
 			j.GetID(), nil,
-			j.Status.String(), jobErrError,
+			j.Status.String(), j.Error,
 			j.StartTime, j.EndTime,
 		).Scan(
 			&j.ID, &j.CustomerID,
@@ -124,9 +116,7 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 		}
 	}
 
-	if jobErr.String != "" {
-		j.Err = fmt.Errorf(jobErr.String)
-	}
+	j.Error = jobErr.String
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
@@ -163,9 +153,7 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 		return j, err
 	}
 
-	if jobErr.String != "" {
-		j.Err = fmt.Errorf(jobErr.String)
-	}
+	j.Error = jobErr.String
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
@@ -212,9 +200,7 @@ func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
 			return nil, err
 		}
 
-		if jobErr.String != "" {
-			j.Err = fmt.Errorf(jobErr.String)
-		}
+		j.Error = jobErr.String
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 
@@ -270,9 +256,7 @@ func (p *Postgres) GetCustomerJobs(m geocloud.Message) ([]*geocloud.Job, error) 
 			return nil, err
 		}
 
-		if jobErr.String != "" {
-			j.Err = fmt.Errorf(jobErr.String)
-		}
+		j.Error = jobErr.String
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 

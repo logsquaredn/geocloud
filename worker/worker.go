@@ -52,16 +52,16 @@ func (o *Worker) Send(m geocloud.Message) error {
 		jobErr := stderr.Bytes()
 		switch {
 		case len(jobErr) > 0:
-			j.Err = fmt.Errorf("%s", jobErr)
+			j.Error = fmt.Sprint(jobErr)
 			j.Status = geocloud.JobStatusError
 		case err != nil:
-			j.Err = err
+			j.Error = err.Error()
 			j.Status = geocloud.JobStatusError
 		default:
 			j.Status = geocloud.JobStatusComplete
 			j.OutputID = outputID
 		}
-		log.Err(j.Err).Str(k, v).Msgf("job finished with status %s", j.Status.Status())
+		log.Err(fmt.Errorf(j.Error)).Str(k, v).Msgf("job finished with status %s", j.Status.Status())
 		o.ds.UpdateJob(j)
 	}()
 

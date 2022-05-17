@@ -47,7 +47,7 @@ type Job struct {
 	OutputID   string    `json:"output_id,omitempty"`
 	TaskType   TaskType  `json:"task_type,omitempty"`
 	Status     JobStatus `json:"status,omitempty"`
-	Err        error     `json:"error,omitempty"`
+	Error      string    `json:"error,omitempty"`
 	StartTime  time.Time `json:"start_time,omitempty"`
 	EndTime    time.Time `json:"end_time,omitempty"`
 	Args       []string  `json:"args,omitempty"`
