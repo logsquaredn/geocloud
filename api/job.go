@@ -63,10 +63,10 @@ func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	return a.checkJobOwnershipForCustomer(ctx, job, customer)
+	return a.checkJobOwnershipForCustomer(job, customer)
 }
 
-func (a *API) checkJobOwnershipForCustomer(ctx *gin.Context, job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, int, error) {
+func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, int, error) {
 	if job.CustomerID != customer.ID {
 		// you could make an argument for 404 here
 		// as "idk what storage you're talking about"
