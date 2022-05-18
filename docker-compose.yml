@@ -37,7 +37,7 @@ services:
   secretary:
     build: .
     image: *image
-    command: s --work-jobs-before 1s
+    command: s --work-jobs-before 1s --work-storage-before 1s
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [secretary]
     depends_on: [datastore, objectstore]

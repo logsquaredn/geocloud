@@ -117,7 +117,7 @@ func (s *S3) PutObject(m geocloud.Message, v geocloud.Volume) error {
 	})
 }
 
-func (s *S3) DeleteObject(prefix string) error {
+func (s *S3) DeleteObjectRecursive(prefix string) error {
 	p := filepath.Join(s.prefix, prefix)
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
@@ -139,7 +139,7 @@ func (s *S3) DeleteObject(prefix string) error {
 
 	_, err = s.svc.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: &s.bucket,
-		Key:    &prefix,
+		Key:    &p,
 	})
 	return err
 }

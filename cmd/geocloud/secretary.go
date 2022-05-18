@@ -23,12 +23,14 @@ var secretaryCmd = &cobra.Command{
 }
 
 var (
-	workJobsBefore time.Duration
-	stripeAPIKey   string
+	workJobsBefore    time.Duration
+	workStorageBefore time.Duration
+	stripeAPIKey      string
 )
 
 func init() {
 	secretaryCmd.Flags().DurationVar(&workJobsBefore, "work-jobs-before", h24, "Work jobs before")
+	secretaryCmd.Flags().DurationVar(&workStorageBefore, "work-storage-before", h24, "Work storage before")
 	secretaryCmd.Flags().StringVar(&stripeAPIKey, "stripe-api-key", os.Getenv("GEOCLOUD_STRIPE_API_KEY"), "Work jobs before")
 }
 
@@ -103,13 +105,6 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		log.Debug().Msgf("deleting objects for customer '%s'", j.CustomerID)
-		err = os.DeleteObject(j.ID)
-		if err != nil {
-			log.Err(err).Msgf("deleting objects for customer '%s'", j.CustomerID)
-			return err
-		}
-
 		log.Debug().Msgf("deleting data for customer '%s'", j.CustomerID)
 		err = ds.DeleteJob(j)
 		if err != nil {
@@ -117,10 +112,11 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.TaskType.String(), j.Status.String(), j.Error, j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, c.Name))
+		archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.ID, j.InputID, j.OutputID, j.TaskType.String(), j.Status.String(), j.Error, j.StartTime.String(), j.EndTime.String(), strings.Join(j.Args, "|"), j.CustomerID, c.Name))
 	}
 
 	if len(archive.String()) > 0 {
+		log.Info().Msg("putting archive to storage")
 		err = osa.PutObject(
 			geocloud.NewMessage(fmt.Sprint(time.Now().Unix())),
 			geocloud.NewSingleFileVolume("archive.csv", []byte(archive.String())),
@@ -128,6 +124,29 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			log.Err(err).Msg("putting archive to s3")
 			return err
+		}
+	}
+
+	log.Info().Msg("getting storages")
+	storages, err := ds.GetStorageBefore(workJobsBefore)
+	if err != nil {
+		log.Err(err).Msg("getting storages")
+		return err
+	}
+
+	log.Info().Msg("processing storages")
+	for _, s := range storages {
+		log.Debug().Msgf("deleting storage: %s", s.ID)
+		err = os.DeleteObjectRecursive(s.ID)
+		if err != nil {
+			log.Err(err).Msgf("deleting storage: %s", s.ID)
+			return err
+		}
+
+		log.Debug().Msgf("deleting storage data: %s", s.ID)
+		err = ds.DeleteStorage(s)
+		if err != nil {
+			log.Err(err).Msgf("deleting storage data: %s", s.ID)
 		}
 	}
 
