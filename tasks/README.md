@@ -21,6 +21,7 @@ gcc -Wall tasks/filter/filter.c tasks/shared/shared.c -l gdal -o assets/filter
 gcc -Wall tasks/reproject/reproject.c tasks/shared/shared.c -l gdal -o assets/reproject
 gcc -Wall tasks/removebadgeometry/removebadgeometry.c tasks/shared/shared.c -l gdal -o assets/removebadgeometry
 gcc -Wall tasks/lookup/vectorlookup.c tasks/shared/shared.c -l gdal -o assets/vectorlookup
+gcc -Wall tasks/lookup/rasterlookup.c tasks/shared/shared.c -l gdal -o assets/rasterlookup
 ```
 
 Local run:
@@ -30,4 +31,5 @@ Local run:
 ../assets/filter /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape 'BASIN' 'al'
 ../assets/removebadgeometry /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape
 ../assets/vectorlookup /home/phish3y/Documents/input_shape/mmi/mmi.zip /home/phish3y/Documents/output_shape 97.5679 34.6970
+../assets/rasterlookup /home/phish3y/Documents/input_shape/input.tif /home/phish3y/Documents/output_shape -89.9383 29.95313
 ```

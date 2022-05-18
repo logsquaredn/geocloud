@@ -19,6 +19,7 @@ struct GDALHandles {
 void error(const char *message, const char *file, int line);
 void fatalError();
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
+int rasterInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
 // inputGeoFilePath needs free()'d
 char *getInputGeoFilePath(const char *inputFilePath);

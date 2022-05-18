@@ -109,11 +109,24 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     return 0;
 }
 
-char *getOutputFilePath(const char *outputDir) {
+int openRasterDataset(GDALDatasetH *dataset, const char *filePath) {
+    *dataset = GDALOpen(filePath, GA_ReadOnly);
+	if(*dataset == NULL) {
+        // TODO improve all error messaging
+        // printf("%d\n", CPLGetErrorCounter());
+        // printf("%d\n", CPLGetLastErrorNo());
+        // printf("%s\n", CPLGetLastErrorMsg());
+        error("failed to open raster dataset", __FILE__, __LINE__);
+		return 1;
+	}
+	
+    return 0;
+}
+
+char* getOutputFilePath(const char *outputDir, const char filename[]) {
     int size = 0;
     while(outputDir[size] != '\0') ++size;
     ++size;
-    char filename[12] = "/output.shp";
     size += strlen(filename);
     char *outputFilePath = (char*) malloc(size);
     snprintf(outputFilePath, size, "%s%s", outputDir, filename);
@@ -121,10 +134,28 @@ char *getOutputFilePath(const char *outputDir) {
     return outputFilePath;
 }
 
+int rasterInitialize(struct GDALHandles *gdalHandles, const char* inputFilePath, const char* outputDir) {
+    GDALAllRegister();
+
+    char outputFilename[12] = "/output.tif";
+    char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
+    fprintf(stdout, "output file path: %s\n", outputFilePath);
+
+	GDALDatasetH inputDataset;
+	if(openRasterDataset(&inputDataset, inputFilePath)) {
+		error("failed to open input raster dataset", __FILE__, __LINE__);
+		return 1;
+	}
+    gdalHandles->inputDataset = inputDataset;
+
+    return 0;
+}
+
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir) {
     GDALAllRegister();
 
-    char *outputFilePath = getOutputFilePath(outputDir);
+    char outputFilename[12] = "/output.shp";
+    char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
     fprintf(stdout, "output file path: %s\n", outputFilePath);
 
 	GDALDatasetH inputDataset;
@@ -263,6 +294,11 @@ char *getInputGeoFilePath(const char *inputFilePath) {
         }
 
         free(unzipDir);
+    } else if(ext && (!strcmp(ext, ".tif") || !strcmp(ext, ".tiff") || !strcmp(ext, ".geotif") || !strcmp(ext, ".geotiff"))) {
+        inputGeoFilePath = strdup(inputFilePath);
+        if(inputGeoFilePath == NULL) {
+            return NULL;
+        }
     } else {
         error("unrecognized input file", __FILE__, __LINE__);
         return NULL;
