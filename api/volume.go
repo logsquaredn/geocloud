@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -63,7 +64,7 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 	var (
 		accept          = ctx.Request.Header.Get("Content-Type")
 		applicationJSON = strings.Contains(accept, "application/json")
-		applicationZip  = strings.Contains(accept, "application/zip")
+		applicationZip  = js.Ternary(applicationJSON, false, true)
 		contentType     = js.Ternary(applicationZip, "application/zip", "application/json")
 		b               []byte
 	)
@@ -83,7 +84,7 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 	case err != nil:
 		return nil, "", http.StatusInternalServerError, err
 	case len(b) == 0:
-		return nil, "", http.StatusInternalServerError, err
+		return nil, "", http.StatusNotFound, fmt.Errorf("could not find: %s content", contentType)
 	}
 
 	return b, contentType, 0, nil

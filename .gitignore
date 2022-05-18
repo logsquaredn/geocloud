@@ -2,6 +2,10 @@
 assets/*
 !assets/zip_3.0_x86_64.tgz
 
+# docs
+docs/swagger.json
+docs/swagger.yaml
+
 # hack
 hack/geocloud/*
 !hack/geocloud/.gitkeep
