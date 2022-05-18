@@ -10,9 +10,11 @@ import (
 )
 
 // @Summary Get a list of jobs
-// @Description
-// @Tags
+// @Description Get a list of jobs based on API Key
+// @Tags listJob
 // @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Success 200 {object} []geocloud.Job
 // @Failure 401 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
@@ -33,9 +35,11 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job
-// @Description
-// @Tags
+// @Description Get the metadata of a job. This can be used as a way to track job status
+// @Tags getJob
 // @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200 {object} geocloud.Job
 // @Failure 401 {object} geocloud.Error
@@ -54,9 +58,11 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job's task
-// @Description
-// @Tags
+// @Description Get the metadata of a job's task
+// @Tags getJobTask
 // @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200 {object} geocloud.Task
 // @Failure 401 {object} geocloud.Error
@@ -81,9 +87,11 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job's input
-// @Description
-// @Tags
+// @Description Get the metadata of a job's input
+// @Tags getJobInput
 // @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200 {object} geocloud.Storage
 // @Failure 401 {object} geocloud.Error
@@ -102,9 +110,12 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job's input content
-// @Description
-// @Tags
+// @Description Gets the content of a job's input
+// @Tags getJobInputContent
 // @Produce application/json, application/zip
+// @Param Content-Type header string false "Request results as a Zip or JSON. Default Zip"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200
 // @Failure 401 {object} geocloud.Error
@@ -135,9 +146,11 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job's output
-// @Description
-// @Tags
+// @Description Get the metadata of a job's output
+// @Tags getJobOutput
 // @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200 {object} geocloud.Storage
 // @Failure 401 {object} geocloud.Error
@@ -156,9 +169,12 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 }
 
 // @Summary Get a job's output content
-// @Description
-// @Tags
+// @Description Gets the content of a job's output
+// @Tags getJobOutputContent
 // @Produce application/json, application/zip
+// @Param Content-Type header string false "Request results as a Zip or JSON. Default Zip"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
 // @Param id path string true "Job ID"
 // @Success 200
 // @Failure 401 {object} geocloud.Error
@@ -195,12 +211,18 @@ type bufferQuery struct {
 
 // @Summary Create a buffer job
 // @Description <b><u>Create a buffer job</u></b>
+// @Description &emsp; - Buffers every geometry by the given distance
+// @Description
 // @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
+// @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createBuffer
 // @Accept application/json, application/zip
 // @Produce application/json
-// @Param input_id query string false "Optional ID of existing storage to use"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing storage to use"
 // @Param distance query integer true "Buffer distance"
 // @Param segmentCount query integer true "Segment count"
 // @Success 200 {object} geocloud.Job
@@ -231,11 +253,18 @@ type filterQuery struct {
 
 // @Summary Create a filter job
 // @Description <b><u>Create a filter job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Description &emsp; - Drops features and their geometries that don't match the given filter
+// @Description
+// @Description &emsp; - API Key is required either as a query parameter or a header
+// @Description &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createFilter
 // @Accept application/json, application/zip
 // @Produce application/json
-// @Param input_id query string false "Optional ID of existing storage to use"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing dataset to use"
 // @Param filterColumn query string true "Column to filter on"
 // @Param filterValue query string true "Value to filter on"
 // @Success 200 {object} geocloud.Job
@@ -265,11 +294,18 @@ type reprojectQuery struct {
 
 // @Summary Create a reproject job
 // @Description <b><u>Create a reproject job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Description &emsp; - Reprojects all geometries to the given projection
+// @Description
+// @Description &emsp; - API Key is required either as a query parameter or a header
+// @Description &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createReproject
 // @Accept application/json, application/zip
 // @Produce application/json
-// @Param input_id query string false "Optional ID of existing storage to use"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing dataset to use"
 // @Param targetProjection query integer true "Target projection EPSG"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
@@ -294,11 +330,19 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 
 // @Summary Create a remove bad geometry job
 // @Description <b><u>Create a remove bad geometry job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Description &emsp; - Drops geometries that are invalid
+// @Description
+// @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH
+// @Description &emsp; - API Key is required either as a query parameter or a header
+// @Description &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createRemovebadgeometry
 // @Accept application/json, application/zip
 // @Produce application/json
-// @Param input_id query string false "Optional ID of existing storage to use"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing dataset to use"
 // @Success 200 {object} geocloud.Job
 // @Failure 400 {object} geocloud.Error
 // @Failure 401 {object} geocloud.Error
@@ -322,11 +366,18 @@ type vectorlookupQuery struct {
 
 // @Summary Create a vector lookup job
 // @Description <b><u>Create a vector lookup job</u></b>
-// @Description &emsp; - Pass the geospatial data to be processed in the request body
+// @Description &emsp; - Returns the feature and geometry of which the given point intersects
+// @Description
+// @Description &emsp; - API Key is required either as a query parameter or a header
+// @Description &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createVectorlookup
 // @Accept application/json, application/zip
 // @Produce application/json
-// @Param input_id query string false "Optional ID of existing storage to use"
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing dataset to use"
 // @Param longitude query number true "Longitude"
 // @Param latitude query number true "Latitude"
 // @Success 200 {object} geocloud.Job
