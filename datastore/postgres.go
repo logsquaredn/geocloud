@@ -32,6 +32,7 @@ type Postgres struct {
 		deleteStorage           *sql.Stmt
 		updateStorage           *sql.Stmt
 		getStorageByCustomerID  *sql.Stmt
+		getStorageBefore        *sql.Stmt
 		getJobsByCustomerID     *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
@@ -57,6 +58,7 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 				deleteStorage           *sql.Stmt
 				updateStorage           *sql.Stmt
 				getStorageByCustomerID  *sql.Stmt
+				getStorageBefore        *sql.Stmt
 				getJobsByCustomerID     *sql.Stmt
 				getOutputStorageByJobID *sql.Stmt
 				getInputStorageByJobID  *sql.Stmt
@@ -141,6 +143,10 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 	}
 
 	if p.stmt.getStorageByCustomerID, err = p.db.Prepare(getStorgageByCustomerIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if p.stmt.getStorageBefore, err = p.db.Prepare(getStorageBeforeSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

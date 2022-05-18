@@ -25,6 +25,9 @@ var (
 	//go:embed psql/queries/get_storage_by_customer_id.sql
 	getStorgageByCustomerIDSQL string
 
+	//go:embed psql/queries/get_storage_before.sql
+	getStorageBeforeSQL string
+
 	//go:embed psql/queries/get_output_storage_by_job_id.sql
 	getOutputStorageByJobIDSQL string
 
@@ -158,4 +161,36 @@ func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, e
 	s.LastUsed = lastUsed.Time
 
 	return s, nil
+}
+
+func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error) {
+	beforeTimestamp := time.Now().Add(-d)
+	rows, err := p.stmt.getStorageBefore.Query(beforeTimestamp)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var storages []*geocloud.Storage
+
+	for rows.Next() {
+		var (
+			s        = &geocloud.Storage{}
+			lastUsed sql.NullTime
+		)
+
+		err = rows.Scan(
+			&s.ID, &s.CustomerID,
+			&s.Name, &lastUsed,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		s.LastUsed = lastUsed.Time
+
+		storages = append(storages, s)
+	}
+
+	return storages, nil
 }
