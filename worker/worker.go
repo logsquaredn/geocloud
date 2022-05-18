@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/frantjc/go-js"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/objectstore"
@@ -61,8 +62,16 @@ func (o *Worker) Send(m geocloud.Message) error {
 			j.Status = geocloud.JobStatusComplete
 			j.OutputID = outputID
 		}
-		log.Err(fmt.Errorf(j.Error)).Str(k, v).Msgf("job finished with status %s", j.Status.Status())
-		o.ds.UpdateJob(j)
+		log.Err(
+			js.Ternary(
+				j.Error != "",
+				fmt.Errorf(j.Error),
+				nil,
+			),
+		).Str(k, v).Msgf("job finished with status '%s'", j.Status.Status())
+		if _, err = o.ds.UpdateJob(j); err != nil {
+			log.Err(err).Msgf("updating finished job '%s'", j.ID)
+		}
 	}()
 
 	go func() {
