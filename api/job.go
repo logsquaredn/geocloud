@@ -33,7 +33,7 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 				return s != ""
 			},
 		)
-		inputID string
+		storage *geocloud.Storage
 	)
 	if len(inputIDs) > 1 {
 		return nil, 400, fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf)
@@ -41,36 +41,32 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 
 	switch {
 	case input != "":
-		storage, statusCode, err := a.getStorageForCustomer(ctx, geocloud.NewMessage(input), customer)
+		storage, statusCode, err = a.getStorageForCustomer(ctx, geocloud.NewMessage(input), customer)
 		if err != nil {
 			return nil, statusCode, err
 		}
-		inputID = storage.ID
 	case inputOf != "":
-		storage, statusCode, err := a.getJobInputStorageForCustomer(ctx, geocloud.NewMessage(inputOf), customer)
+		storage, statusCode, err = a.getJobInputStorageForCustomer(ctx, geocloud.NewMessage(inputOf), customer)
 		if err != nil {
 			return nil, statusCode, err
 		}
-		inputID = storage.ID
 	case outputOf != "":
-		storage, statusCode, err := a.getJobOutputStorageForCustomer(ctx, geocloud.NewMessage(outputOf), customer)
+		storage, statusCode, err = a.getJobOutputStorageForCustomer(ctx, geocloud.NewMessage(outputOf), customer)
 		if err != nil {
 			return nil, statusCode, err
 		}
-		inputID = storage.ID
 	default:
-		storage, statusCode, err := a.putRequestVolumeForCustomer(ctx, customer)
+		storage, statusCode, err = a.putRequestVolumeForCustomer(ctx, customer)
 		if err != nil {
 			return nil, statusCode, err
 		}
-		inputID = storage.ID
 	}
 
 	job, err := a.ds.CreateJob(&geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
 		CustomerID: customer.ID,
-		InputID:    inputID,
+		InputID:    storage.ID,
 	})
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
