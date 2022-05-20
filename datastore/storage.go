@@ -40,7 +40,7 @@ func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		lastUsed sql.NullTime
 	)
 
-	if err := p.stmt.createStorage.QueryRow(
+	if err := p.stmt.updateStorage.QueryRow(
 		s.ID, time.Now(),
 	).Scan(
 		&s.ID, &s.CustomerID,
