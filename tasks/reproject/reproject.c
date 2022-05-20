@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
 
 	const char *targetProjection = argv[3];	
 	long targetProjectionLong = strtol(targetProjection, NULL, 10);
-	if(targetProjectionLong == 0) {
-		error("EPSG code must be an integer", __FILE__, __LINE__);
+	if(targetProjectionLong <= 0) {
+		error("EPSG code must be a valid integer greater than 0", __FILE__, __LINE__);
 		fatalError();
 	}
 	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);

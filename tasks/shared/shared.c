@@ -137,10 +137,6 @@ char* getOutputFilePath(const char *outputDir, const char filename[]) {
 int rasterInitialize(struct GDALHandles *gdalHandles, const char* inputFilePath, const char* outputDir) {
     GDALAllRegister();
 
-    char outputFilename[12] = "/output.tif";
-    char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
-    fprintf(stdout, "output file path: %s\n", outputFilePath);
-
 	GDALDatasetH inputDataset;
 	if(openRasterDataset(&inputDataset, inputFilePath)) {
 		error("failed to open input raster dataset", __FILE__, __LINE__);

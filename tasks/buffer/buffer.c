@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
 	const char *quadSegCount = argv[4];
 	int quadSegCountInt = atoi(quadSegCount);
-	if(quadSegCountInt == 0) {
+	if(quadSegCountInt <= 0) {
 		error("quadrant segment count must be a valid integer greater than 0", __FILE__, __LINE__);
 		fatalError();
 	}

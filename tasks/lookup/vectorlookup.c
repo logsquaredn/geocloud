@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
         error("longitude must be a valid double between -180 & 180", __FILE__, __LINE__);
 		fatalError();
     }
+	fprintf(stdout, "lon: %f\n", lon);
 
     const char* latArg = argv[4];
     double lat = strtod(latArg, NULL);
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]) {
         error("latitude must be a valid double between -90 & 90", __FILE__, __LINE__);
 		fatalError();
     }
+	fprintf(stdout, "lat: %f\n", lat);
 
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
