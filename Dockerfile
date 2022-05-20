@@ -31,6 +31,7 @@ RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer
 RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter
 RUN gcc -Wall reproject/reproject.c shared/shared.c -l gdal -o /assets/reproject
 RUN gcc -Wall lookup/vectorlookup.c shared/shared.c -l gdal -o /assets/vectorlookup
+RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterlookup
 
 FROM build_image AS build
 ARG version=0.0.0
