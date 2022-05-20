@@ -38,4 +38,12 @@ INSERT INTO task (
     ARRAY['longitude', 'latitude']
 ) ON CONFLICT DO NOTHING;
 
+INSERT INTO task (
+    task_type,
+    task_params
+) VALUES (
+    'rasterlookup', 
+    ARRAY['bands', 'longitude', 'latitude']
+) ON CONFLICT DO NOTHING;
+
 COMMIT;

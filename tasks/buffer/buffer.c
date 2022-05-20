@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input file path: %s\n", inputFilePath);
+	fprintf(stdout, "input filepath: %s\n", inputFilePath);
 	
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
@@ -17,25 +17,25 @@ int main(int argc, char *argv[]) {
 	const char *bufferDistance = argv[3];
 	double bufferDistanceDouble = strtod(bufferDistance, NULL);
 	if(bufferDistanceDouble == 0) {
-		error("buffer distance must be a valid double greater than 0", __FILE__, __LINE__);
+		error("buffer distance must be a positive double", __FILE__, __LINE__);
 		fatalError();
 	}
 	fprintf(stdout, "buffer distance: %f\n", bufferDistanceDouble);
 
 	const char *quadSegCount = argv[4];
 	int quadSegCountInt = atoi(quadSegCount);
-	if(quadSegCountInt == 0) {
-		error("quadrant segment count must be a valid integer greater than 0", __FILE__, __LINE__);
+	if(quadSegCountInt <= 0) {
+		error("quadrant segment count must be a positive integer", __FILE__, __LINE__);
 		fatalError();
 	}
 	fprintf(stdout, "quadrant segment count: %d\n", quadSegCountInt);
 	
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo file path", __FILE__, __LINE__);
+		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;

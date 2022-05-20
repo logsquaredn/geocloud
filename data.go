@@ -80,12 +80,13 @@ const (
 	TaskTypeRemoveBadGeometry TaskType = "removebadgeometry"
 	TaskTypeReproject         TaskType = "reproject"
 	TaskTypeVectorLookup      TaskType = "vectorlookup"
+	TaskTypeRasterLookup      TaskType = "rasterlookup"
 )
 
 var (
 	AllTaskTypes = []TaskType{
 		TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
-		TaskTypeReproject, TaskTypeVectorLookup,
+		TaskTypeReproject, TaskTypeVectorLookup, TaskTypeRasterLookup,
 	}
 )
 

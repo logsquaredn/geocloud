@@ -7,7 +7,7 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
-	"github.com/swaggo/gin-swagger"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
@@ -58,6 +58,7 @@ func NewServer(opts *Opts) (*API, error) {
 					job.POST("/reproject", a.createReprojectJobHandler)
 					job.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
 					job.POST("/vectorlookup", a.createVectorLookupJobHandler)
+					job.POST("/rasterlookup", a.createRasterLookupJobHandler)
 					job.GET("/", a.listJobHandler)
 					job.GET("/:id", a.getJobHandler)
 					job.GET("/:id/input", a.getJobInputHandler)

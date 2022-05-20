@@ -216,6 +216,7 @@ type bufferQuery struct {
 // @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createBuffer
 // @Accept application/json, application/zip
@@ -258,6 +259,7 @@ type filterQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createFilter
 // @Accept application/json, application/zip
@@ -299,6 +301,7 @@ type reprojectQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createReproject
 // @Accept application/json, application/zip
@@ -336,6 +339,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createRemovebadgeometry
 // @Accept application/json, application/zip
@@ -371,6 +375,7 @@ type vectorlookupQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createVectorlookup
 // @Accept application/json, application/zip
@@ -388,6 +393,51 @@ type vectorlookupQuery struct {
 // @Router /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&vectorlookupQuery{}); err != nil {
+		a.err(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
+	if err != nil {
+		a.err(ctx, statusCode, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, job)
+}
+
+type rasterlookupQuery struct {
+	Bands     string  `form:"bands"`
+	Longitude float64 `form:"longitude"`
+	Latitude  float64 `form:"latitude"`
+}
+
+// @Summary Create a raster lookup job
+// @Description <b><u>Create a raster lookup job</u></b>
+// @Description &emsp; - Returns the value of each requested band of which the given point intersects
+// @Description
+// @Description &emsp; - API Key is required either as a query parameter or a header
+// @Description &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description &emsp; - Pass the ID of an existing dataset with an empty request body
+// @Description &emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff
+// @Description &emsp; - This task will generate JSON output
+// @Tags createVectorlookup
+// @Accept application/json, application/zip
+// @Produce application/json
+// @Param api-key query string false "API Key via query parameter"
+// @Param X-API-Key header string false "API Key via header"
+// @Param input_id query string false "ID of existing dataset to use"
+// @Param bands query string true "Comma separated list of bands"
+// @Param longitude query number true "Longitude"
+// @Param latitude query number true "Latitude"
+// @Success 200 {object} geocloud.Job
+// @Failure 400 {object} geocloud.Error
+// @Failure 401 {object} geocloud.Error
+// @Failure 403 {object} geocloud.Error
+// @Failure 500 {object} geocloud.Error
+// @Router /job/rasterlookup [post]
+func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
+	if err := ctx.ShouldBindQuery(&rasterlookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}

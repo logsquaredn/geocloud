@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input file path: %s\n", inputFilePath);
+	fprintf(stdout, "input filepath: %s\n", inputFilePath);
 	
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
@@ -17,23 +17,25 @@ int main(int argc, char *argv[]) {
     const char* lonArg = argv[3];
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
-        error("longitude must be a valid double between -180 & 180", __FILE__, __LINE__);
+        error("longitude must be a double between -180 & 180", __FILE__, __LINE__);
 		fatalError();
     }
+	fprintf(stdout, "lon: %f\n", lon);
 
     const char* latArg = argv[4];
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {
-        error("latitude must be a valid double between -90 & 90", __FILE__, __LINE__);
+        error("latitude must be a double between -90 & 90", __FILE__, __LINE__);
 		fatalError();
     }
+	fprintf(stdout, "lat: %f\n", lat);
 
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo file path", __FILE__, __LINE__);
+		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;

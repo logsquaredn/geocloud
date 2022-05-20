@@ -9,25 +9,25 @@ int main(int argc, char *argv[]) {
 	}
 
 	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input file path: %s\n", inputFilePath);
+	fprintf(stdout, "input filepath: %s\n", inputFilePath);
 	
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
 
 	const char *targetProjection = argv[3];	
 	long targetProjectionLong = strtol(targetProjection, NULL, 10);
-	if(targetProjectionLong == 0) {
-		error("EPSG code must be an integer", __FILE__, __LINE__);
+	if(targetProjectionLong <= 0) {
+		error("EPSG code must be a positive integer", __FILE__, __LINE__);
 		fatalError();
 	}
 	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);
 
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo file path", __FILE__, __LINE__);
+		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
