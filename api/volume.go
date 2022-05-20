@@ -40,7 +40,7 @@ func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
 		contentType     = ctx.Request.Header.Get("Content-Type")
 		applicationJSON = strings.Contains(contentType, "application/json")
 		applicationZip  = strings.Contains(contentType, "application/zip")
-		inputName       = js.Ternary(applicationZip, "input.zip", "input.geojson")
+		inputName       = js.Ternary(applicationZip, "input.zip", "input.json")
 	)
 	switch {
 	case applicationJSON && applicationZip:
@@ -79,7 +79,7 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 		// pass errors through
 		case e != nil:
 		// 1. if the request was for application/zip and we found a zip, give it
-		// 2. if the request was for application/json and we found some geojson, give it
+		// 2. if the request was for application/json and we found some json, give it
 		// 3. if the request was for no specific Content-Type, give whatever we found. May be overridden later in the Walk by a zip
 		// 4. if the request was for no specific Content-Type and we found a zip, give it
 		case applicationZip && filepath.Ext(f.Name()) == ".zip", applicationJSON && filepath.Ext(f.Name()) == ".json", !applicationJSON && !applicationZip && len(b) == 0, !applicationJSON && !applicationZip && filepath.Ext(f.Name()) == ".zip":

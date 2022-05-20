@@ -82,32 +82,32 @@ services:
     build: .
     image: *image
     entrypoint: removebadgeometry
-    command: /tmp/input/input.geojson /tmp
-    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    command: /tmp/input/input.json /tmp
+    volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
   buffer:
     build: .
     image: *image
-    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: buffer
-    command: /tmp/input/input.geojson /tmp 2
+    command: /tmp/input/input.json /tmp 2
   filter:
     build: .
     image: *image
-    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: filter
-    command: /tmp/input/input.geojson /tmp prop0 value0
+    command: /tmp/input/input.json /tmp prop0 value0
   reproject:
     build: .
     image: *image
-    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: reproject
-    command: /tmp/input/input.geojson /tmp 2000
+    command: /tmp/input/input.json /tmp 2000
   vectorlookup:
     build: .
     image: *image
-    volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
+    volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: vectorlookup
-    command: /tmp/input/input.geojson /tmp 97.5679 34.6970
+    command: /tmp/input/input.json /tmp 97.5679 34.6970
   rasterlookup:
     build: .
     image: *image

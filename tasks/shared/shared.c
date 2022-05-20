@@ -96,6 +96,7 @@ int getShpDriver(GDALDriverH **driver) {
 }
 
 int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
+    fprintf(stdout, "filepath: %s\n", filePath);
     *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
 	if(*dataset == NULL) {
         // TODO improve all error messaging
@@ -271,7 +272,7 @@ char *unzip(const char *inputFilePath) {
 char *getInputGeoFilePath(const char *inputFilePath) {
     char *inputGeoFilePath;
     char *ext = strrchr(inputFilePath, '.');
-    if(ext && !strcmp(ext, ".geojson")) {
+    if(ext && !strcmp(ext, ".json")) {
         inputGeoFilePath = strdup(inputFilePath);
         if(inputGeoFilePath == NULL) {
             return NULL;
@@ -334,7 +335,7 @@ int cleanup(const char *outputDir) {
     struct dirent *dir;
     if(d) {
         while((dir = readdir(d)) != NULL) {
-            if(!isExt(dir->d_name, ".zip") && !isExt(dir->d_name, ".geojson")) {
+            if(!isExt(dir->d_name, ".zip") && !isExt(dir->d_name, ".json")) {
                 int size = 0;
                 while(outputDir[size] != '\0') ++size;
                 size += strlen(dir->d_name);
