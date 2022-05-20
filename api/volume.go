@@ -82,7 +82,7 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 		// 2. if the request was for application/json and we found some geojson, give it
 		// 3. if the request was for no specific Content-Type, give whatever we found. May be overridden later in the Walk by a zip
 		// 4. if the request was for no specific Content-Type and we found a zip, give it
-		case applicationZip && filepath.Ext(f.Name()) == ".zip", applicationJSON && filepath.Ext(f.Name()) == ".geojson", !applicationJSON && !applicationZip && len(b) == 0, !applicationJSON && !applicationZip && filepath.Ext(f.Name()) == ".zip":
+		case applicationZip && filepath.Ext(f.Name()) == ".zip", applicationJSON && filepath.Ext(f.Name()) == ".json", !applicationJSON && !applicationZip && len(b) == 0, !applicationJSON && !applicationZip && filepath.Ext(f.Name()) == ".zip":
 			// TODO use io.ReadAll
 			// see github.com/logsquaredn/geocloud/objectstore/s3_volume.go
 			b = make([]byte, f.Size())
