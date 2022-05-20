@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 	
 	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo file path", __FILE__, __LINE__);
+		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
 	}
 	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);

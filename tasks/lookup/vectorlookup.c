@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;

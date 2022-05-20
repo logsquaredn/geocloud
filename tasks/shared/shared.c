@@ -152,7 +152,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 
     char outputFilename[12] = "/output.shp";
     char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
-    fprintf(stdout, "output file path: %s\n", outputFilePath);
+    fprintf(stdout, "output filepath: %s\n", outputFilePath);
 
 	GDALDatasetH inputDataset;
 	if(openVectorDataset(&inputDataset, inputFilePath)) {

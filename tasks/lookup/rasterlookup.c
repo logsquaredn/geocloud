@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 	if(argc != 6) {
-		error("raster lookup requires four arguments. Input file, output directory, band, longitude, and latitude", __FILE__, __LINE__);
+		error("raster lookup requires four arguments. Input file, output directory, list of bands, longitude, and latitude", __FILE__, __LINE__);
 		fatalError();
 	}
 
@@ -14,13 +14,22 @@ int main(int argc, char *argv[]) {
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
 
-	const char *bandArg = argv[3];
-	int bandNumber = atoi(bandArg);
-	if(bandNumber <= 0) {
-		error("band must be a valid integer greater than 0", __FILE__, __LINE__);
-		fatalError();
+	const char delim[2] = ",";
+	char *tok = strtok(argv[3], delim);
+	int bNums[32];
+	int bCt = 0;
+	while(tok != NULL) {
+		int bNum = atoi(tok);
+		if(bNum <= 0) {
+			error("band must be a valid integer greater than 0", __FILE__, __LINE__);
+			fatalError();
+		}
+		fprintf(stdout, "band: %d\n", bNum);
+		bNums[bCt] = bNum;
+
+		++bCt;
+		tok = strtok(NULL, delim);
 	}
-	fprintf(stdout, "band: %d\n", bandNumber);
 
     const char *lonArg = argv[4];
     double lon = strtod(lonArg, NULL);
@@ -43,7 +52,7 @@ int main(int argc, char *argv[]) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
@@ -53,11 +62,6 @@ int main(int argc, char *argv[]) {
 	}
 	free(inputGeoFilePath);
 
-	GDALRasterBandH band = GDALGetRasterBand(gdalHandles.inputDataset, bandNumber);
-	if(band == NULL) {
-		error("failed to find band", __FILE__, __LINE__);
-		fatalError();
-	}
 
 	double *buff = (double*) malloc(6 * sizeof(double));
 	if(GDALGetGeoTransform(gdalHandles.inputDataset, buff) != OGRERR_NONE) {
@@ -72,33 +76,53 @@ int main(int argc, char *argv[]) {
 	if(pixHeight < 0) {
 		pixHeight = pixHeight * -1;
 	}
-
 	int col = (lon - xOrigin) / pixWidth;
 	int row = (yOrigin - lat) / pixHeight;
-	float* rasterIOBuff = malloc(1 * sizeof(float));
-	if(GDALRasterIO(band, GF_Read, col, row, 1, 1, rasterIOBuff, 1, 1, GDT_Float32, 0, 0) != OGRERR_NONE) {
-		error("failed to read raster value", __FILE__, __LINE__);
-		fatalError();
-	}
 
-	char result[128];
-	sprintf(result, "{\"band%d\": %f}", bandNumber, rasterIOBuff[0]);
-	
 	char *opath = getOutputFilePath(outputDir, "/output.json");
 	fprintf(stdout, "output filepath: %s\n", opath);
 	FILE *fptr = fopen(opath, "w");
-	if(fptr == NULL) {
-		error("failed to create output file", __FILE__, __LINE__);
+	if(fputs("{\"results\":[", fptr) == EOF) {
+		error("failed to write beginning results to output file", __FILE__, __LINE__);
 		fatalError();
 	}
 
-	if(fputs(result, fptr) == EOF) {
-		error("failed to write results to output file", __FILE__, __LINE__);
+	--bCt;
+	while(bCt >= 0) {
+		GDALRasterBandH band = GDALGetRasterBand(gdalHandles.inputDataset, bNums[bCt]);
+		if(band == NULL) {
+			error("failed to find band", __FILE__, __LINE__);
+			fatalError();
+		}
+		
+		float* rasterIOBuff = malloc(1 * sizeof(float));
+		if(GDALRasterIO(band, GF_Read, col, row, 1, 1, rasterIOBuff, 1, 1, GDT_Float32, 0, 0) != OGRERR_NONE) {
+			error("failed to read raster value", __FILE__, __LINE__);
+			fatalError();
+		}
+
+		char result[128];
+		if(bCt - 1 < 0) {
+			sprintf(result, "{\"band%d\": %f}", bNums[bCt], rasterIOBuff[0]);	
+		} else {
+			sprintf(result, "{\"band%d\": %f},", bNums[bCt], rasterIOBuff[0]);	
+		}	
+
+		if(fputs(result, fptr) == EOF) {
+			error("failed to write results to output file", __FILE__, __LINE__);
+			fatalError();
+		}
+
+		free(rasterIOBuff);
+		--bCt;
+	}
+
+	if(fputs("]}", fptr) == EOF) {
+		error("failed to write end results to output file", __FILE__, __LINE__);
 		fatalError();
 	}
 
 	fclose(fptr);
-	free(rasterIOBuff);
 	GDALClose(gdalHandles.inputDataset);
 
 	fprintf(stdout, "raster lookup completed successfully\n");
