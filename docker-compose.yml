@@ -108,7 +108,7 @@ services:
     volumes: [./testdata/geojson/featurecollection.geojson:/tmp/input/input.geojson:ro]
     entrypoint: vectorlookup
     command: /tmp/input/input.geojson /tmp 97.5679 34.6970
-rasterlookup:
+  rasterlookup:
     build: .
     image: *image
     volumes: [./testdata/raster/input.tif:/tmp/input/input.tif:ro]
