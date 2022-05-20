@@ -6,8 +6,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+)
+
+const (
+	qInput = "input"
+	qInputOf = "input_of"
+	qOutputOf = "output_of"
 )
 
 func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType, customer *geocloud.Customer) (*geocloud.Job, int, error) {
@@ -16,18 +23,47 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 		return nil, statusCode, err
 	}
 
-	inputID := ctx.Query("input_id")
-	if inputID == "" {
+	var (
+		input = ctx.Query(qInput)
+		inputOf = ctx.Query(qInputOf)
+		outputOf = ctx.Query(qOutputOf)
+		inputIDs = js.Filter(
+			[]string{input, inputOf, outputOf},
+			func(s string, _ int, _ []string) bool {
+				return s != ""
+			},
+		)
+		inputID string
+	)
+	if len(inputIDs) > 1 {
+		return nil, 400, fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf)
+	}
+
+	switch {
+	case input != "":
+		storage, statusCode, err := a.getStorageForCustomer(ctx, geocloud.NewMessage(input), customer)
+		if err != nil {
+			return nil, statusCode, err
+		}
+		inputID = storage.ID
+	case inputOf != "":
+		storage, statusCode, err := a.getJobInputStorageForCustomer(ctx, geocloud.NewMessage(inputOf), customer)
+		if err != nil {
+			return nil, statusCode, err
+		}
+		inputID = storage.ID
+	case outputOf != "":
+		storage, statusCode, err := a.getJobOutputStorageForCustomer(ctx, geocloud.NewMessage(outputOf), customer)
+		if err != nil {
+			return nil, statusCode, err
+		}
+		inputID = storage.ID
+	default:
 		storage, statusCode, err := a.putRequestVolumeForCustomer(ctx, customer)
 		if err != nil {
 			return nil, statusCode, err
 		}
 		inputID = storage.ID
-	} else {
-		_, statusCode, err := a.getStorageForCustomer(ctx, geocloud.NewMessage(inputID), customer)
-		if err != nil {
-			return nil, statusCode, err
-		}
 	}
 
 	job, err := a.ds.CreateJob(&geocloud.Job{
