@@ -31,6 +31,10 @@ func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.C
 }
 
 func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
+	if ctx.Request.Body == nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("missing request body")
+	}
+
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
