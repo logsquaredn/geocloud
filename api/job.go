@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	qInput = "input"
-	qInputOf = "input_of"
+	qInput    = "input"
+	qInputOf  = "input_of"
 	qOutputOf = "output_of"
 )
 
@@ -24,8 +24,8 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 	}
 
 	var (
-		input = ctx.Query(qInput)
-		inputOf = ctx.Query(qInputOf)
+		input    = ctx.Query(qInput)
+		inputOf  = ctx.Query(qInputOf)
 		outputOf = ctx.Query(qOutputOf)
 		inputIDs = js.Filter(
 			[]string{input, inputOf, outputOf},
