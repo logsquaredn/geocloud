@@ -216,7 +216,7 @@ type bufferQuery struct {
 // @Description &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body.
-// @Description &emsp; - This task accepts a ZIP containing a shapefile, or GeoJSON input
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createBuffer
 // @Accept application/json, application/zip
@@ -259,7 +259,7 @@ type filterQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
-// @Description &emsp; - This task accepts a ZIP containing a shapefile, or GeoJSON input
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createFilter
 // @Accept application/json, application/zip
@@ -301,7 +301,7 @@ type reprojectQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
-// @Description &emsp; - This task accepts a ZIP containing a shapefile, or GeoJSON input
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createReproject
 // @Accept application/json, application/zip
@@ -339,7 +339,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
-// @Description &emsp; - This task accepts a ZIP containing a shapefile, or GeoJSON input
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createRemovebadgeometry
 // @Accept application/json, application/zip
@@ -375,7 +375,7 @@ type vectorlookupQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
-// @Description &emsp; - This task accepts a ZIP containing a shapefile, or GeoJSON input
+// @Description &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags createVectorlookup
 // @Accept application/json, application/zip
