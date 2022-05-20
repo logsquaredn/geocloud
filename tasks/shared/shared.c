@@ -318,7 +318,7 @@ int zipShp(const char *outputDir) {
 
 int dumpToGeojson(const char *outputDir) {
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "ogr2ogr -f GeoJSON ", outputDir, "/output.geojson ", outputDir);
+    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "ogr2ogr -f GeoJSON ", outputDir, "/output.json ", outputDir);
 
     int ogr2ogrResult = system(cmd);
     if(ogr2ogrResult != 0) {
