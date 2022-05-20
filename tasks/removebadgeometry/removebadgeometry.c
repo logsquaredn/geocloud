@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input file path: %s\n", inputFilePath);
+	fprintf(stdout, "input filepath: %s\n", inputFilePath);
 	
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
 	}
-	fprintf(stdout, "input geo file path: %s\n", inputGeoFilePath);
+	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
 
 	struct GDALHandles gdalHandles;
 	gdalHandles.inputLayer = NULL;
