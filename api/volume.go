@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -99,4 +100,13 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 	}
 
 	return b, contentType, 0, nil
+}
+
+func isJSON(b []byte) bool {
+	var js map[string]interface{}
+	return json.Unmarshal(b, &js) == nil
+}
+
+func isZIP(b []byte) bool {
+	return http.DetectContentType(b) == "application/zip"
 }

@@ -39,3 +39,22 @@ func (a *API) customerMiddleware(ctx *gin.Context) {
 
 	ctx.Next()
 }
+
+const (
+	apiKeyQueryParam = "api-key"
+	apiKeyHeader     = "X-API-Key" //nolint:gosec
+	apiKeyCookie     = apiKeyHeader
+)
+
+var getCustomerID = getAPIKey
+
+func getAPIKey(ctx *gin.Context) string {
+	apiKey := ctx.Query(apiKeyQueryParam)
+	if apiKey == "" {
+		apiKey = ctx.GetHeader(apiKeyHeader)
+		if apiKey == "" {
+			apiKey, _ = ctx.Cookie(apiKeyCookie)
+		}
+	}
+	return apiKey
+}

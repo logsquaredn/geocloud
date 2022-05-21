@@ -52,17 +52,19 @@ func (p *Postgres) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	return t, err
 }
 
-func (p *Postgres) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.Task, err error) {
-	ttss := make([]string, len(tts))
-	for i, tt := range tts {
-		ttss[i] = tt.String()
+func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, error) {
+	rawTaskTypes := make([]string, len(taskTypes))
+	for i, tt := range taskTypes {
+		rawTaskTypes[i] = tt.String()
 	}
 
-	rows, err := p.stmt.getTasksByTypes.Query(pq.Array(ttss))
+	rows, err := p.stmt.getTasksByTypes.Query(pq.Array(rawTaskTypes))
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer rows.Close()
+
+	var tasks []*geocloud.Task
 
 	for rows.Next() {
 		var (
@@ -73,17 +75,17 @@ func (p *Postgres) GetTasks(tts ...geocloud.TaskType) (ts []*geocloud.Task, err 
 
 		err = rows.Scan(&taskType, pq.Array(&task.Params), &queueID)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		task.QueueID = queueID.String
 		task.Type, err = geocloud.TaskTypeFrom(taskType)
 		if err != nil {
-			return
+			return nil, err
 		}
 
-		ts = append(ts, task)
+		tasks = append(tasks, task)
 	}
-	err = rows.Err()
-	return
+
+	return tasks, rows.Err()
 }

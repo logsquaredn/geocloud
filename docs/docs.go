@@ -5,9 +5,7 @@
 
 package docs
 
-// silence go.mod wanting this to be
-// indirect, as it becomes direct during build
-import _ "github.com/swaggo/swag"
+import _ "github.com/swaggo/swag" // silence go.mod wanting this to be indirect, as it becomes direct at build time
 
 type swaggerInfo struct {
 	Version     string

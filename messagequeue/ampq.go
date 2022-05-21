@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/logsquaredn/geocloud"
+	"github.com/rs/zerolog/log"
 	"github.com/streadway/amqp"
 )
 
@@ -72,8 +73,11 @@ func (a *AMQP) Poll(f func(geocloud.Message) error) error {
 
 	for m := range msgs {
 		go func(m amqp.Delivery) {
-			if err := f(message(string(m.Body))); err == nil {
-				m.Ack(false)
+			id := string(m.Body)
+			if err := f(geocloud.NewMessage(id)); err == nil {
+				if err = m.Ack(false); err != nil {
+					log.Err(err).Msgf("unable to acknowledge message '%s'", id)
+				}
 			}
 		}(m)
 	}
