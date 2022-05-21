@@ -436,7 +436,9 @@ type rasterlookupQuery struct {
 // @Produce application/json
 // @Param api-key query string false "API Key via query parameter"
 // @Param X-API-Key header string false "API Key via header"
-// @Param input_id query string false "ID of existing dataset to use"
+// @Param input query string false "ID of existing dataset to use"
+// @Param input_of query string false "ID of existing job whose input dataset to use"
+// @Param output_of query string false "ID of existing job whose output dataset to use"
 // @Param bands query string true "Comma separated list of bands"
 // @Param longitude query number true "Longitude"
 // @Param latitude query number true "Latitude"
