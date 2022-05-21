@@ -112,4 +112,12 @@ jobs:
           asset_path: /usr/local/bin/vectorlookup
           asset_name: task_vectorlookup_linux_amd64
           asset_content_type: application/octet-stream
-
+      - name: upload-task-rasterlookup
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/bin/rasterlookup
+          asset_name: task_rasterlookup_linux_amd64
+          asset_content_type: application/octet-stream
