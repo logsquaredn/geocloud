@@ -143,7 +143,8 @@ func (o *Worker) Send(m geocloud.Message) error {
 		},
 		j.Args...,
 	)
-	task := exec.Command(t.Type.Name(), args...)
+	// TODO pass args as env
+	task := exec.Command(t.Type.Name(), args...) //nolint:gosec
 	// don't let tasks see potentially sensitive environment variables
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
 		return !(strings.HasPrefix(e, "GEOCLOUD_") || strings.HasPrefix(e, "AWS_"))

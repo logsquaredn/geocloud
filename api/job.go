@@ -106,3 +106,11 @@ func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud
 
 	return job, 0, nil
 }
+
+func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
+	jobArgs := make([]string, len(taskParams))
+	for i, param := range taskParams {
+		jobArgs[i] = ctx.Query(param)
+	}
+	return jobArgs
+}
