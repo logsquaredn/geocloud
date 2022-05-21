@@ -121,4 +121,3 @@ jobs:
           asset_path: /usr/local/bin/rasterlookup
           asset_name: task_rasterlookup_linux_amd64
           asset_content_type: application/octet-stream
-
