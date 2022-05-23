@@ -56,7 +56,6 @@ func init() {
 		runJobCmd,
 	)
 	createCmd.AddCommand(
-		createJobCmd,
 		createStorageCmd,
 	)
 	rootCmd.AddCommand(
