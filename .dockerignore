@@ -6,3 +6,4 @@ Makefile
 docker-compose.yml
 hack/
 testdata/
+bin/

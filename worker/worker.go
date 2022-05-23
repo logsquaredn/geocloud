@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/frantjc/go-js"
@@ -44,10 +45,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return nil
 	}
 
-	var (
-		stderr   = new(bytes.Buffer)
-		outputID = ""
-	)
+	stderr := new(bytes.Buffer)
 	defer func() {
 		j.EndTime = time.Now()
 		jobErr := stderr.Bytes()
@@ -60,7 +58,6 @@ func (o *Worker) Send(m geocloud.Message) error {
 			j.Status = geocloud.JobStatusError
 		default:
 			j.Status = geocloud.JobStatusComplete
-			j.OutputID = outputID
 		}
 		log.Err(
 			js.Ternary(
@@ -75,10 +72,15 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}()
 
 	go func() {
-		log.Debug().Str(k, v).Msg("getting input storage")
-		ist, _ := o.ds.GetStorage(geocloud.NewMessage(j.InputID))
-		log.Debug().Str(k, v).Msg("updating input storage")
-		o.ds.UpdateStorage(ist)
+		ist, err := o.ds.GetStorage(geocloud.NewMessage(j.InputID))
+		if err == nil {
+			_, err = o.ds.UpdateStorage(ist)
+			if err != nil {
+				log.Err(err).Msg("updating input storage")
+			}
+		} else {
+			log.Err(err).Msg("getting input storage")
+		}
 	}()
 
 	j.Status = geocloud.JobStatusInProgress
@@ -95,11 +97,11 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}
 
 	log.Trace().Str(k, v).Msg("creating input volume")
-	invol, err := o.involume(m)
+	invol, err := o.inputVolume(m)
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(o.jobdir(m))
+	defer os.RemoveAll(o.jobDir(m))
 
 	log.Trace().Str(k, v).Msg("getting input")
 	input, err := o.os.GetObject(geocloud.NewMessage(j.InputID))
@@ -108,24 +110,27 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}
 
 	log.Debug().Str(k, v).Msg("downloading input")
-	if err = input.Download(o.involumePath(j)); err != nil {
+	if err = input.Download(o.inputVolumePath(j)); err != nil {
 		return err
 	}
 
 	log.Trace().Str(k, v).Msg("creating output volume")
-	outvol, err := o.outvolume(m)
+	outvol, err := o.outputVolume(m)
 	if err != nil {
 		return err
 	}
 
-	var filename string
-	invol.Walk(func(_ string, f geocloud.File, e error) error {
-		if e != nil {
-			return e
-		}
-		filename = f.Name()
-		return fmt.Errorf("found") // we only expect 1 input, so use the first one we find
-	})
+	var (
+		filename string
+		_        = invol.Walk(func(_ string, f geocloud.File, e error) error {
+			if e != nil {
+				return e
+			}
+			filename = f.Name()
+			// we only expect 1 input, so use the first one we find and end the Walk
+			return fmt.Errorf("found")
+		})
+	)
 
 	if filename == "" {
 		return fmt.Errorf("no input found")
@@ -133,12 +138,17 @@ func (o *Worker) Send(m geocloud.Message) error {
 
 	args := append(
 		[]string{
-			filepath.Join(o.involumePath(j), filename),
-			o.outvolumePath(j),
+			filepath.Join(o.inputVolumePath(j), filename),
+			o.outputVolumePath(j),
 		},
 		j.Args...,
 	)
-	task := exec.Command(t.Type.Name(), args...)
+	// TODO pass args as env
+	task := exec.Command(t.Type.Name(), args...) //nolint:gosec
+	// don't let tasks see potentially sensitive environment variables
+	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
+		return !(strings.HasPrefix(e, "GEOCLOUD_") || strings.HasPrefix(e, "AWS_"))
+	})
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
 	task.Stderr = stderr
@@ -155,43 +165,32 @@ func (o *Worker) Send(m geocloud.Message) error {
 	if err != nil {
 		return err
 	}
-
-	outputID = ost.ID
 	j.OutputID = ost.ID
-	log.Trace().Str(k, v).Msgf("updating job output")
-	j, err = o.ds.UpdateJob(j)
-	if err != nil {
-		return err
-	}
 
 	log.Debug().Str(k, v).Msg("uploading output")
-	if err = o.os.PutObject(geocloud.NewMessage(j.OutputID), outvol); err != nil {
-		return err
-	}
-
-	return nil
+	return o.os.PutObject(geocloud.NewMessage(j.OutputID), outvol)
 }
 
-func (o *Worker) involumePath(m geocloud.Message) string {
-	return filepath.Join(o.jobdir(m), "input")
+func (o *Worker) inputVolumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobDir(m), "input")
 }
 
-func (o *Worker) outvolumePath(m geocloud.Message) string {
-	return filepath.Join(o.jobdir(m), "output")
+func (o *Worker) outputVolumePath(m geocloud.Message) string {
+	return filepath.Join(o.jobDir(m), "output")
 }
 
-func (o *Worker) involume(m geocloud.Message) (geocloud.Volume, error) {
-	return geocloud.NewDirVolume(o.involumePath(m))
+func (o *Worker) inputVolume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.inputVolumePath(m))
 }
 
-func (o *Worker) outvolume(m geocloud.Message) (geocloud.Volume, error) {
-	return geocloud.NewDirVolume(o.outvolumePath(m))
+func (o *Worker) outputVolume(m geocloud.Message) (geocloud.Volume, error) {
+	return geocloud.NewDirVolume(o.outputVolumePath(m))
 }
 
-func (o *Worker) jobdir(m geocloud.Message) string {
-	return filepath.Join(o.jobsdir(), m.GetID())
+func (o *Worker) jobDir(m geocloud.Message) string {
+	return filepath.Join(o.jobsDir(), m.GetID())
 }
 
-func (o *Worker) jobsdir() string {
+func (o *Worker) jobsDir() string {
 	return filepath.Join(o.workdir, "jobs")
 }

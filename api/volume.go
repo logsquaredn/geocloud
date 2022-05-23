@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,16 +46,16 @@ func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
 	switch {
 	case applicationJSON && applicationZip:
 		// both possible Content-Types are specified
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("only one Content-Type among 'application/json' and 'application/zip' may be specified")
 	case applicationZip && !isZIP(data):
 		// Content-Type is application/zip but data is not
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("Content-Type was 'application/zip' but request body was not")
 	case applicationJSON && !isJSON(data):
 		// Content-Type is application/json but data is not
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("Content-Type was 'application/json' but request body was not")
 	case !(applicationJSON || applicationZip):
 		// neither possible Content-Types are specified
-		return nil, http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, fmt.Errorf("must specify one Content-Type among 'application/json' and 'application/zip'")
 	}
 
 	return geocloud.NewSingleFileVolume(inputName, data), 0, nil
@@ -62,7 +63,7 @@ func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
 
 func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte, string, int, error) {
 	var (
-		accept          = ctx.Request.Header.Get("Content-Type")
+		accept          = ctx.Request.Header.Get("Accept")
 		applicationJSON = strings.Contains(accept, "application/json")
 		applicationZip  = strings.Contains(accept, "application/zip")
 		contentType     string
@@ -71,7 +72,7 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 	// if the request was for both content types,
 	// we don't know what to do
 	if applicationJSON && applicationZip {
-		return nil, "", http.StatusBadRequest, fmt.Errorf("only one Content-Type among 'application/json', 'application/zip' may be set")
+		return nil, "", http.StatusBadRequest, fmt.Errorf("only one Accept among 'application/json' and 'application/zip' may be specified")
 	}
 
 	err := volume.Walk(func(_ string, f geocloud.File, e error) error {
@@ -99,4 +100,13 @@ func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) ([]byte
 	}
 
 	return b, contentType, 0, nil
+}
+
+func isJSON(b []byte) bool {
+	var js map[string]interface{}
+	return json.Unmarshal(b, &js) == nil
+}
+
+func isZIP(b []byte) bool {
+	return http.DetectContentType(b) == "application/zip"
 }

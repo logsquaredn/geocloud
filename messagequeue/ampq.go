@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/logsquaredn/geocloud"
+	"github.com/rs/zerolog/log"
 	"github.com/streadway/amqp"
 )
 
@@ -22,19 +23,21 @@ func NewAMQP(opts *AMQPOpts) (*AMQP, error) {
 		err error
 		i   int64 = 1
 	)
-	for q.conn, err = amqp.Dial(opts.connectionString()); err != nil; i++ {
+	for q.conn, err = amqp.Dial(opts.connectionString()); err != nil; q.conn, err = amqp.Dial(opts.connectionString()) {
 		if i >= opts.Retries && opts.Retries > 0 {
 			return nil, fmt.Errorf("failed to dial amqp after %d attempts: %w", i, err)
 		}
 		time.Sleep(opts.RetryDelay)
+		i++
 	}
 
 	i = 1
-	for q.ch, err = q.conn.Channel(); err != nil; i++ {
+	for q.ch, err = q.conn.Channel(); err != nil; q.ch, err = q.conn.Channel() {
 		if i >= opts.Retries && opts.Retries > 0 {
 			return nil, fmt.Errorf("failed to connect to amqp channel after %d attempts: %w", i, err)
 		}
 		time.Sleep(opts.RetryDelay)
+		i++
 	}
 
 	return q, nil
@@ -72,8 +75,11 @@ func (a *AMQP) Poll(f func(geocloud.Message) error) error {
 
 	for m := range msgs {
 		go func(m amqp.Delivery) {
-			if err := f(message(string(m.Body))); err == nil {
-				m.Ack(false)
+			id := string(m.Body)
+			if err := f(geocloud.NewMessage(id)); err == nil {
+				if err = m.Ack(false); err != nil {
+					log.Err(err).Msgf("unable to acknowledge message '%s'", id)
+				}
 			}
 		}(m)
 	}

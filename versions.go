@@ -1,13 +1,14 @@
 package geocloud
 
-import "fmt"
+import (
+	"fmt"
+	"runtime/debug"
+)
 
 var (
-	Version = "0.1.0"
+	Version = "0.0.0"
 
 	Prerelease = ""
-
-	Build = ""
 )
 
 func Semver() string {
@@ -15,8 +16,29 @@ func Semver() string {
 	if Prerelease != "" {
 		version = fmt.Sprintf("%s-%s", version, Prerelease)
 	}
-	if Build != "" {
-		version = fmt.Sprintf("%s+%s", version, Build)
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		var (
+			revision string
+			modified bool
+		)
+		for _, setting := range buildInfo.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				revision = setting.Value
+			case "vcs.modified":
+				modified = setting.Value == "true"
+			}
+		}
+		if revision != "" {
+			i := len(revision)
+			if i > 7 {
+				i = 7
+			}
+			version = fmt.Sprintf("%s+%s", version, revision[:i])
+		}
+		if modified {
+			version = fmt.Sprintf("%s*", version)
+		}
 	}
 	return version
 }
