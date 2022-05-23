@@ -110,7 +110,6 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Tags         createStorage
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        name       query     string  false  "Human readable name of storage"
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
 // @Param        name       query     string  false  "Storage name"
