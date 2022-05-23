@@ -249,6 +249,35 @@ char *getShpFilePath(const char *unzipDir) {
     return shpFilePath;
 }
 
+char *getRasterFp(const char *unzipDir) {
+    char *rasterFp;
+    DIR *d = opendir(unzipDir);
+    struct dirent *dir;
+    if(d) {
+        int maybeRaster = 0;
+        while((dir = readdir(d)) != NULL) {
+            maybeRaster++;
+            int size = 0;
+            while(unzipDir[size] != '\0') ++size;
+            size += strlen(dir->d_name);
+            rasterFp = (char*) malloc(size + 2);
+            snprintf(rasterFp, size + 2, "%s/%s", unzipDir, dir->d_name);
+            break;
+        }
+
+        if(!maybeRaster) {
+            error("raster file not found in input", __FILE__, __LINE__);
+            return NULL;
+        }
+        closedir(d);
+    } else {
+        error("unable to open unzip directory", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    return rasterFp;
+}
+
 char *unzip(const char *inputFilePath) {
     char *dupInputFilePath = strdup(inputFilePath);
     if(dupInputFilePath == NULL) {
@@ -260,16 +289,21 @@ char *unzip(const char *inputFilePath) {
     char cmd[256];
     snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", inputFilePath, " -d ", unzipDir);    
 
-    int unzipResult = system(cmd);
-    if(unzipResult != 0) {
+    FILE *fp = popen(cmd, "r");
+    if(fp == NULL) {
         error("failed to unzip input file", __FILE__, __LINE__);
         return NULL;
+    }
+
+    char output[256];
+    while(fgets(output, sizeof(output), fp) != NULL) {
+        fprintf(stdout, "zip output: %s\n", output);
     }
 
     return unzipDir;
 }
 
-char *getInputGeoFilePath(const char *inputFilePath) {
+char *getInputGeoFilePathVector(const char *inputFilePath) {
     char *inputGeoFilePath;
     char *ext = strrchr(inputFilePath, '.');
     if(ext && !strcmp(ext, ".json")) {
@@ -279,7 +313,7 @@ char *getInputGeoFilePath(const char *inputFilePath) {
         }
     } else if(ext && !strcmp(ext, ".zip")) {
         char *unzipDir = unzip(inputFilePath);
-        if(unzipDir == 0) {
+        if(unzipDir == NULL) {
             error("failed to unzip input file", __FILE__, __LINE__);
             return NULL;
         }
@@ -291,11 +325,31 @@ char *getInputGeoFilePath(const char *inputFilePath) {
         }
 
         free(unzipDir);
-    } else if(ext && (!strcmp(ext, ".tif") || !strcmp(ext, ".tiff") || !strcmp(ext, ".geotif") || !strcmp(ext, ".geotiff"))) {
-        inputGeoFilePath = strdup(inputFilePath);
-        if(inputGeoFilePath == NULL) {
+    } else {
+        error("unrecognized input file", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    return inputGeoFilePath;
+}
+
+char *getInputGeoFilePathRaster(const char *inputFilePath) {
+    char *inputGeoFilePath;
+    char *ext = strrchr(inputFilePath, '.');
+    if(ext && !strcmp(ext, ".zip")) {
+        char *unzipDir = unzip(inputFilePath);
+        if(unzipDir == NULL) {
+            error("failed to unzip input file", __FILE__, __LINE__);
             return NULL;
         }
+
+        inputGeoFilePath = getRasterFp(unzipDir);
+        if(inputGeoFilePath == NULL) {
+            error("failed to get raster filepath", __FILE__, __LINE__);
+            return NULL;
+        }
+
+        free(unzipDir);
     } else {
         error("unrecognized input file", __FILE__, __LINE__);
         return NULL;

@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(stdout, "quadrant segment count: %d\n", quadSegCountInt);
 	
-	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
+	char *inputGeoFilePath = getInputGeoFilePathVector(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
