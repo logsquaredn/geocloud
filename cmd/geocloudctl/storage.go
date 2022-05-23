@@ -68,7 +68,7 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	s, err := client.CreateStorage(i)
+	s, err := client.CreateStorage(i, viper.GetString("name"))
 	if err != nil {
 		return err
 	}

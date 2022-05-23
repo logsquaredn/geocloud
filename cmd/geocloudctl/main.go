@@ -39,6 +39,8 @@ func init() {
 	flags := createCmd.PersistentFlags()
 	flags.StringP("file", "f", "", "Path to input")
 	_ = viper.BindPFlag("file", flags.Lookup("file"))
+	flags.StringP("name", "n", "", "Name of storage")
+	_ = viper.BindPFlag("name", flags.Lookup("name"))
 }
 
 func init() {
