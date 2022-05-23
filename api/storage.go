@@ -41,6 +41,7 @@ func (a *API) createStorage(ctx *gin.Context) (*geocloud.Storage, int, error) {
 func (a *API) createStorageForCustomer(ctx *gin.Context, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
 	storage, err := a.ds.CreateStorage(&geocloud.Storage{
 		CustomerID: customer.ID,
+		Name:       ctx.Query("name"),
 	})
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
