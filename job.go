@@ -61,7 +61,7 @@ func (c *Client) GetJobs() ([]*Job, error) {
 		jobs = []*Job{}
 	)
 
-	url.Path = EndpointJobs
+	url.Path = EndpointJob
 
 	return jobs, c.get(url, &jobs)
 }
@@ -72,7 +72,7 @@ func (c *Client) GetJob(id string) (*Job, error) {
 		job = &Job{}
 	)
 
-	url.Path = path.Join(EndpointJobs, id)
+	url.Path = path.Join(EndpointJob, id)
 
 	return job, c.get(url, job)
 }

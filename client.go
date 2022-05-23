@@ -2,7 +2,9 @@ package geocloud
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 )
 
@@ -19,6 +21,9 @@ func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 		}
 	}
 
+	if c.httpClient.Jar, err = cookiejar.New(&cookiejar.Options{}); err != nil {
+		return nil, err
+	}
 	c.httpClient.Jar.SetCookies(baseURL, []*http.Cookie{
 		{
 			Name:  "X-API-Key",
@@ -33,6 +38,10 @@ func (c *Client) get(url *url.URL, i interface{}) error {
 	res, err := c.httpClient.Get(url.String())
 	if err != nil {
 		return err
+	}
+
+	if res.StatusCode > 299 || res.StatusCode < 200 {
+		return fmt.Errorf("http %d", res.StatusCode)
 	}
 
 	return json.NewDecoder(res.Body).Decode(i)

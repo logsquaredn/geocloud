@@ -1,7 +1,7 @@
 package geocloud
 
 const (
-	EndpointJobs    = "/api/v1/jobs"
+	EndpointJob     = "/api/v1/job"
 	EndpointStorage = "/api/v1/storage"
-	EndpointTasks   = "/api/v1/tasks"
+	EndpointTask    = "/api/v1/task"
 )
