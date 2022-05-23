@@ -44,7 +44,7 @@ secretary:
 .PHONY: migrate migrations
 migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
-	@$(DOCKER-COMPOSE) exec datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)');"
+	@$(DOCKER-COMPOSE) exec datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: infra infrastructure
 infra infrastructure: services sleep migrate secretary
