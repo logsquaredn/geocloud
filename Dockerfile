@@ -36,8 +36,8 @@ RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterloo
 FROM build_image AS build
 ARG version=0.0.0
 ARG prerelease=
-ARG build=
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease} -X github.com/logsquaredn/geocloud.Build=${build}" -o /assets/geocloud ./cmd/geocloud/
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloud ./cmd/geocloud
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloudctl ./cmd/geocloudctl
 
 FROM base_image AS geocloud
 RUN apk add --no-cache ca-certificates

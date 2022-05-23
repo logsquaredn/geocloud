@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/cobra"
@@ -22,12 +24,13 @@ var (
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.String("api-key", "", "Geocloud API key")
-	viper.BindPFlag("api-key", flags.Lookup("api-key"))
+	_ = viper.BindPFlag("api-key", flags.Lookup("api-key"))
 	flags.String("base-url", "", "Geocloud base URL")
-	viper.BindPFlag("base-url", flags.Lookup("base-url"))
+	_ = viper.BindPFlag("base-url", flags.Lookup("base-url"))
 }
 
 func init() {
+	rootCmd.SetVersionTemplate(fmt.Sprintf("{{ .Name }}{{ .Version }} %s\n", runtime.Version()))
 	getCmd.AddCommand(
 		getJobsCmd,
 		getStorageCmd,

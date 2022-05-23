@@ -14,14 +14,12 @@ func getClient() (*geocloud.Client, error) {
 	)
 	if c := viper.GetString("base-url"); c != "" {
 		baseURL = c
-	} else {
+	} else if apiKey == "" {
 		// hack for local dev
-		if apiKey == "" {
-			if u, err := user.Current(); err == nil {
-				apiKey = u.Username
-				if apiKey == "" {
-					apiKey = u.Name
-				}
+		if u, err := user.Current(); err == nil {
+			apiKey = u.Username
+			if apiKey == "" {
+				apiKey = u.Name
 			}
 		}
 	}

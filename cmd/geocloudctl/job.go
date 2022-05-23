@@ -4,10 +4,10 @@ import "github.com/spf13/cobra"
 
 var (
 	getJobsCmd = &cobra.Command{
-		Use:  "jobs",
+		Use:     "jobs",
 		Aliases: []string{"job", "j"},
-		RunE: runGetJobs,
-		Args: cobra.RangeArgs(0, 1),
+		RunE:    runGetJobs,
+		Args:    cobra.RangeArgs(0, 1),
 	}
 )
 

@@ -33,3 +33,7 @@ hack/rabbitmq/log/*
 # vscode
 .vscode/
 .idea/
+
+# bin
+bin/*
+!bin/.gitkeep

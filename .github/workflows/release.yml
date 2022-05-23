@@ -67,6 +67,15 @@ jobs:
           asset_path: /usr/local/bin/geocloud
           asset_name: geocloud_linux_amd64
           asset_content_type: application/octet-stream
+      - name: upload-geocloudctl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: /usr/local/bin/geocloudctl
+          asset_name: geocloudctl_linux_amd64
+          asset_content_type: application/octet-stream
       - name: upload-task-removebadgeometry
         uses: actions/upload-release-asset@v1
         env:

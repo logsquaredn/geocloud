@@ -7,6 +7,6 @@ import (
 
 func write(i any) error {
 	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent(" ", "  ")
+	enc.SetIndent("", "  ")
 	return enc.Encode(i)
 }

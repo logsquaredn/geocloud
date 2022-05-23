@@ -4,10 +4,10 @@ import "github.com/spf13/cobra"
 
 var (
 	getStorageCmd = &cobra.Command{
-		Use:  "storage",
+		Use:     "storage",
 		Aliases: []string{"storages", "s"},
-		RunE: runGetStorage,
-		Args: cobra.RangeArgs(0, 1),
+		RunE:    runGetStorage,
+		Args:    cobra.RangeArgs(0, 1),
 	}
 )
 

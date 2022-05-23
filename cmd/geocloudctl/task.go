@@ -4,10 +4,10 @@ import "github.com/spf13/cobra"
 
 var (
 	getTasksCmd = &cobra.Command{
-		Use:  "tasks",
+		Use:     "tasks",
 		Aliases: []string{"task", "t"},
-		RunE: runGetTasks,
-		Args: cobra.RangeArgs(0, 1),
+		RunE:    runGetTasks,
+		Args:    cobra.RangeArgs(0, 1),
 	}
 )
 
