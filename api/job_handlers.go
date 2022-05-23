@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
@@ -15,12 +16,32 @@ import (
 // @Produce application/json
 // @Param api-key query string false "API Key via query parameter"
 // @Param X-API-Key header string false "API Key via header"
+// @Param page-size query string false "Amount of jobs to return"
+// @Param page query string false "Page of jobs to return"
 // @Success 200 {object} []geocloud.Job
 // @Failure 401 {object} geocloud.Error
 // @Failure 500 {object} geocloud.Error
 // @Router /job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
-	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx))
+	pageSizeInt := 10
+	pageInt := 1
+	var err error
+	pageSize := ctx.Query("page-size")
+	page := ctx.Query("page")
+	if pageSize != "" {
+		pageSizeInt, err = strconv.Atoi(pageSize)
+		if err != nil {
+			a.err(ctx, http.StatusBadRequest, err)
+		}
+	}
+	if page != "" {
+		pageInt, err = strconv.Atoi(page)
+		if err != nil {
+			a.err(ctx, http.StatusBadRequest, err)
+		}
+	}
+
+	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx), pageSizeInt, pageInt)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		jobs = []*geocloud.Job{}
