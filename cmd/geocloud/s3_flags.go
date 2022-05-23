@@ -1,76 +1,67 @@
-//nolint:dupl
 package main
 
 import (
-	"os"
-
 	"github.com/logsquaredn/geocloud/objectstore"
-)
-
-var (
-	s3Opts = &objectstore.S3Opts{}
+	"github.com/spf13/viper"
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.Bucket,
-		"s3-bucket",
-		os.Getenv("GEOCLOUD_S3_BUCKET"),
-		"S3 bucket",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.Prefix,
-		"s3-prefix",
-		os.Getenv("GEOCLOUD_S3_PREFIX"),
-		"S3 prefix",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.Endpoint,
-		"s3-endpoint",
-		os.Getenv("GEOCLOUD_S3_ENDPOINT"),
-		"S3 endpoint",
-	)
-	rootCmd.PersistentFlags().BoolVar(
-		&s3Opts.DisableSSL,
-		"s3-disable-ssl",
-		parseBool(os.Getenv("GEOCLOUD_S3_DISABLE_SSL")),
-		"S3 disable ssl",
-	)
-	rootCmd.PersistentFlags().BoolVar(
-		&s3Opts.ForcePathStyle,
-		"s3-force-path-style",
-		parseBool(os.Getenv("GEOCLOUD_S3_FORCE_PATH_STYLE")),
-		"S3 force path style",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.Region,
-		"s3-region",
-		coalesceString(
-			os.Getenv("GEOCLOUD_S3_REGION"),
-			"us-east-1",
-		),
-		"S3 region",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.AccessKeyID,
-		"s3-access-key-id",
-		coalesceString(
-			os.Getenv("GEOCLOUD_S3_ACCESS_KEY_ID"),
-			os.Getenv("GEOCLOUD_ACCESS_KEY_ID"),
-		),
-		"S3 access key ID",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&s3Opts.SecretAccessKey,
-		"s3-secret-access-key",
-		coalesceString(
-			os.Getenv("GEOCLOUD_S3_SECRET_ACCESS_KEY"),
-			os.Getenv("GEOCLOUD_SECRET_ACCESS_KEY"),
-		),
-		"S3 secret access key",
-	)
+	viper.BindEnv("s3-access-key-id", "GEOCLOUD_ACCESS_KEY_ID")
+	viper.BindEnv("s3-secret-access-key", "GEOCLOUD_SECRET_ACCESS_KEY")
+	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
+		{
+			arg:  "s3-bucket",
+			def:  "",
+			desc: "S3 bucket",
+		},
+		{
+			arg:  "s3-prefix",
+			def:  "",
+			desc: "S3 prefix",
+		},
+		{
+			arg:  "s3-endpoint",
+			def:  "",
+			desc: "S3 endpoint",
+		},
+		{
+			arg:  "s3-disable-ssl",
+			def:  false,
+			desc: "S3 disable SSL",
+		},
+		{
+			arg:  "s3-force-path-style",
+			def:  false,
+			desc: "S3 force path style",
+		},
+		{
+			arg:  "s3-region",
+			def:  "us-east-1",
+			desc: "S3 region",
+		},
+		{
+			arg:  "s3-access-key-id",
+			def:  "",
+			desc: "S3 access key ID",
+		},
+		{
+			arg:  "s3-secret-access-key",
+			def:  "",
+			desc: "S3 secret access key",
+		},
+	}...)
 }
 
 func getS3Opts() *objectstore.S3Opts {
+	s3Opts := &objectstore.S3Opts{
+		Bucket:          viper.GetString("s3-bucket"),
+		Prefix:          viper.GetString("s3-prefix"),
+		Endpoint:        viper.GetString("s3-endpoint"),
+		DisableSSL:      viper.GetBool("s3-disable-ssl"),
+		ForcePathStyle:  viper.GetBool("s3-force-path-style"),
+		Region:          viper.GetString("s3-region"),
+		AccessKeyID:     viper.GetString("s3-access-key-id"),
+		SecretAccessKey: viper.GetString("s3-secret-access-key"),
+	}
 	return s3Opts
 }

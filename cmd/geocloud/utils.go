@@ -2,15 +2,6 @@ package main
 
 import "strconv"
 
-func coalesceString(ss ...string) string {
-	for _, s := range ss {
-		if s != "" {
-			return s
-		}
-	}
-	return ""
-}
-
 func parseBool(s string) bool {
 	b, _ := strconv.ParseBool(s)
 	return b

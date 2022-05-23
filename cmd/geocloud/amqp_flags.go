@@ -1,68 +1,59 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/logsquaredn/geocloud/messagequeue"
-)
-
-var (
-	amqpAddress string
-	amqpOpts    = &messagequeue.AMQPOpts{}
+	"github.com/spf13/viper"
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(
-		&amqpAddress,
-		"amqp-address",
-		coalesceString(
-			os.Getenv("GEOCLOUD_AMQP_ADDRESS"),
-			fmt.Sprintf(":%d", defaultAMQPPort),
-		),
-		"AMQP address",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&amqpOpts.User,
-		"amqp-user",
-		coalesceString(
-			os.Getenv("GEOCLOUD_AMQP_USER"),
-			"geocloud",
-		),
-		"AMQP user",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&amqpOpts.Password,
-		"amqp-password",
-		os.Getenv("GEOCLOUD_AMQP_PASSWORD"),
-		"AMQP password",
-	)
-	rootCmd.PersistentFlags().Int64Var(
-		&amqpOpts.Retries,
-		"amqp-retries",
-		parseInt64(os.Getenv("GEOCLOUD_AMQP_RETRIES")),
-		"AMQP retries",
-	)
-	rootCmd.PersistentFlags().DurationVar(
-		&amqpOpts.RetryDelay,
-		"amqp-retry-delay",
-		s5,
-		"AMQP retry delay",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&amqpOpts.QueueName,
-		"amqp-queue-name",
-		coalesceString(
-			os.Getenv("GEOCLOUD_AMQP_QUEUE_NAME"),
-			"geocloud",
-		),
-		"AMQP queue name",
-	)
+	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
+		{
+			arg:  "amqp-address",
+			def:  defaultAMQPAddress,
+			desc: "AMQP address",
+		},
+		{
+			arg:  "amqp-user",
+			def:  defaultAMQPUser,
+			desc: "AMQP user",
+		},
+		{
+			arg:  "amqp-password",
+			def:  "",
+			desc: "AMQP password",
+		},
+		{
+			arg:  "amqp-retries",
+			def:  int64(5),
+			desc: "AMQP retries",
+		},
+		{
+			arg:  "amqp-retry-delay",
+			def:  s5,
+			desc: "AMQP retry delay",
+		},
+		{
+			arg:  "amqp-queue-name",
+			def:  defaultAMQPQueueName,
+			desc: "AMQP queue name",
+		},
+	}...)
 }
 
 func getAMQPOpts() *messagequeue.AMQPOpts {
-	delimiter := strings.Index(amqpAddress, ":")
+	var (
+		amqpOpts = &messagequeue.AMQPOpts{
+			User:       viper.GetString("amqp-user"),
+			Password:   viper.GetString("amqp-password"),
+			Retries:    viper.GetInt64("amqp-retries"),
+			RetryDelay: viper.GetDuration("amqp-retry-delay"),
+			QueueName:  viper.GetString("amqp-queue-name"),
+		}
+		amqpAddress = viper.GetString("amqp-address")
+		delimiter   = strings.Index(amqpAddress, ":")
+	)
 	if delimiter < 0 {
 		amqpOpts.Host = amqpAddress
 	} else {
