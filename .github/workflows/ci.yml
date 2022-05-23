@@ -55,6 +55,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: version
-        run: |
-          geocloud -v
-          docker -v
+        run: geocloud version
