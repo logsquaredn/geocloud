@@ -27,11 +27,15 @@ func NewPostgresMigrations(opts *PostgresOpts) (*PostgresMigrations, error) {
 	for p.mgrt, err = migrate.NewWithSourceInstance(
 		"migrations", src,
 		opts.connectionString(),
-	); err != nil; i++ {
+	); err != nil; p.mgrt, err = migrate.NewWithSourceInstance(
+		"migrations", src,
+		opts.connectionString(),
+	) {
 		if i >= opts.Retries && opts.Retries > 0 {
 			return nil, fmt.Errorf("failed to create migrations after %d attempts: %w", i, err)
 		}
 		time.Sleep(opts.RetryDelay)
+		i++
 	}
 
 	return p, nil

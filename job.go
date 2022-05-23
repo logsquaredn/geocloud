@@ -74,8 +74,6 @@ func (c *Client) GetJob(id string) (*Job, error) {
 
 	url.Path = path.Join(EndpointJob, id)
 
-	fmt.Println("GET", url.Path)
-
 	return job, c.get(url, job)
 }
 
