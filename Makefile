@@ -2,20 +2,32 @@ DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
 GCC ?= gcc
 GO ?= go
+INSTALL ?= sudo install
 
-BIN ?= bin
-ASSETS ?= assets
+BIN ?= /usr/local/bin
 
 REGISTRY ?= ghcr.io
 REPOSITORY ?= logsquaredn/geocloud
+MODULE ?= github.com/$(REPOSITORY)
 TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
+VERSION ?= 0.0.0
+PRERELEASE ?= alpha0
+
+WHOAMI ?= $(shell whoami)
+
 .PHONY: fallthrough
-fallthrough: fmt infra up
+fallthrough: fmt install infra detach
 
 .PHONY: fmt
 fmt:
 	@$(GO) fmt ./...
+
+geocloud geocloudctl:
+	@$(GO) build -ldflags "-s -w -X $(MODULE).Version=$(VERSION) -X $(MODULE).Prerelease=$(PRERELEASE)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
+	@$(INSTALL) $(CURDIR)/bin/$@ $(BIN)
+
+install: geocloud geocloudctl
 
 .PHONY: services
 services:
@@ -32,6 +44,7 @@ secretary:
 .PHONY: migrate migrations
 migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
+	@$(DOCKER-COMPOSE) exec datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)');"
 
 .PHONY: infra infrastructure
 infra infrastructure: services sleep migrate secretary
@@ -40,6 +53,10 @@ infra infrastructure: services sleep migrate secretary
 up:
 	@$(DOCKER-COMPOSE) up --build worker api
 
+.PHONY: detach
+detach:
+	@$(DOCKER-COMPOSE) up -d --build worker api
+	
 .PHONY: restart
 restart:
 	@$(DOCKER-COMPOSE) stop worker api
@@ -49,7 +66,7 @@ restart:
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
+CLEAN ?= bin/* hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down
