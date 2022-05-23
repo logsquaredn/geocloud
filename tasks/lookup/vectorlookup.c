@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     }
 	fprintf(stdout, "lat: %f\n", lat);
 
-	char *inputGeoFilePath = getInputGeoFilePathVector(inputFilePath);
+	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();

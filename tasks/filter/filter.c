@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 	const char *filterValue = argv[4];
 	fprintf(stdout, "filter value: %s\n", filterValue);
 
-	char *inputGeoFilePath = getInputGeoFilePathVector(inputFilePath);
+	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo file path", __FILE__, __LINE__);
 		fatalError();	

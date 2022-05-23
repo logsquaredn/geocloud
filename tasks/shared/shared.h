@@ -23,8 +23,7 @@ int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath,
 int rasterInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
 // inputGeoFilePath needs free()'d
-char *getInputGeoFilePathVector(const char *inputFilePath);
-char *getInputGeoFilePathRaster(const char *inputFilePath);
+char *getInputGeoFilePath(const char *inputFilePath);
 int dumpToGeojson(const char *outputDir);
 int zipShp(const char *outputDir);
 int cleanup(const char *outputDir);

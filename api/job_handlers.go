@@ -419,7 +419,7 @@ type rasterlookupQuery struct {
 // @Description &emsp; - API Key is required either as a query parameter or a header
 // @Description &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description &emsp; - Pass the ID of an existing dataset with an empty request body
-// @Description &emsp; - This task accepts a ZIP containing a single TIF file
+// @Description &emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff
 // @Description &emsp; - This task will generate JSON output
 // @Tags createVectorlookup
 // @Accept application/json, application/zip

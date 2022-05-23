@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 	const char *outputDir = argv[2];
 	fprintf(stdout, "output directory: %s\n", outputDir);
 
-	char *inputGeoFilePath = getInputGeoFilePathVector(inputFilePath);
+	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
 	if(inputGeoFilePath == NULL) {
 		error("failed to find input geo filepath", __FILE__, __LINE__);
 		fatalError();
