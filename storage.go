@@ -39,3 +39,36 @@ func (c *Client) GetStorage(id string) (*Storage, error) {
 
 	return storage, c.get(url, storage)
 }
+
+func (c *Client) GetJobInput(id string) (*Storage, error) {
+	var (
+		url     = c.baseURL
+		storage = &Storage{}
+	)
+
+	url.Path = path.Join(EndpointJob, id, "input")
+
+	return storage, c.get(url, storage)
+}
+
+func (c *Client) GetJobOutput(id string) (*Storage, error) {
+	var (
+		url     = c.baseURL
+		storage = &Storage{}
+	)
+
+	url.Path = path.Join(EndpointJob, id, "output")
+
+	return storage, c.get(url, storage)
+}
+
+func (c *Client) CreateStorage(b []byte) (*Storage, error) {
+	var (
+		url     = c.baseURL
+		storage = &Storage{}
+	)
+
+	url.Path = path.Join(EndpointStorage)
+
+	return storage, c.post(url, b, storage)
+}

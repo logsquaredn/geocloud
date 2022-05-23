@@ -76,3 +76,14 @@ func (c *Client) GetTask(rawTaskType string) (*Task, error) {
 
 	return task, c.get(url, task)
 }
+
+func (c *Client) GetJobTask(id string) (*Task, error) {
+	var (
+		url  = c.baseURL
+		task = &Task{}
+	)
+
+	url.Path = path.Join(EndpointJob, id, "task")
+
+	return task, c.get(url, task)
+}

@@ -1,6 +1,9 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
 
 var (
 	getTasksCmd = &cobra.Command{
@@ -11,17 +14,29 @@ var (
 	}
 )
 
+func init() {
+	flags := getTasksCmd.PersistentFlags()
+	flags.StringP("job", "j", "", "Job")
+	_ = viper.BindPFlag("job", flags.Lookup("job"))
+}
+
 func runGetTasks(cmd *cobra.Command, args []string) error {
 	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	var t any
+	var (
+		t any
+		j = viper.GetString("job")
+	)
 
-	if len(args) > 0 {
+	switch {
+	case len(args) > 0:
 		t, err = client.GetTask(args[0])
-	} else {
+	case j != "":
+		t, err = client.GetJobTask(j)
+	default:
 		t, err = client.GetTasks()
 	}
 	if err != nil {

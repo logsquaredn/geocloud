@@ -1,6 +1,7 @@
 package geocloud
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,6 +40,21 @@ func (c *Client) get(url *url.URL, i interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
+
+	if res.StatusCode > 299 || res.StatusCode < 200 {
+		return fmt.Errorf("http %d", res.StatusCode)
+	}
+
+	return json.NewDecoder(res.Body).Decode(i)
+}
+
+func (c *Client) post(url *url.URL, b []byte, i interface{}) error {
+	res, err := c.httpClient.Post(url.String(), "application/json", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
 	if res.StatusCode > 299 || res.StatusCode < 200 {
 		return fmt.Errorf("http %d", res.StatusCode)

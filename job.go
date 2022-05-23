@@ -74,5 +74,39 @@ func (c *Client) GetJob(id string) (*Job, error) {
 
 	url.Path = path.Join(EndpointJob, id)
 
+	fmt.Println("GET", url.Path)
+
 	return job, c.get(url, job)
+}
+
+func (c *Client) CreateJob(rawTaskType string, b []byte) (*Job, error) {
+	var (
+		url           = c.baseURL
+		job           = &Job{}
+		taskType, err = TaskTypeFrom(rawTaskType)
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	url.Path = path.Join(EndpointJob, taskType.String())
+
+	return job, c.post(url, b, job)
+}
+
+func (c *Client) RunJob(rawTaskType string, b []byte) (*Job, error) {
+	job, err := c.CreateJob(rawTaskType, b)
+	if err != nil {
+		return nil, err
+	}
+
+	for ; err == nil; job, err = c.GetJob(job.ID) {
+		time.Sleep(time.Second)
+		switch job.Status {
+		case JobStatusComplete, JobStatusError:
+			return job, nil
+		}
+	}
+
+	return nil, err
 }
