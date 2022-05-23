@@ -7,7 +7,7 @@ permissions:
   contents: read
   packages: write 
 jobs:
-  tag-push:
+  build:
     runs-on: ubuntu-latest
     steps:
       # - name: setup-qemu
@@ -41,11 +41,11 @@ jobs:
     outputs:
       digest: ${{ steps.build-push.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
-  create-release:
+  release:
     runs-on: ubuntu-latest
-    needs: tag-push
+    needs: build
     container:
-      image: ghcr.io/logsquaredn/geocloud@${{ needs.tag-push.outputs.digest }}
+      image: ghcr.io/logsquaredn/geocloud:${{ needs.build.outputs.tag }}@${{ needs.build.outputs.digest }}
       credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: v${{ needs.tag-push.outputs.tag }}
+          release_name: v${{ needs.build.outputs.tag }}
       - name: upload-geocloud
         uses: actions/upload-release-asset@v1
         env:
