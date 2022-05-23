@@ -1,6 +1,9 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/logsquaredn/geocloud"
+	"github.com/spf13/cobra"
+)
 
 var (
 	getJobsCmd = &cobra.Command{
@@ -22,6 +25,20 @@ var (
 		Args:    cobra.ExactArgs(1),
 	}
 )
+
+func init() {
+	flags := createJobCmd.PersistentFlags()
+	flags.String("input", "", "Storage ID to use")
+	flags.String("input-of", "", "Job ID to use the input of")
+	flags.String("output-of", "", "Job ID to use the output of")
+}
+
+func init() {
+	flags := runJobCmd.PersistentFlags()
+	flags.String("input", "", "Storage ID to use")
+	flags.String("input-of", "", "Job ID to use the input of")
+	flags.String("output-of", "", "Job ID to use the output of")
+}
 
 func runGetJobs(cmd *cobra.Command, args []string) error {
 	client, err := getClient()
@@ -49,12 +66,28 @@ func runCreateJob(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	i, err := getInput()
-	if err != nil {
-		return err
+	var (
+		req geocloud.Request
+		i   = cmd.Flag("input").Value.String()
+		io  = cmd.Flag("input-of").Value.String()
+		oo  = cmd.Flag("output-of").Value.String()
+	)
+	switch {
+	case i != "":
+		req = geocloud.NewJobWithInput(i)
+	case io != "":
+		req = geocloud.NewJobWithInputOfJob(io)
+	case oo != "":
+		req = geocloud.NewJobWithOutputOfJob(oo)
+	default:
+		f, err := getInput(cmd)
+		if err != nil {
+			return err
+		}
+		req = geocloud.NewJobFromInput(f)
 	}
 
-	j, err := client.CreateJob(args[0], i)
+	j, err := client.CreateJob(args[0], req)
 	if err != nil {
 		return err
 	}
@@ -68,12 +101,28 @@ func runRunJob(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	i, err := getInput()
-	if err != nil {
-		return err
+	var (
+		req geocloud.Request
+		i   = cmd.Flag("input").Value.String()
+		io  = cmd.Flag("input-of").Value.String()
+		oo  = cmd.Flag("output-of").Value.String()
+	)
+	switch {
+	case i != "":
+		req = geocloud.NewJobWithInput(i)
+	case io != "":
+		req = geocloud.NewJobWithInputOfJob(io)
+	case oo != "":
+		req = geocloud.NewJobWithOutputOfJob(oo)
+	default:
+		f, err := getInput(cmd)
+		if err != nil {
+			return err
+		}
+		req = geocloud.NewJobFromInput(f)
 	}
 
-	j, err := client.RunJob(args[0], i)
+	j, err := client.RunJob(args[0], req)
 	if err != nil {
 		return err
 	}

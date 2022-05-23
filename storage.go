@@ -62,14 +62,20 @@ func (c *Client) GetJobOutput(id string) (*Storage, error) {
 	return storage, c.get(url, storage)
 }
 
-func (c *Client) CreateStorage(b []byte, name string) (*Storage, error) {
+func (c *Client) CreateStorage(r Request) (*Storage, error) {
 	var (
 		url     = c.baseURL
 		storage = &Storage{}
 	)
 
 	url.Path = path.Join(EndpointStorage)
-	url.Query().Set("name", name)
+	values := url.Query()
+	for k, v := range r.Query() {
+		if k != "" && v != "" {
+			values.Add(k, v)
+		}
+	}
+	url.RawQuery = values.Encode()
 
-	return storage, c.post(url, b, storage)
+	return storage, c.post(url, r, storage)
 }

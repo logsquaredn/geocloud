@@ -1,9 +1,9 @@
 package geocloud
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -49,8 +49,8 @@ func (c *Client) get(url *url.URL, i interface{}) error {
 	return json.NewDecoder(res.Body).Decode(i)
 }
 
-func (c *Client) post(url *url.URL, b []byte, i interface{}) error {
-	res, err := c.httpClient.Post(url.String(), "application/json", bytes.NewReader(b))
+func (c *Client) post(url *url.URL, r io.Reader, i interface{}) error {
+	res, err := c.httpClient.Post(url.String(), "application/json", r)
 	if err != nil {
 		return err
 	}

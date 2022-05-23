@@ -42,7 +42,7 @@ func ParseTaskType(taskType string) (TaskType, error) {
 			return t, nil
 		}
 	}
-	return "", fmt.Errorf("unknown task type %s", taskType)
+	return "", fmt.Errorf("unknown task type '%s'", taskType)
 }
 
 type Task struct {

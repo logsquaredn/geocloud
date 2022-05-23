@@ -29,7 +29,7 @@ func ParseJobStatus(jobStatus string) (JobStatus, error) {
 			return j, nil
 		}
 	}
-	return "", fmt.Errorf("unknown job status %s", jobStatus)
+	return "", fmt.Errorf("unknown job status '%s'", jobStatus)
 }
 
 func (s JobStatus) String() string {
@@ -77,7 +77,7 @@ func (c *Client) GetJob(id string) (*Job, error) {
 	return job, c.get(url, job)
 }
 
-func (c *Client) CreateJob(rawTaskType string, b []byte) (*Job, error) {
+func (c *Client) CreateJob(rawTaskType string, r Request) (*Job, error) {
 	var (
 		url           = c.baseURL
 		job           = &Job{}
@@ -88,12 +88,19 @@ func (c *Client) CreateJob(rawTaskType string, b []byte) (*Job, error) {
 	}
 
 	url.Path = path.Join(EndpointJob, taskType.String())
+	values := url.Query()
+	for k, v := range r.Query() {
+		if k != "" && v != "" {
+			values.Add(k, v)
+		}
+	}
+	url.RawQuery = values.Encode()
 
-	return job, c.post(url, b, job)
+	return job, c.post(url, r, job)
 }
 
-func (c *Client) RunJob(rawTaskType string, b []byte) (*Job, error) {
-	job, err := c.CreateJob(rawTaskType, b)
+func (c *Client) RunJob(rawTaskType string, r Request) (*Job, error) {
+	job, err := c.CreateJob(rawTaskType, r)
 	if err != nil {
 		return nil, err
 	}
