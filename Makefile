@@ -10,6 +10,8 @@ REGISTRY ?= ghcr.io
 REPOSITORY ?= logsquaredn/geocloud
 TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
+WHOAMI ?= $(shell whoami)
+
 .PHONY: fallthrough
 fallthrough: fmt infra up
 
@@ -32,6 +34,7 @@ secretary:
 .PHONY: migrate migrations
 migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
+	@$(DOCKER-COMPOSE) exec datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)');"
 
 .PHONY: infra infrastructure
 infra infrastructure: services sleep migrate secretary
