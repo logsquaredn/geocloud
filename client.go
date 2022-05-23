@@ -27,7 +27,7 @@ func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 	}
 	c.httpClient.Jar.SetCookies(baseURL, []*http.Cookie{
 		{
-			Name:  "X-API-Key",
+			Name:  APIKeyCookie,
 			Value: apiKey,
 		},
 	})
