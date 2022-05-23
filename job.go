@@ -20,7 +20,7 @@ func (s JobStatus) Status() string {
 	return string(s)
 }
 
-func JobStatusFrom(jobStatus string) (JobStatus, error) {
+func ParseJobStatus(jobStatus string) (JobStatus, error) {
 	for _, j := range []JobStatus{
 		JobStatusWaiting, JobStatusInProgress,
 		JobStatusComplete, JobStatusError,
@@ -81,7 +81,7 @@ func (c *Client) CreateJob(rawTaskType string, b []byte) (*Job, error) {
 	var (
 		url           = c.baseURL
 		job           = &Job{}
-		taskType, err = TaskTypeFrom(rawTaskType)
+		taskType, err = ParseTaskType(rawTaskType)
 	)
 	if err != nil {
 		return nil, err

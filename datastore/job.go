@@ -61,12 +61,12 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+	j.TaskType, err = geocloud.ParseTaskType(taskType)
 	if err != nil {
 		return j, err
 	}
 
-	j.Status, err = geocloud.JobStatusFrom(jobStatus)
+	j.Status, err = geocloud.ParseJobStatus(jobStatus)
 	if err != nil {
 		return j, err
 	}
@@ -120,11 +120,11 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	if j.TaskType, err = geocloud.TaskTypeFrom(taskType); err != nil {
+	if j.TaskType, err = geocloud.ParseTaskType(taskType); err != nil {
 		return j, err
 	}
 
-	if j.Status, err = geocloud.JobStatusFrom(jobStatus); err != nil {
+	if j.Status, err = geocloud.ParseJobStatus(jobStatus); err != nil {
 		return j, err
 	}
 
@@ -157,11 +157,11 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	if j.TaskType, err = geocloud.TaskTypeFrom(taskType); err != nil {
+	if j.TaskType, err = geocloud.ParseTaskType(taskType); err != nil {
 		return j, err
 	}
 
-	if j.Status, err = geocloud.JobStatusFrom(jobStatus); err != nil {
+	if j.Status, err = geocloud.ParseJobStatus(jobStatus); err != nil {
 		return j, err
 	}
 
@@ -204,12 +204,12 @@ func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 
-		j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+		j.TaskType, err = geocloud.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}
 
-		j.Status, err = geocloud.JobStatusFrom(jobStatus)
+		j.Status, err = geocloud.ParseJobStatus(jobStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -260,12 +260,12 @@ func (p *Postgres) GetCustomerJobs(m geocloud.Message) ([]*geocloud.Job, error) 
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 
-		j.TaskType, err = geocloud.TaskTypeFrom(taskType)
+		j.TaskType, err = geocloud.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}
 
-		j.Status, err = geocloud.JobStatusFrom(jobStatus)
+		j.Status, err = geocloud.ParseJobStatus(jobStatus)
 		if err != nil {
 			return nil, err
 		}
