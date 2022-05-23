@@ -39,8 +39,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           cache-from: type=registry,ref=ghcr.io/logsquaredn/geocloud:latest
-          push: ${{ github.event_name == 'push' }}
-          load: ${{ github.event_name != 'push' }}
+          push: true
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:
@@ -54,7 +53,6 @@ jobs:
       credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-    # if: ${{ github.event_name == 'push' }}
     steps:
       - name: version
         run: |
