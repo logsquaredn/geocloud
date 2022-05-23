@@ -25,6 +25,6 @@ func bindConfToFlags(flags *pflag.FlagSet, cs ...*conf) {
 		case time.Duration:
 			flags.Duration(c.arg, t, c.desc)
 		}
-		viper.BindPFlag(c.arg, flags.Lookup(c.arg))
+		_ = viper.BindPFlag(c.arg, flags.Lookup(c.arg))
 	}
 }

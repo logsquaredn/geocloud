@@ -31,8 +31,7 @@ func init() {
 	flags := secretaryCmd.Flags()
 	flags.DurationVar(&workJobsBefore, "work-jobs-before", h24, "Work jobs before")
 	flags.DurationVar(&workStorageBefore, "work-storage-before", h24, "Work storage before")
-	flags.String("stripe-api-key", "", "Stripe API key")
-	viper.BindPFlag("stripe-api-key", flags.Lookup("stripe-api-key"))
+	bindConfToFlags(flags, &conf{"stripe-api-key", "", "Stripe API key"})
 }
 
 func runSecretary(cmd *cobra.Command, args []string) error {

@@ -6,49 +6,17 @@ import (
 )
 
 func init() {
-	viper.BindEnv("s3-archive-access-key-id", "GEOCLOUD_ACCESS_KEY_ID")
-	viper.BindEnv("s3-archive-secret-access-key", "GEOCLOUD_SECRET_ACCESS_KEY")
+	_ = viper.BindEnv("s3-archive-access-key-id", "GEOCLOUD_ACCESS_KEY_ID")
+	_ = viper.BindEnv("s3-archive-secret-access-key", "GEOCLOUD_SECRET_ACCESS_KEY")
 	bindConfToFlags(secretaryCmd.Flags(), []*conf{
-		{
-			arg:  "s3-archive-bucket",
-			def:  "",
-			desc: "S3 bucket",
-		},
-		{
-			arg:  "s3-archive-prefix",
-			def:  "",
-			desc: "S3 prefix",
-		},
-		{
-			arg:  "s3-archive-endpoint",
-			def:  "",
-			desc: "S3 endpoint",
-		},
-		{
-			arg:  "s3-archive-disable-ssl",
-			def:  "",
-			desc: "S3 disable SSL",
-		},
-		{
-			arg:  "s3-archive-force-path-style",
-			def:  "",
-			desc: "S3 force path style",
-		},
-		{
-			arg:  "s3-archive-region",
-			def:  "us-east-1",
-			desc: "S3 region",
-		},
-		{
-			arg:  "s3-archive-access-key-id",
-			def:  "",
-			desc: "S3 access key ID",
-		},
-		{
-			arg:  "s3-archive-secret-access-key",
-			def:  "",
-			desc: "S3 secret access key",
-		},
+		{"s3-archive-bucket", "", "S3 bucket"},
+		{"s3-archive-prefix", "", "S3 prefix"},
+		{"s3-archive-endpoint", "", "S3 endpoint"},
+		{"s3-archive-disable-ssl", false, "S3 disable SSL"},
+		{"s3-archive-force-path-style", false, "S3 force path style"},
+		{"s3-archive-region", "us-east-1", "S3 region"},
+		{"s3-archive-access-key-id", "", "S3 access key ID"},
+		{"s3-archive-secret-access-key", "", "S3 secret access key"},
 	}...)
 }
 

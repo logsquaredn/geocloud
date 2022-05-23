@@ -1,49 +1,21 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/spf13/viper"
 )
 
-var (
-	postgresAddress string
-	postgresOpts    = &datastore.PostgresOpts{}
-)
-
 func init() {
 	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
-		{
-			arg:  "postgres-address",
-			def:  defaultPostgresAddress,
-			desc: "Postgres address",
-		},
-		{
-			arg:  "postgres-user",
-			def:  defaultPostgresUser,
-			desc: "Postgres user",
-		},
-		{
-			arg:  "postgres-password",
-			def:  "",
-			desc: "Postgres password",
-		},
-		{
-			arg:  "postgres-retries",
-			def:  int64(5),
-			desc: "Postgres retries",
-		},
-		{
-			arg:  "postgres-retry-delay",
-			def:  s5,
-			desc: "Postgres retry delay",
-		},
-		{
-			arg:  "postgres-sslmode",
-			def:  "",
-			desc: "Postgres SSL mode",
-		},
+		{"postgres-address", defaultPostgresAddress, "Postgres address"},
+		{"postgres-user", defaultPostgresUser, "Postgres user"},
+		{"postgres-password", "", "Postgres password"},
+		{"postgres-retries", int64(5), "Postgres retries"},
+		{"postgres-retry-delay", s5, "Postgres retry delay"},
+		{"postgres-sslmode", "", "Postgres SSL mode"},
 	}...)
 }
 
@@ -63,7 +35,8 @@ func getPostgresOpts() *datastore.PostgresOpts {
 		postgresOpts.Host = postgresAddress
 	} else {
 		postgresOpts.Host = postgresAddress[:delimiter]
-		postgresOpts.Port = parseInt64(postgresAddress[delimiter:])
+		port, _ := strconv.Atoi(postgresAddress[delimiter:])
+		postgresOpts.Port = int64(port)
 	}
 
 	if postgresOpts.Host == "" {

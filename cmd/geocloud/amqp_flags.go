@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/logsquaredn/geocloud/messagequeue"
@@ -9,36 +10,12 @@ import (
 
 func init() {
 	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
-		{
-			arg:  "amqp-address",
-			def:  defaultAMQPAddress,
-			desc: "AMQP address",
-		},
-		{
-			arg:  "amqp-user",
-			def:  defaultAMQPUser,
-			desc: "AMQP user",
-		},
-		{
-			arg:  "amqp-password",
-			def:  "",
-			desc: "AMQP password",
-		},
-		{
-			arg:  "amqp-retries",
-			def:  int64(5),
-			desc: "AMQP retries",
-		},
-		{
-			arg:  "amqp-retry-delay",
-			def:  s5,
-			desc: "AMQP retry delay",
-		},
-		{
-			arg:  "amqp-queue-name",
-			def:  defaultAMQPQueueName,
-			desc: "AMQP queue name",
-		},
+		{"amqp-address", defaultAMQPAddress, "AMQP address"},
+		{"amqp-user", defaultAMQPUser, "AMQP user"},
+		{"amqp-password", "", "AMQP password"},
+		{"amqp-retries", int64(5), "AMQP retries"},
+		{"amqp-retry-delay", s5, "AMQP retry delay"},
+		{"amqp-queue-name", defaultAMQPQueueName, "AMQP queue name"},
 	}...)
 }
 
@@ -58,7 +35,8 @@ func getAMQPOpts() *messagequeue.AMQPOpts {
 		amqpOpts.Host = amqpAddress
 	} else {
 		amqpOpts.Host = amqpAddress[:delimiter]
-		amqpOpts.Port = parseInt64(amqpAddress[delimiter:])
+		port, _ := strconv.Atoi(amqpAddress[delimiter:])
+		amqpOpts.Port = int64(port)
 	}
 
 	if amqpOpts.Host == "" {
