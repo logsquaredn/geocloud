@@ -44,11 +44,19 @@ fallthrough: fmt install infra detach
 fmt:
 	@$(GO) fmt ./...
 
+.PHONY: geocloud geocloudctl
 geocloud geocloudctl:
 	@$(GO) build -ldflags "-s -w -X $(MODULE).Version=$(VERSION) -X $(MODULE).Prerelease=$(PRERELEASE)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
-	@$(INSTALL) $(CURDIR)/bin/$@ $(BIN)
 
-install: geocloud geocloudctl
+.PHONY: install-geocloud
+install-geocloud: geocloud
+	@$(INSTALL) $(CURDIR)/bin/geocloud $(BIN)
+
+.PHONY: install-geocloudctl
+install-geocloudctl: geocloudctl
+	@$(INSTALL) $(CURDIR)/bin/geocloudctl $(BIN)
+
+install: install-geocloud install-geocloudctl
 
 .PHONY: services
 services:
