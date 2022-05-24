@@ -25,12 +25,11 @@ void info(const char *msg);
 void error(const char *message, const char *file, int line);
 void fatalError(const char *message, const char *file, int line);
 
+int isGeojson(const char *fp);
 int isZip(const char *fp);
+int isShp(const char *fp);
 // result of unzip must be free()'d
 char **unzip(const char *fp);
-
-GDALDatasetH initRaster(const char *fp);
-
 
 // inputGeoFilePath needs free()'d
 char *getInputGeoFilePath(const char *inputFilePath);

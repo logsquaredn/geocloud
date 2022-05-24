@@ -19,6 +19,24 @@ void fatalError(const char *msg, const char *file, int line) {
 	exit(1);
 }
 
+int isGeojson(const char *fp) {
+    char *ext = strrchr(fp, '.');
+    if(ext != NULL && !strcmp(ext, ".geojson")) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int isShp(const char *fp) {
+    char *ext = strrchr(fp, '.');
+    if(ext != NULL && !strcmp(ext, ".shp")) {
+        return 1;
+    }
+
+    return 0;
+}
+
 int isZip(const char *fp) {
     char *ext = strrchr(fp, '.');
     if(ext != NULL && !strcmp(ext, ".zip")) {
@@ -45,19 +63,19 @@ char **unzip(const char *fp) {
     }
 
     const char delim[3] = ": ";
-    char **ufl = calloc(MAX_UNZIPPED_FILES, sizeof(char*));
+    char **fl = calloc(MAX_UNZIPPED_FILES, sizeof(char*));
     char buff[ONE_KB];
-    int ufc = 0;
+    int fc = 0;
     while(fgets(buff, ONE_KB, fptr) != NULL) {
         if(strstr(buff, "inflating:") != NULL) {
             char *tok = strtok(buff, delim);
             tok = strtok(NULL, delim);
 
-            if(ufc <= MAX_UNZIPPED_FILES) {
-                ufl[ufc] = calloc(ONE_KB, sizeof(char*));
-                ufl[ufc] = tok;
+            if(fc <= MAX_UNZIPPED_FILES) {
+                fl[fc] = calloc(ONE_KB, sizeof(char*));
+                fl[fc] = strdup(tok);
+                ++fc;
             }
-            ++ufc;
         }
     }
 
@@ -67,47 +85,8 @@ char **unzip(const char *fp) {
         error(eMsg, __FILE__, __LINE__);
     }
 
-    return ufl;
+    return fl;
 }
-
-GDALDatasetH initRaster(const char *fp) {
-	return GDALOpen(fp, GA_ReadOnly);
-}
-
-// char *getInputGeoFilePath(const char *inputFilePath) {
-//     char *inputGeoFilePath;
-//     char *ext = strrchr(inputFilePath, '.');
-//     if(ext && !strcmp(ext, ".json")) {
-//         inputGeoFilePath = strdup(inputFilePath);
-//         if(inputGeoFilePath == NULL) {
-//             return NULL;
-//         }
-//     } else if(ext && !strcmp(ext, ".zip")) {
-//         char *unzipDir = unzip(inputFilePath);
-//         if(unzipDir == 0) {
-//             error("failed to unzip input file", __FILE__, __LINE__);
-//             return NULL;
-//         }
-
-//         inputGeoFilePath = getShpFilePath(unzipDir);
-//         if(inputGeoFilePath == NULL) {
-//             error("failed to get shp file path", __FILE__, __LINE__);
-//             return NULL;
-//         }
-
-//         free(unzipDir);
-//     } else if(ext && (!strcmp(ext, ".tif") || !strcmp(ext, ".tiff") || !strcmp(ext, ".geotif") || !strcmp(ext, ".geotiff"))) {
-//         inputGeoFilePath = strdup(inputFilePath);
-//         if(inputGeoFilePath == NULL) {
-//             return NULL;
-//         }
-//     } else {
-//         error("unrecognized input file", __FILE__, __LINE__);
-//         return NULL;
-//     }
-
-//     return inputGeoFilePath;
-// }
 
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geometry, OGRFeatureH *inputFeature) {
     OGRFeatureH outputFeature =  OGR_F_Create(gdalHandles->outputFeatureDefn);
@@ -196,21 +175,6 @@ int getShpDriver(GDALDriverH **driver) {
     return 0;
 }
 
-int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
-    fprintf(stdout, "filepath: %s\n", filePath);
-    *dataset = GDALOpenEx(filePath, GDAL_OF_VECTOR, NULL, NULL, NULL);
-	if(*dataset == NULL) {
-        // TODO improve all error messaging
-        // printf("%d\n", CPLGetErrorCounter());
-        // printf("%d\n", CPLGetLastErrorNo());
-        // printf("%s\n", CPLGetLastErrorMsg());
-        error("failed to open vector dataset", __FILE__, __LINE__);
-		return 1;
-	}
-	
-    return 0;
-}
-
 char* getOutputFilePath(const char *outputDir, const char filename[]) {
     char *outputFilePath = (char*) calloc(ONE_KB, sizeof(char));
     snprintf(outputFilePath, ONE_KB, "%s%s", outputDir, filename);
@@ -219,18 +183,9 @@ char* getOutputFilePath(const char *outputDir, const char filename[]) {
 }
 
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir) {
-    GDALAllRegister();
-
     char outputFilename[12] = "/output.shp";
     char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
     fprintf(stdout, "output filepath: %s\n", outputFilePath);
-
-	GDALDatasetH inputDataset;
-	if(openVectorDataset(&inputDataset, inputFilePath)) {
-		error("failed to open input vector dataset", __FILE__, __LINE__);
-		return 1;
-	}
-    gdalHandles->inputDataset = inputDataset;
 
 	GDALDriverH *driver;
 	if(getShpDriver(&driver)) {

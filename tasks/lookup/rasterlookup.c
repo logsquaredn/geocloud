@@ -58,7 +58,9 @@ int main(int argc, char *argv[]) {
 	}
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
-        fatalError("longitude must be a double between -180 & 180", __FILE__, __LINE__);
+		char eMsg[ONE_KB];
+		sprinf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
+        fatalError(eMsg, __FILE__, __LINE__);
     }
 	sprintf(iMsg, "lon: %f", lon);
 	info(iMsg);
@@ -69,7 +71,9 @@ int main(int argc, char *argv[]) {
 	}
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {
-        fatalError("latitude must be a double between -90 & 90", __FILE__, __LINE__);
+		char eMsg[ONE_KB];
+		sprinf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
+        fatalError(eMsg, __FILE__, __LINE__);
     }
 	sprintf(iMsg, "lat: %f", lat);
 	info(iMsg);
@@ -78,35 +82,35 @@ int main(int argc, char *argv[]) {
 		fatalError("input file must be a .zip", __FILE__, __LINE__);
 	}
 
-	char **ufl = unzip(ifp);
-	if(ufl == NULL) {
+	char **fl = unzip(ifp);
+	if(fl == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "failed to unzip: %s", ifp);
 		fatalError(eMsg, __FILE__, __LINE__);
 	}
 
-	char *uf;
-	int ufc = 0;
-	while((uf = ufl[ufc]) != NULL) {
-		++ufc;
+	char *f;
+	int fc = 0;
+	while((f = fl[fc]) != NULL) {
+		++fc;
 	}
-	if(ufc != 1) {
+	if(fc != 1) {
 		char eMsg[ONE_KB];
-		sprintf(eMsg, "input zip must contain exactly one raster file. found: %d", ufc);
+		sprintf(eMsg, "input zip must contain exactly one raster file. found: %d", fc);
 		fatalError(eMsg, __FILE__, __LINE__);
 	}
 
-	char *rfp = ufl[0];
+	char *rfp = fl[0];
 	sprintf(iMsg, "raster filepath: %s", rfp);
 	info(iMsg); 
 
-	GDALDatasetH gd = initRaster(rfp);
+	GDALDatasetH gd = GDALOpen(rfp, GA_ReadOnly);
 	if(gd == NULL) {
 		char eMsg[ONE_KB];
-		sprintf(eMsg, "failed to initalize raster: %s", rfp);
+		sprintf(eMsg, "failed to open raster file: %s", rfp);
 		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	free(ufl);
+	free(fl);
 
 	double *buff = (double*) calloc(6, sizeof(double));
 	if(GDALGetGeoTransform(gd, buff) != OGRERR_NONE) {
