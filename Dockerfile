@@ -19,7 +19,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN swag init -d ./api --parseDependency true
-COPY .git/ .git/
 
 FROM ${build_tasks_image} AS build_tasks_image
 WORKDIR /src/github.com/logsquaredn/geocloud/tasks
