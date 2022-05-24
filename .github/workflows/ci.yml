@@ -34,16 +34,18 @@ jobs:
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::${GITHUB_SHA::7}"
-      - name: build-push
-        id: build-push
+      - uses: actions/checkout@v2
+      - name: build
+        id: build
         uses: docker/build-push-action@v3
         with:
+          context: .
           cache-from: type=registry,ref=ghcr.io/logsquaredn/geocloud:latest
           push: true
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:
-      digest: ${{ steps.build-push.outputs.digest }}
+      digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
   test:
     runs-on: ubuntu-latest
