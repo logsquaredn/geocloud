@@ -44,6 +44,9 @@ jobs:
           push: true
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
+      - name: tmp
+        run: |
+          which docker
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
@@ -61,4 +64,4 @@ jobs:
       - name: version
         run: |
           geocloud -v
-          docker -v
+          which docker
