@@ -40,9 +40,9 @@ WHOAMI ?= $(shell whoami)
 .PHONY: fallthrough
 fallthrough: fmt install infra detach
 
-.PHONY: fmt
-fmt:
-	@$(GO) fmt ./...
+.PHONY: fmt vet test
+fmt vet test:
+	@$(GO) $@ ./...
 
 .PHONY: geocloud geocloudctl
 geocloud geocloudctl:
@@ -104,14 +104,6 @@ clean: down
 .PHONY: prune
 prune: clean
 	@$(DOCKER) system prune --volumes -a
-
-.PHONY: test
-test:
-	@$(GO) test -test.v -race ./...
-
-.PHONY: vet
-vet: fmt
-	@$(GO) vet ./...
 
 .PHONY: sleep
 sleep:

@@ -30,11 +30,15 @@ jobs:
       - name: up
         run: |
           make services sleep migrate detach geocloudctl
+      - name: wait
+        run: |
+          make sleep
       - name: geocloudctl
         run: |
-          ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json
-          ./bin/geocloudctl get jobs
-          ./bin/geocloudctl get storage
+          ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json || true
+          ./bin/geocloudctl get jobs || true
+          ./bin/geocloudctl get storage || true
+          docker-compose logs api
       - name: down
         run: |
           make down
