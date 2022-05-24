@@ -62,4 +62,4 @@ jobs:
       - name: versions
         run: |
           geocloud -v
-          docker -v
+          ls /usr/bin
