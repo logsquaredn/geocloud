@@ -18,6 +18,20 @@ jobs:
         with:
           go-version: 1.18
       - uses: golangci/golangci-lint-action@v3.1.0
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: compose
+        run: |
+          make services sleep migrate detach
+      - name: logs
+        run: |
+          sleep 11
+          docker-compose logs api worker
   build:
     runs-on: ubuntu-latest
     steps:
@@ -41,25 +55,10 @@ jobs:
         with:
           context: .
           cache-from: type=registry,ref=ghcr.io/logsquaredn/geocloud:latest
-          push: true
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    container:
-      image: ghcr.io/logsquaredn/geocloud:${{ needs.build.outputs.tag }}@${{ needs.build.outputs.digest }}
-      credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      # this is the output of `which docker` on an ubuntu-latest runner
-      volumes:
-        - /usr/bin/docker:/usr/bin/docker
-    steps:
-      - name: versions
-        run: |
-          geocloud -v
-          /usr/bin/docker -v

@@ -1,7 +1,26 @@
+GO ?= go
+
+ifneq "$(strip $(shell command -v $(GO) 2>/dev/null))" ""
+	GOOS ?= $(shell $(GO) env GOOS)
+else
+	ifeq ($(GOOS),)
+		UNAME_S := $(shell uname -s)
+		ifeq ($(UNAME_S),Linux)
+			GOOS = linux
+		endif
+		ifeq ($(UNAME_S),Darwin)
+			GOOS = darwin
+		endif
+	else
+		GOOS ?= $$GOOS
+	endif
+endif
+
+-include Makefile.$(GOOS)
+
 DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
 GCC ?= gcc
-GO ?= go
 INSTALL ?= sudo install
 
 BIN ?= /usr/local/bin
@@ -15,6 +34,8 @@ VERSION ?= 0.0.0
 PRERELEASE ?= alpha0
 
 WHOAMI ?= $(shell whoami)
+
+.DEFAULT_GOAL := fallthrough
 
 .PHONY: fallthrough
 fallthrough: fmt install infra detach
