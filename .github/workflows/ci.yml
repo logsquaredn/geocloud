@@ -37,6 +37,9 @@ jobs:
           ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json
           ./bin/geocloudctl get jobs
           ./bin/geocloudctl get storage
+      - name: test
+        run: |
+          make test
       - name: down
         run: |
           make down
