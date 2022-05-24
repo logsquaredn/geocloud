@@ -18,6 +18,8 @@ endif
 
 -include Makefile.$(GOOS)
 
+PKGS ?= $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
+
 DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
 GCC ?= gcc
@@ -40,9 +42,21 @@ WHOAMI ?= $(shell whoami)
 .PHONY: fallthrough
 fallthrough: fmt install infra detach
 
-.PHONY: fmt vet test
-fmt vet test:
+.PHONY: fmt vet
+fmt vet:
 	@$(GO) $@ ./...
+
+.PHONY: tests
+tests:
+	@for pkg in $(PKGS); do \
+		$(GO) test -o "$(CURDIR)/bin/$$(basename $$pkg).test" -c $$pkg; \
+	done
+
+.PHONY: test
+test: tests
+	@for test in $(CURDIR)/bin/*.test; do \
+		$$test; \
+	done
 
 .PHONY: geocloud geocloudctl
 geocloud geocloudctl:
