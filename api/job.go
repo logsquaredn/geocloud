@@ -13,8 +13,8 @@ import (
 
 const (
 	qInput    = "input"
-	qInputOf  = "input_of"
-	qOutputOf = "output_of"
+	qInputOf  = "input-of"
+	qOutputOf = "output-of"
 )
 
 func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType, customer *geocloud.Customer) (*geocloud.Job, int, error) {
@@ -35,11 +35,9 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 		)
 		storage *geocloud.Storage
 	)
-	if len(inputIDs) > 1 {
-		return nil, 400, fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf)
-	}
-
 	switch {
+	case len(inputIDs) > 1:
+		return nil, 400, fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf)
 	case input != "":
 		storage, statusCode, err = a.getStorageForCustomer(ctx, geocloud.NewMessage(input), customer)
 		if err != nil {

@@ -36,13 +36,13 @@ func (t TaskType) String() string {
 	return t.Type()
 }
 
-func TaskTypeFrom(taskType string) (TaskType, error) {
+func ParseTaskType(taskType string) (TaskType, error) {
 	for _, t := range AllTaskTypes {
 		if strings.EqualFold(taskType, t.String()) {
 			return t, nil
 		}
 	}
-	return "", fmt.Errorf("unknown task type %s", taskType)
+	return "", fmt.Errorf("unknown task type '%s'", taskType)
 }
 
 type Task struct {
@@ -66,7 +66,7 @@ func (c *Client) GetTask(rawTaskType string) (*Task, error) {
 	var (
 		url           = c.baseURL
 		task          = &Task{}
-		taskType, err = TaskTypeFrom(rawTaskType)
+		taskType, err = ParseTaskType(rawTaskType)
 	)
 	if err != nil {
 		return nil, err

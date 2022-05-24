@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -22,10 +22,13 @@ var (
 
 func init() {
 	flags := getStorageCmd.PersistentFlags()
-	flags.StringP("input-of", "i", "", "Input of job")
-	_ = viper.BindPFlag("input-of", flags.Lookup("input-of"))
-	flags.StringP("output-of", "o", "", "Output of job")
-	_ = viper.BindPFlag("output-of", flags.Lookup("output-of"))
+	flags.String("input-of", "", "Job ID to get storage input of")
+	flags.String("output-of", "", "Job ID to get storage output of")
+}
+
+func init() {
+	flags := createStorageCmd.PersistentFlags()
+	flags.StringP("name", "n", "", "Name of storage")
 }
 
 func runGetStorage(cmd *cobra.Command, args []string) error {
@@ -36,8 +39,8 @@ func runGetStorage(cmd *cobra.Command, args []string) error {
 
 	var (
 		s any
-		i = viper.GetString("input-of")
-		o = viper.GetString("output-of")
+		i = cmd.Flag("input-of").Value.String()
+		o = cmd.Flag("output-of").Value.String()
 	)
 
 	switch {
@@ -63,12 +66,12 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	i, err := getInput()
+	i, err := getInput(cmd)
 	if err != nil {
 		return err
 	}
 
-	s, err := client.CreateStorage(i)
+	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, cmd.Flag("name").Value.String()))
 	if err != nil {
 		return err
 	}

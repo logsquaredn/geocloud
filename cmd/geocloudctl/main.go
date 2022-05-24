@@ -23,7 +23,7 @@ var (
 		Use: "run",
 	}
 	createCmd = &cobra.Command{
-		Use: "get",
+		Use: "create",
 	}
 )
 
@@ -37,14 +37,12 @@ func init() {
 
 func init() {
 	flags := createCmd.PersistentFlags()
-	flags.StringP("file", "f", "", "Path to input")
-	_ = viper.BindPFlag("file", flags.Lookup("file"))
+	flags.StringP("file", "f", "", "Path to input file")
 }
 
 func init() {
 	flags := runCmd.PersistentFlags()
-	flags.StringP("file", "f", "", "Path to input")
-	_ = viper.BindPFlag("file", flags.Lookup("file"))
+	flags.StringP("file", "f", "", "Path to input file")
 }
 
 func init() {
@@ -58,7 +56,6 @@ func init() {
 		runJobCmd,
 	)
 	createCmd.AddCommand(
-		createJobCmd,
 		createStorageCmd,
 	)
 	rootCmd.AddCommand(
