@@ -19,6 +19,8 @@ endif
 -include Makefile.$(GOOS)
 
 PKGS ?= $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
+SWAG ?= swag
+GOLANGCI ?= golangci-lint
 
 DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
@@ -45,11 +47,16 @@ fallthrough: fmt install infra detach
 .PHONY: fmt vet
 fmt vet:
 	@$(GO) $@ ./...
+	@$(SWAG) fmt -d ./api/
+
+.PHONY: lint
+lint:
+	@$(GOLANGCI) run
 
 .PHONY: tests
 tests:
 	@for pkg in $(PKGS); do \
-		$(GO) test -o "$(CURDIR)/bin/$$(basename $$pkg).test" -c $$pkg; \
+		$(GO) test -o $(CURDIR)/bin/$$(basename $$pkg).test -c $$pkg; \
 	done
 
 .PHONY: test
