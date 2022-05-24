@@ -44,9 +44,6 @@ jobs:
           push: true
           build-args: revision=${{ steps.get-tag.outputs.tag }}
           tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
-      - name: tmp
-        run: |
-          which docker
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
@@ -58,10 +55,11 @@ jobs:
       credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # this is the output of `which docker` on an ubuntu-latest runner
       volumes:
-        - /usr/local/bin/docker:/usr/local/bin/docker
+        - /usr/bin/docker:/usr/bin/docker
     steps:
-      - name: version
+      - name: versions
         run: |
           geocloud -v
-          which docker
+          docker -v
