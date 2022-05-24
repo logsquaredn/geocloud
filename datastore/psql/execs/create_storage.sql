@@ -6,4 +6,4 @@ INSERT INTO storage (
     $1,
     $2,
     $3
-) RETURNING storage_id, customer_id, storage_name, last_used;
+) RETURNING storage_id, customer_id, storage_name, last_used, create_time;

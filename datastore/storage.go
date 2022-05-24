@@ -1,7 +1,6 @@
 package datastore
 
 import (
-	"database/sql"
 	_ "embed"
 	"time"
 
@@ -36,58 +35,46 @@ var (
 )
 
 func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
-	var (
-		lastUsed sql.NullTime
-	)
-
 	if err := p.stmt.updateStorage.QueryRow(
 		s.ID, time.Now(),
 	).Scan(
 		&s.ID, &s.CustomerID,
-		&s.Name, &lastUsed,
+		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
 		return s, err
 	}
-
-	s.LastUsed = lastUsed.Time
 
 	return s, nil
 }
 
 func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
 	var (
-		id       = uuid.NewString()
-		lastUsed sql.NullTime
+		id = uuid.NewString()
 	)
 
 	if err := p.stmt.createStorage.QueryRow(
 		id, s.CustomerID, s.Name,
 	).Scan(
 		&s.ID, &s.CustomerID,
-		&s.Name, &lastUsed,
+		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
 		return s, err
 	}
-
-	s.LastUsed = lastUsed.Time
 
 	return s, nil
 }
 
 func (p *Postgres) GetStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s        = &geocloud.Storage{}
-		lastUsed sql.NullTime
+		s = &geocloud.Storage{}
 	)
 
 	if err := p.stmt.getStorage.QueryRow(m.GetID()).Scan(
 		&s.ID, &s.CustomerID,
-		&s.Name, &lastUsed,
+		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
 		return s, err
 	}
-
-	s.LastUsed = lastUsed.Time
 
 	return s, nil
 }
@@ -108,19 +95,16 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message) ([]*geocloud.Storage, 
 
 	for rows.Next() {
 		var (
-			s        = &geocloud.Storage{}
-			lastUsed sql.NullTime
+			s = &geocloud.Storage{}
 		)
 
-		err = rows.Scan(
+		if err = rows.Scan(
 			&s.ID, &s.CustomerID,
-			&s.Name, &lastUsed,
-		)
-		if err != nil {
+			&s.Name, &s.LastUsed, &s.CreateTime,
+		); err != nil {
 			return nil, err
 		}
 
-		s.LastUsed = lastUsed.Time
 		storage = append(storage, s)
 	}
 
@@ -129,36 +113,30 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message) ([]*geocloud.Storage, 
 
 func (p *Postgres) GetJobInputStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s        = &geocloud.Storage{}
-		lastUsed sql.NullTime
+		s = &geocloud.Storage{}
 	)
 
 	if err := p.stmt.getInputStorageByJobID.QueryRow(m.GetID()).Scan(
 		&s.ID, &s.CustomerID,
-		&s.Name, &lastUsed,
+		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
 		return s, err
 	}
-
-	s.LastUsed = lastUsed.Time
 
 	return s, nil
 }
 
 func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s        = &geocloud.Storage{}
-		lastUsed sql.NullTime
+		s = &geocloud.Storage{}
 	)
 
 	if err := p.stmt.getOutputStorageByJobID.QueryRow(m.GetID()).Scan(
 		&s.ID, &s.CustomerID,
-		&s.Name, &lastUsed,
+		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
 		return s, err
 	}
-
-	s.LastUsed = lastUsed.Time
 
 	return s, nil
 }
@@ -175,19 +153,15 @@ func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error
 
 	for rows.Next() {
 		var (
-			s        = &geocloud.Storage{}
-			lastUsed sql.NullTime
+			s = &geocloud.Storage{}
 		)
 
-		err = rows.Scan(
+		if err = rows.Scan(
 			&s.ID, &s.CustomerID,
-			&s.Name, &lastUsed,
-		)
-		if err != nil {
+			&s.Name, &s.LastUsed, &s.CreateTime,
+		); err != nil {
 			return nil, err
 		}
-
-		s.LastUsed = lastUsed.Time
 
 		storages = append(storages, s)
 	}
