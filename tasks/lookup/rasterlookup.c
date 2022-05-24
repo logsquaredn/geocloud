@@ -137,44 +137,42 @@ int main(int argc, char *argv[]) {
 		fatalError("failed to write beginning results to output file", __FILE__, __LINE__);
 	}
 
-	// --bCt;
-	// while(bCt >= 0) {
-	// 	GDALRasterBandH band = GDALGetRasterBand(gdalHandles.inputDataset, bNums[bCt]);
-	// 	if(band == NULL) {
-	// 		error("failed to find band", __FILE__, __LINE__);
-	// 		fatalError();
-	// 	}
+	--bCt;
+	while(bCt >= 0) {
+		GDALRasterBandH band = GDALGetRasterBand(gd, bNums[bCt]);
+		if(band == NULL) {
+			char eMsg[ONE_KB];
+			sprintf(eMsg, "failed to find band: %d", bNums[bCt]);
+			fatalError(eMsg, __FILE__, __LINE__);
+		}
 		
-	// 	float* rasterIOBuff = malloc(1 * sizeof(float));
-	// 	if(GDALRasterIO(band, GF_Read, col, row, 1, 1, rasterIOBuff, 1, 1, GDT_Float32, 0, 0) != OGRERR_NONE) {
-	// 		error("failed to read raster value", __FILE__, __LINE__);
-	// 		fatalError();
-	// 	}
+		float* rasterIOBuff = calloc(1, sizeof(float));
+		if(GDALRasterIO(band, GF_Read, col, row, 1, 1, rasterIOBuff, 1, 1, GDT_Float32, 0, 0) != OGRERR_NONE) {
+			fatalError("failed to read raster value", __FILE__, __LINE__);
+		}
 
-	// 	char result[128];
-	// 	if(bCt - 1 < 0) {
-	// 		sprintf(result, "{\"band%d\": %f}", bNums[bCt], rasterIOBuff[0]);	
-	// 	} else {
-	// 		sprintf(result, "{\"band%d\": %f},", bNums[bCt], rasterIOBuff[0]);	
-	// 	}	
+		char result[128];
+		if(bCt - 1 < 0) {
+			sprintf(result, "{\"band%d\": %f}", bNums[bCt], rasterIOBuff[0]);	
+		} else {
+			sprintf(result, "{\"band%d\": %f},", bNums[bCt], rasterIOBuff[0]);	
+		}	
 
-	// 	if(fputs(result, fptr) == EOF) {
-	// 		error("failed to write results to output file", __FILE__, __LINE__);
-	// 		fatalError();
-	// 	}
+		if(fputs(result, fptr) == EOF) {
+			fatalError("failed to write results to output file", __FILE__, __LINE__);
+		}
 
-	// 	free(rasterIOBuff);
-	// 	--bCt;
-	// }
+		free(rasterIOBuff);
+		--bCt;
+	}
 
-	// if(fputs("]}", fptr) == EOF) {
-	// 	error("failed to write end results to output file", __FILE__, __LINE__);
-	// 	fatalError();
-	// }
+	if(fputs("]}", fptr) == EOF) {
+		fatalError("failed to write end results to output file", __FILE__, __LINE__);
+	}
 
 	fclose(fptr);
 	GDALClose(gd);
 
-	fprintf(stdout, "raster lookup completed successfully\n");
+	info("raster lookup completed successfully");
 	return 0;
 }
