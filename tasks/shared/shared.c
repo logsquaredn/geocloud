@@ -1,12 +1,113 @@
 #include "shared.h"
 
-void error(const char *message, const char *file, int line) {
-	fprintf(stderr, "%s:%d: %s\n", file, line, message);
+const char *ENV_VAR_INPUT_FILEPATH = "GEOCLOUD_INPUT_FILE";
+const char *ENV_VAR_OUTPUT_DIRECTORY = "GEOCLOUD_OUTPUT_DIRECTORY";
+int MAX_UNZIPPED_FILES = 16;
+int ONE_KB = 1024;
+
+
+void info(const char *msg) {
+    fprintf(stdout, "INFO:%lu: %s\n", time(NULL), msg);
 }
 
-void fatalError() {
+void error(const char *msg, const char *file, int line) {
+	fprintf(stderr, "ERROR:%lu:%s:%d: %s\n", time(NULL), file, line, msg);
+}
+
+void fatalError(const char *msg, const char *file, int line) {
+    error(msg, file, line);
 	exit(1);
 }
+
+int isZip(const char *fp) {
+    char *ext = strrchr(fp, '.');
+    if(ext != NULL && !strcmp(ext, ".zip")) {
+        return 1;
+    }
+
+    return 0;
+}
+
+char **unzip(const char *fp) {
+    char dfp[ONE_KB]; 
+    strcpy(dfp, fp);
+
+    char* d = dirname(dfp);
+    char cmd[ONE_KB];
+    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", fp, " -d ", d);    
+
+    FILE *fptr = popen(cmd, "r");
+    if(fptr == NULL) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to execute command: %s", cmd);
+        error(eMsg, __FILE__, __LINE__);
+        return NULL;
+    }
+
+    const char delim[3] = ": ";
+    char **ufl = calloc(MAX_UNZIPPED_FILES, sizeof(char*));
+    char buff[ONE_KB];
+    int ufc = 0;
+    while(fgets(buff, ONE_KB, fptr) != NULL) {
+        if(strstr(buff, "inflating:") != NULL) {
+            char *tok = strtok(buff, delim);
+            tok = strtok(NULL, delim);
+
+            if(ufc <= MAX_UNZIPPED_FILES) {
+                ufl[ufc] = calloc(ONE_KB, sizeof(char*));
+                ufl[ufc] = tok;
+            }
+            ++ufc;
+        }
+    }
+
+    if(pclose(fptr) == -1) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to close output pipe from command: %s", cmd);
+        error(eMsg, __FILE__, __LINE__);
+    }
+
+    return ufl;
+}
+
+GDALDatasetH initRaster(const char *fp) {
+	return GDALOpen(fp, GA_ReadOnly);
+}
+
+// char *getInputGeoFilePath(const char *inputFilePath) {
+//     char *inputGeoFilePath;
+//     char *ext = strrchr(inputFilePath, '.');
+//     if(ext && !strcmp(ext, ".json")) {
+//         inputGeoFilePath = strdup(inputFilePath);
+//         if(inputGeoFilePath == NULL) {
+//             return NULL;
+//         }
+//     } else if(ext && !strcmp(ext, ".zip")) {
+//         char *unzipDir = unzip(inputFilePath);
+//         if(unzipDir == 0) {
+//             error("failed to unzip input file", __FILE__, __LINE__);
+//             return NULL;
+//         }
+
+//         inputGeoFilePath = getShpFilePath(unzipDir);
+//         if(inputGeoFilePath == NULL) {
+//             error("failed to get shp file path", __FILE__, __LINE__);
+//             return NULL;
+//         }
+
+//         free(unzipDir);
+//     } else if(ext && (!strcmp(ext, ".tif") || !strcmp(ext, ".tiff") || !strcmp(ext, ".geotif") || !strcmp(ext, ".geotiff"))) {
+//         inputGeoFilePath = strdup(inputFilePath);
+//         if(inputGeoFilePath == NULL) {
+//             return NULL;
+//         }
+//     } else {
+//         error("unrecognized input file", __FILE__, __LINE__);
+//         return NULL;
+//     }
+
+//     return inputGeoFilePath;
+// }
 
 int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geometry, OGRFeatureH *inputFeature) {
     OGRFeatureH outputFeature =  OGR_F_Create(gdalHandles->outputFeatureDefn);
@@ -110,42 +211,11 @@ int openVectorDataset(GDALDatasetH *dataset, const char *filePath) {
     return 0;
 }
 
-int openRasterDataset(GDALDatasetH *dataset, const char *filePath) {
-    *dataset = GDALOpen(filePath, GA_ReadOnly);
-	if(*dataset == NULL) {
-        // TODO improve all error messaging
-        // printf("%d\n", CPLGetErrorCounter());
-        // printf("%d\n", CPLGetLastErrorNo());
-        // printf("%s\n", CPLGetLastErrorMsg());
-        error("failed to open raster dataset", __FILE__, __LINE__);
-		return 1;
-	}
-	
-    return 0;
-}
-
 char* getOutputFilePath(const char *outputDir, const char filename[]) {
-    int size = 0;
-    while(outputDir[size] != '\0') ++size;
-    ++size;
-    size += strlen(filename);
-    char *outputFilePath = (char*) malloc(size);
-    snprintf(outputFilePath, size, "%s%s", outputDir, filename);
+    char *outputFilePath = (char*) calloc(ONE_KB, sizeof(char));
+    snprintf(outputFilePath, ONE_KB, "%s%s", outputDir, filename);
 
     return outputFilePath;
-}
-
-int rasterInitialize(struct GDALHandles *gdalHandles, const char* inputFilePath, const char* outputDir) {
-    GDALAllRegister();
-
-	GDALDatasetH inputDataset;
-	if(openRasterDataset(&inputDataset, inputFilePath)) {
-		error("failed to open input raster dataset", __FILE__, __LINE__);
-		return 1;
-	}
-    gdalHandles->inputDataset = inputDataset;
-
-    return 0;
 }
 
 int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir) {
@@ -247,61 +317,6 @@ char *getShpFilePath(const char *unzipDir) {
     }
 
     return shpFilePath;
-}
-
-char *unzip(const char *inputFilePath) {
-    char *dupInputFilePath = strdup(inputFilePath);
-    if(dupInputFilePath == NULL) {
-        error("failed to dup input file path", __FILE__, __LINE__);
-        return NULL;
-    }
-
-    char* unzipDir = dirname(dupInputFilePath);
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "unzip -o ", inputFilePath, " -d ", unzipDir);    
-
-    int unzipResult = system(cmd);
-    if(unzipResult != 0) {
-        error("failed to unzip input file", __FILE__, __LINE__);
-        return NULL;
-    }
-
-    return unzipDir;
-}
-
-char *getInputGeoFilePath(const char *inputFilePath) {
-    char *inputGeoFilePath;
-    char *ext = strrchr(inputFilePath, '.');
-    if(ext && !strcmp(ext, ".json")) {
-        inputGeoFilePath = strdup(inputFilePath);
-        if(inputGeoFilePath == NULL) {
-            return NULL;
-        }
-    } else if(ext && !strcmp(ext, ".zip")) {
-        char *unzipDir = unzip(inputFilePath);
-        if(unzipDir == 0) {
-            error("failed to unzip input file", __FILE__, __LINE__);
-            return NULL;
-        }
-
-        inputGeoFilePath = getShpFilePath(unzipDir);
-        if(inputGeoFilePath == NULL) {
-            error("failed to get shp file path", __FILE__, __LINE__);
-            return NULL;
-        }
-
-        free(unzipDir);
-    } else if(ext && (!strcmp(ext, ".tif") || !strcmp(ext, ".tiff") || !strcmp(ext, ".geotif") || !strcmp(ext, ".geotiff"))) {
-        inputGeoFilePath = strdup(inputFilePath);
-        if(inputGeoFilePath == NULL) {
-            return NULL;
-        }
-    } else {
-        error("unrecognized input file", __FILE__, __LINE__);
-        return NULL;
-    }
-
-    return inputGeoFilePath;
 }
 
 int zipShp(const char *outputDir) {
@@ -466,7 +481,7 @@ OGRGeometryH createBottomLeftPoly(OGREnvelope* envelope) {
     return buttomLeftPoly;
 }
 
-
+// TODO doubt this method should FATAL ERROR
 int splitGeometries(OGRGeometryH splitGeoms[], int seed, OGRGeometryH inputGeometry) {
     if(OGR_G_GetGeometryCount(inputGeometry) < 50) {
         splitGeoms[seed] = inputGeometry; 
@@ -483,26 +498,22 @@ int splitGeometries(OGRGeometryH splitGeoms[], int seed, OGRGeometryH inputGeome
 
     OGRGeometryH topLeftIntersection = OGR_G_Intersection(inputGeometry, topLeft);
     if(topLeftIntersection == NULL) {
-        error("failed to intersect input geometry with top left geometry", __FILE__, __LINE__);
-        fatalError();
+        fatalError("failed to intersect input geometry with top left geometry", __FILE__, __LINE__);
     }
 
     OGRGeometryH topRightIntersection = OGR_G_Intersection(inputGeometry, topRight);
     if(topRightIntersection == NULL) {
-        error("failed to intersect input geometry with top right geometry", __FILE__, __LINE__);
-        fatalError();
+        fatalError("failed to intersect input geometry with top right geometry", __FILE__, __LINE__);
     }
 
     OGRGeometryH bottomRightIntersection = OGR_G_Intersection(inputGeometry, bottomRight);
     if(bottomRightIntersection == NULL) {
-        error("failed to intersect input geometry with bottom right geometry", __FILE__, __LINE__);
-        fatalError();
+        fatalError("failed to intersect input geometry with bottom right geometry", __FILE__, __LINE__);
     }
 
     OGRGeometryH bottomLeftIntersection = OGR_G_Intersection(inputGeometry, bottomLeft);
     if(bottomLeftIntersection == NULL) {
-        error("failed to intersect input geometry with bottom left geometry", __FILE__, __LINE__);
-        fatalError();
+        fatalError("failed to intersect input geometry with bottom left geometry", __FILE__, __LINE__);
     }
 
     seed = splitGeometries(splitGeoms, seed, topLeftIntersection);
