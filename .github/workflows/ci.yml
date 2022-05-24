@@ -53,6 +53,10 @@ jobs:
       credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      volumes:
+        - /usr/local/bin/docker:/usr/local/bin/docker
     steps:
       - name: version
-        run: geocloud version
+        run: |
+          geocloud -v
+          docker -v
