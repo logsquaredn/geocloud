@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestNewMessage(t *testing.T) {
 	var (
 		expected = uuid.NewString()
