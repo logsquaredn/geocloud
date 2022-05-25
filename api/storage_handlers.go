@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
@@ -20,7 +21,25 @@ import (
 // @Failure  500  {object}  geocloud.Error
 // @Router   /storage [get]
 func (a *API) listStorageHandler(ctx *gin.Context) {
-	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomer(ctx))
+	pageSizeInt := 10
+	pageInt := 1
+	var err error
+	pageSize := ctx.Query("page-size")
+	page := ctx.Query("page")
+	if pageSize != "" {
+		pageSizeInt, err = strconv.Atoi(pageSize)
+		if err != nil {
+			a.err(ctx, http.StatusBadRequest, err)
+		}
+	}
+	if page != "" {
+		pageInt, err = strconv.Atoi(page)
+		if err != nil {
+			a.err(ctx, http.StatusBadRequest, err)
+		}
+	}
+
+	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomer(ctx), pageSizeInt, pageInt)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		storage = []*geocloud.Storage{}
