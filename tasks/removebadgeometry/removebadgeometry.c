@@ -3,71 +3,107 @@
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
-	if(argc != 3) {
-		error("remove bad geometry requires two arguments. Input file and output directory", __FILE__, __LINE__);
-		fatalError();
-	}
+	GDALAllRegister();
 
-	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input filepath: %s\n", inputFilePath);
+	char iMsg[ONE_KB];
+
+	char *iFp = getenv(ENV_VAR_INPUT_FILEPATH);
+	if(iFp == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_INPUT_FILEPATH);
+		fatalError(eMsg, __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "input filepath: %s", iFp);
+	info(iMsg);
 	
-	const char *outputDir = argv[2];
-	fprintf(stdout, "output directory: %s\n", outputDir);
-
-	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
-	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo filepath", __FILE__, __LINE__);
-		fatalError();
+	const char *oDir = getenv(ENV_VAR_OUTPUT_DIRECTORY);
+	if(oDir == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
+		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
+	sprintf(iMsg, "output directory: %s", oDir);
+	info(iMsg);
 
-	struct GDALHandles gdalHandles;
-	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
-		error("failed to initialize", __FILE__, __LINE__);
-		fatalError();
-	}
-	free(inputGeoFilePath);
 
-	if(gdalHandles.inputLayer != NULL) {
-		OGRFeatureH inputFeature;
-		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
-            OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-			if(OGR_G_IsValid(inputGeometry)) {	
-				if(buildOutputVectorFeature(&gdalHandles, &inputGeometry, &inputFeature)) {
-					error("failed to build output vector feature", __FILE__, __LINE__);
-					fatalError();
-				}
-			}
-
-			OGR_G_DestroyGeometry(inputGeometry);
+	int isInputShp = 0;
+	char *vFp = NULL;
+	if(isZip(iFp)) {
+		isInputShp = 1;
+		char **fl = unzip(iFp);
+		if(fl == NULL) {
+			char eMsg[ONE_KB];
+			sprintf(eMsg, "failed to unzip: %s", iFp);
+			fatalError(eMsg, __FILE__, __LINE__);	
 		}
 
-		OGR_F_Destroy(inputFeature);
-		OSRDestroySpatialReference(gdalHandles.inputSpatialRef);
-		GDALClose(gdalHandles.outputDataset);
+		char *f;
+		int fc = 0;
+		while((f = fl[fc]) != NULL) {
+			if(isShp(f)) {
+				vFp = f;
+			} else {
+				free(fl[fc]);
+			}
+			++fc;
+		}
+
+		if(vFp == NULL) {
+			fatalError("input zip must contain a shp file", __FILE__, __LINE__);
+		}
+
+		free(fl);
+	} else if(isGeojson(iFp)) {
+		vFp = strdup(iFp);
 	} else {
-		fprintf(stdout, "no layers found in input file\n");
+		fatalError("input file must be a .zip or .geojson", __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "vector filepath: %s", vFp);
+	info(iMsg); 
+
+	GDALDatasetH iDs = OGROpen(vFp, 1, NULL);
+	if(iDs == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to open vector file: %s", vFp);
+		fatalError(eMsg, __FILE__, __LINE__);	
 	}
 
-	// TODO this seg faults on some geojson input
-	// GDALClose(gdalHandles.inputDataset);
+	int lCount = GDALDatasetGetLayerCount(iDs);
+	if(lCount < 1) {
+		fatalError("input dataset has no layers", __FILE__, __LINE__);
+	}
+	OGRLayerH iLay = OGR_DS_GetLayer(iDs, 0);
+	if(iLay == NULL) {
+		fatalError("failed to get layer from input dataset", __FILE__, __LINE__);
+	}
+	OGR_L_ResetReading(iLay);
 
-	if(zipShp(outputDir)) {
-		error("failed to zip up shp", __FILE__, __LINE__);
-		fatalError();
+	OGRFeatureH iFeat;
+	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
+		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
+		if(!OGR_G_IsValid(iGeom)) {	
+			if(OGR_L_DeleteFeature(iLay, OGR_F_GetFID(iFeat)) != OGRERR_NONE) {
+				fatalError("failed to delete feature from input", __FILE__, __LINE__);			
+			}	
+		}
+
+		OGR_G_DestroyGeometry(iGeom);
 	}
 
-	if(dumpToGeojson(outputDir)) {
-		error("failed to convert shp to geojson", __FILE__, __LINE__);
-		fatalError();
+	GDALClose(iDs);
+
+	if(isInputShp) {
+	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
+			 fatalError("failed to produce output", __FILE__, __LINE__);
+		 }
+	} else {
+		if(produceJsonOutput(iFp, oDir) != 0) {
+			fatalError("failed to produce output", __FILE__, __LINE__);
+		}
 	}
 
-	if(cleanup(outputDir)) {
-		error("failed to cleanup output", __FILE__, __LINE__);
-		fatalError();
-	}
+	free(vFp);
 
-	fprintf(stdout, "removed bad geometry completed successfully\n");
+	info("remove bad geometry completed successfully");
 	return 0;
 }

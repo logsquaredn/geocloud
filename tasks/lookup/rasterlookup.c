@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
 		char eMsg[ONE_KB];
-		sprinf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
+		sprintf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
         fatalError(eMsg, __FILE__, __LINE__);
     }
 	sprintf(iMsg, "lon: %f", lon);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {
 		char eMsg[ONE_KB];
-		sprinf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
+		sprintf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
         fatalError(eMsg, __FILE__, __LINE__);
     }
 	sprintf(iMsg, "lat: %f", lat);

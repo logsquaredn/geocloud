@@ -81,36 +81,30 @@ services:
   removebadgeometry:
     build: .
     image: *image
-    entrypoint: removebadgeometry
-    command: /tmp/input/input.json /tmp
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
+    entrypoint: removebadgeometry
   buffer:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: buffer
-    command: /tmp/input/input.json /tmp 2
   filter:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: filter
-    command: /tmp/input/input.json /tmp prop0 value0
   reproject:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: reproject
-    command: /tmp/input/input.json /tmp 2000
   vectorlookup:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: vectorlookup
-    command: /tmp/input/input.json /tmp 97.5679 34.6970
   rasterlookup:
     build: .
     image: *image
     volumes: [./testdata/raster/input.tif:/tmp/input/input.tif:ro]
     entrypoint: rasterlookup
-    command: /tmp/input/input.tif /tmp 2,4 -89.9383 29.95313
