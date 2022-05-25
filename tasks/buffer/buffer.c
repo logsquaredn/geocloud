@@ -84,24 +84,64 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "vector filepath: %s", vfp);
 	info(iMsg); 
 
-	GDALDatasetH gd = GDALOpenEx(vfp, GDAL_OF_VECTOR, NULL, NULL, NULL);
-	if(gd == NULL) {
+	GDALDatasetH iDs = GDALOpenEx(vfp, GDAL_OF_VECTOR, NULL, NULL, NULL);
+	if(iDs == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "failed to open vector file: %s", vfp);
 		fatalError(eMsg, __FILE__, __LINE__);	
 	}
 	free(vfp);
 
-
-
-	// struct GDALHandles gdalHandles;
-	// gdalHandles.inputLayer = NULL;
-	// if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
-	// 	error("failed to initialize", __FILE__, __LINE__);
-	// 	fatalError();
-	// }
-	// free(inputGeoFilePath);
+	int lCount = GDALDatasetGetLayerCount(iDs);
+	if(lCount < 1) {
+		fatalError("input dataset has no layers", __FILE__, __LINE__);
+	}
+	OGRLayerH iLay = GDALDatasetGetLayer(iDs, 0);
+	if(iLay == NULL) {
+		fatalError("failed to get layer from input dataset", __FILE__, __LINE__);
+	}
+	OGR_L_ResetReading(iLay);
 	
+	GDALDriverH shpD = GDALGetDriverByName("ESRI Shapefile");
+	if(shpD == NULL) {
+		fatalError("failed to get shapefile driver", __FILE__, __LINE__);
+	}
+	// TODO create output file
+
+
+
+	OGRFeatureH iFeat;
+	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
+		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
+		if(iGeom == NULL) {
+			fatalError("failed to get input geometry", __FILE__, __LINE__);			
+		}
+
+		OGRGeometryH rebuiltBuffGeom = OGR_G_CreateGeometry(wkbMultiPolygon);
+		OGRGeometryH splitGeoms[4 * ONE_KB];
+		int geomCount = splitGeometries(splitGeoms, iGeom, 0);
+		if(geomCount < 0) {
+			fatalError("failed to split geometries", __FILE__, __LINE__);
+		}
+
+		for(int i = 0; i < geomCount; ++i) {
+			OGRGeometryH buffGeom = OGR_G_Buffer(splitGeoms[i], bd, qsc);
+			if(buffGeom == NULL) {
+				fatalError("failed to buffer input geometry", __FILE__, __LINE__);
+			}
+
+			if(OGR_G_AddGeometry(rebuiltBuffGeom, buffGeom) != OGRERR_NONE) {
+	 			fatalError("failed to add buffered geometry to rebuilt geometry", __FILE__, __LINE__);
+	 		}
+
+			OGR_G_DestroyGeometry(splitGeoms[i]);
+			OGR_G_DestroyGeometry(buffGeom);
+		}
+
+		// TODO
+	}
+
+	OGR_F_Destroy(iFeat);
 	// if(gdalHandles.inputLayer != NULL) {
 	// 	OGRFeatureH inputFeature;
 	// 	while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
@@ -161,7 +201,7 @@ int main(int argc, char *argv[]) {
 	// 	fatalError();
 	// }
 
-	GDALClose(gd);
+	GDALClose(iDs);
 
 	info("buffer complete successfully");
 	return 0;

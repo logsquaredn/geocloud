@@ -21,15 +21,17 @@ struct GDALHandles {
     OGRFeatureDefnH *outputFeatureDefn;
 };
 
-void info(const char *msg);
-void error(const char *message, const char *file, int line);
-void fatalError(const char *message, const char *file, int line);
+void info(const char*);
+void error(const char*, const char*, int);
+void fatalError(const char*, const char*, int);
 
-int isGeojson(const char *fp);
-int isZip(const char *fp);
-int isShp(const char *fp);
+int isGeojson(const char*);
+int isZip(const char*);
+int isShp(const char*);
 // result of unzip must be free()'d
-char **unzip(const char *fp);
+char **unzip(const char*);
+
+int splitGeometries(OGRGeometryH[], OGRGeometryH, int);
 
 // inputGeoFilePath needs free()'d
 char *getInputGeoFilePath(const char *inputFilePath);
@@ -40,6 +42,5 @@ int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *input
 int dumpToGeojson(const char *outputDir);
 int zipShp(const char *outputDir);
 int cleanup(const char *outputDir);
-int splitGeometries(OGRGeometryH[], int, OGRGeometryH);
 
 #endif
