@@ -1,13 +1,12 @@
 package main
 
 import (
-	"strings"
-
+	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/viper"
 )
 
 func init() {
 	viper.SetEnvPrefix("geocloud")
 	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.SetEnvKeyReplacer(geocloud.QueryParamToEnvVarReplacer)
 }

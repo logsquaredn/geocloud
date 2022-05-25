@@ -11,7 +11,7 @@ import (
 
 // @Summary  Get a list of task types
 // @Description
-// @Tags
+// @Tags     Task
 // @Produce  application/json
 // @Success  200  {object}  []geocloud.Task
 // @Failure  401  {object}  geocloud.Error
@@ -36,7 +36,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 
 // @Summary  Get a task type
 // @Description
-// @Tags
+// @Tags     Task
 // @Produce  application/json
 // @Param    type  path      string  true  "Task type"
 // @Success  200   {object}  geocloud.Task

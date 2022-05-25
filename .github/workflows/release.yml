@@ -59,7 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: v${{ needs.build.outputs.tag }}
+          release_name: v${{ needs.push.outputs.tag }}
       - name: upload-geocloud
         uses: actions/upload-release-asset@v1
         env:
@@ -77,58 +77,4 @@ jobs:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: /usr/local/bin/geocloudctl
           asset_name: geocloudctl_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-removebadgeometry
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/removebadgeometry
-          asset_name: task_removebadgeometry_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-filter
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/filter
-          asset_name: task_filter_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-buffer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/buffer
-          asset_name: task_buffer_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-reproject
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/reproject
-          asset_name: task_reproject_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-vectorlookup
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/vectorlookup
-          asset_name: task_vectorlookup_linux_amd64
-          asset_content_type: application/octet-stream
-      - name: upload-task-rasterlookup
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: /usr/local/bin/rasterlookup
-          asset_name: task_rasterlookup_linux_amd64
           asset_content_type: application/octet-stream
