@@ -5,7 +5,7 @@ INSERT INTO task (
     task_params
 ) VALUES (
     'buffer',
-    ARRAY['distance', 'segmentCount']
+    ARRAY['distance', 'segment-count']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
@@ -13,7 +13,7 @@ INSERT INTO task (
     task_params
 ) VALUES (
     'filter',
-    ARRAY['filterColumn', 'filterValue']
+    ARRAY['filter-column', 'filter-value']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
@@ -21,7 +21,7 @@ INSERT INTO task (
     task_params
 ) VALUES (
     'reproject', 
-    ARRAY['targetProjection']
+    ARRAY['target-projection']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (

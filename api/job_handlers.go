@@ -206,7 +206,7 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 
 type bufferQuery struct {
 	Distance     int `form:"distance"`
-	SegmentCount int `form:"segmentCount"`
+	SegmentCount int `form:"segment-count"`
 }
 
 // @Summary      Create a buffer job
@@ -221,18 +221,18 @@ type bufferQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key       query     string   false  "API Key via query parameter"
-// @Param        X-API-Key     header    string   false  "API Key via header"
-// @Param        input         query     string   false  "ID of existing dataset to use"
-// @Param        input-of      query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output-of     query     string   false  "ID of existing job whose output dataset to use"
-// @Param        distance      query     integer  true   "Buffer distance"
-// @Param        segmentCount  query     integer  true   "Segment count"
-// @Success      200           {object}  geocloud.Job
-// @Failure      400           {object}  geocloud.Error
-// @Failure      401           {object}  geocloud.Error
-// @Failure      403           {object}  geocloud.Error
-// @Failure      500           {object}  geocloud.Error
+// @Param        api-key        query     string   false  "API Key via query parameter"
+// @Param        X-API-Key      header    string   false  "API Key via header"
+// @Param        input          query     string   false  "ID of existing dataset to use"
+// @Param        input-of       query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of      query     string   false  "ID of existing job whose output dataset to use"
+// @Param        distance       query     integer  true   "Buffer distance"
+// @Param        segment-count  query     integer  true   "Segment count"
+// @Success      200            {object}  geocloud.Job
+// @Failure      400            {object}  geocloud.Error
+// @Failure      401            {object}  geocloud.Error
+// @Failure      403            {object}  geocloud.Error
+// @Failure      500            {object}  geocloud.Error
 // @Router       /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
@@ -250,8 +250,8 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 type filterQuery struct {
-	FilterColumn string `form:"filterColumn"`
-	FilterValue  string `form:"filterValue"`
+	FilterColumn string `form:"filter-column"`
+	FilterValue  string `form:"filter-value"`
 }
 
 // @Summary      Create a filter job
@@ -266,18 +266,18 @@ type filterQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key       query     string  false  "API Key via query parameter"
-// @Param        X-API-Key     header    string  false  "API Key via header"
-// @Param        input         query     string  false  "ID of existing dataset to use"
-// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
-// @Param        filterColumn  query     string  true   "Column to filter on"
-// @Param        filterValue   query     string  true   "Value to filter on"
-// @Success      200           {object}  geocloud.Job
-// @Failure      400           {object}  geocloud.Error
-// @Failure      401           {object}  geocloud.Error
-// @Failure      403           {object}  geocloud.Error
-// @Failure      500           {object}  geocloud.Error
+// @Param        api-key        query     string  false  "API Key via query parameter"
+// @Param        X-API-Key      header    string  false  "API Key via header"
+// @Param        input          query     string  false  "ID of existing dataset to use"
+// @Param        input-of       query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of      query     string  false  "ID of existing job whose output dataset to use"
+// @Param        filter-column  query     string  true   "Column to filter on"
+// @Param        filter-value   query     string  true   "Value to filter on"
+// @Success      200            {object}  geocloud.Job
+// @Failure      400            {object}  geocloud.Error
+// @Failure      401            {object}  geocloud.Error
+// @Failure      403            {object}  geocloud.Error
+// @Failure      500            {object}  geocloud.Error
 // @Router       /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
