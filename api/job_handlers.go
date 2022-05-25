@@ -295,7 +295,7 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 }
 
 type reprojectQuery struct {
-	TargetProjection int `form:"targetProjection"`
+	TargetProjection int `form:"target-projection"`
 }
 
 // @Summary      Create a reproject job
@@ -371,7 +371,7 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type vectorlookupQuery struct {
+type vectorLookupQuery struct {
 	Longitude float64 `form:"longitude"`
 	Latitude  float64 `form:"latitude"`
 }
@@ -402,7 +402,7 @@ type vectorlookupQuery struct {
 // @Failure      500        {object}  geocloud.Error
 // @Router       /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&vectorlookupQuery{}); err != nil {
+	if err := ctx.ShouldBindQuery(&vectorLookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
@@ -416,7 +416,7 @@ func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type rasterlookupQuery struct {
+type rasterLookupQuery struct {
 	Bands     string  `form:"bands"`
 	Longitude float64 `form:"longitude"`
 	Latitude  float64 `form:"latitude"`
@@ -449,7 +449,7 @@ type rasterlookupQuery struct {
 // @Failure      500        {object}  geocloud.Error
 // @Router       /job/rasterlookup [post]
 func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&rasterlookupQuery{}); err != nil {
+	if err := ctx.ShouldBindQuery(&rasterLookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
