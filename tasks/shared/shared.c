@@ -1,7 +1,7 @@
 #include "shared.h"
 
 const char *ENV_VAR_INPUT_FILEPATH = "GEOCLOUD_INPUT_FILE";
-const char *ENV_VAR_OUTPUT_DIRECTORY = "GEOCLOUD_OUTPUT_DIRECTORY";
+const char *ENV_VAR_OUTPUT_DIRECTORY = "GEOCLOUD_OUTPUT_DIR";
 int MAX_UNZIPPED_FILES = 16;
 int ONE_KB = 1024;
 
@@ -86,6 +86,28 @@ char **unzip(const char *fp) {
     }
 
     return fl;
+}
+
+GDALDatasetH createVectorDataset(const char *fp) {
+    GDALDriverH shpD = GDALGetDriverByName("ESRI Shapefile");
+	if(shpD == NULL) {
+		error("failed to get shapefile driver", __FILE__, __LINE__);
+        return NULL;
+	}
+
+    GDALDatasetH ds = GDALCreate(shpD, 
+                          fp, 
+                          0, 0, 0, 
+                          GDT_Unknown, 
+                          NULL);
+    if(ds == NULL) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to create vector dataset at: %s", fp);
+        fatalError(eMsg, __FILE__, __LINE__);
+        return NULL;
+    }
+    
+    return ds;
 }
 
 OGRGeometryH createTopLeftPoly(OGREnvelope* envelope) {
@@ -234,260 +256,159 @@ int splitGeometries(OGRGeometryH splitGeoms[], OGRGeometryH inputGeometry, int s
         return -1;
     }
 
-    seed = splitGeometries(splitGeoms, seed, topLeftIntersection);
-    seed = splitGeometries(splitGeoms, seed, topRightIntersection);
-    seed = splitGeometries(splitGeoms, seed, bottomRightIntersection);
-    seed = splitGeometries(splitGeoms, seed, bottomLeftIntersection);
+    seed = splitGeometries(splitGeoms, topLeftIntersection, seed);
+    seed = splitGeometries(splitGeoms, topRightIntersection, seed);
+    seed = splitGeometries(splitGeoms, bottomRightIntersection, seed);
+    seed = splitGeometries(splitGeoms, bottomLeftIntersection, seed);
 
     return seed;
 }
 
+int zipDir(const char *dst, const char *srcDir) {
+    char cmd[ONE_KB];
+    sprintf(cmd, "zip -jr %s %s", dst, srcDir);
 
-// TODO POTENTIAL CLEANUP 
-
-int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRGeometryH *geometry, OGRFeatureH *inputFeature) {
-    OGRFeatureH outputFeature =  OGR_F_Create(gdalHandles->outputFeatureDefn);
-    if(outputFeature == NULL) {
-        error("failed to create output feature", __FILE__, __LINE__);
-        return 1;
+    FILE *fptr = popen(cmd, "r");
+    if(fptr == NULL) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to zip directory: %s", srcDir);
+        error(eMsg, __FILE__, __LINE__);
+        return 1;  
     }
 
-    if(OGR_F_SetGeometry(outputFeature, *geometry) != OGRERR_NONE) {
-        error("failed to set geometry on output feature", __FILE__, __LINE__);
-        return 1;
-    }
+    char buff[ONE_KB];
+    while(fgets(buff, ONE_KB, fptr) != NULL) {}
 
-    for(int i = 0; i < OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(gdalHandles->inputLayer)); ++i) {
-        const char *fieldValue = OGR_F_GetFieldAsString(*inputFeature, i);
-        OGR_F_SetFieldString(outputFeature, i, fieldValue);
-    }
-
-    if(OGR_L_CreateFeature(gdalHandles->outputLayer, outputFeature) != OGRERR_NONE) {
-        error("failed to create feature in output layer", __FILE__, __LINE__);
-        return 1;
-    }    
-
-    OGR_F_Destroy(outputFeature);
-
-    return 0;
-}
-
-int createOutputFields(OGRLayerH inLayer, OGRLayerH *outLayer, OGRFeatureDefnH outFeatureDefn) {
-    OGRFeatureDefnH inFeatureDef = OGR_L_GetLayerDefn(inLayer);
-    int inputFieldCount = OGR_FD_GetFieldCount(inFeatureDef);
-    for(int i = 0; i < inputFieldCount; ++i) {
-        OGRFieldDefnH fieldDefn = OGR_FD_GetFieldDefn(inFeatureDef, i);
-        if(fieldDefn == NULL) {
-            error("failed to get input feature definition", __FILE__, __LINE__);
-            return 1;
-        }
-
-        if(OGR_L_CreateField(*outLayer, fieldDefn, i) != OGRERR_NONE) {
-            error("failed to create field in output layer", __FILE__, __LINE__);
-            return 1;
-        }
-    }
-    
-    return 0;
-}
-
-int deleteExistingDataset(GDALDriverH driver, const char* filePath) {
-    struct stat statBuffer;
-    if(stat(filePath, &statBuffer) == 0) {
-        if(GDALDeleteDataset(driver, filePath) != CE_None) {
-            error("failed to delete dataset at output location", __FILE__, __LINE__);
-			return 1;
-        }
+    if(pclose(fptr) == -1) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to close output pipe from command: %s", cmd);
+        error(eMsg, __FILE__, __LINE__);
     }
 
     return 0;
 }
 
-int createVectorDataset(GDALDatasetH *dataset, GDALDriverH driver, const char *filePath) {
-    if(deleteExistingDataset(driver, filePath)) {
-        error("failed to delete existing dataset at output location", __FILE__, __LINE__);
+int dump2geojson(const char *dst, const char *src) {
+    char cmd[ONE_KB];
+    sprintf(cmd, "ogr2ogr -f GeoJSON %s %s", dst, src);
+
+    FILE *fptr = popen(cmd, "r");
+    if(fptr == NULL) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to convert src: %s to dst: %s", src, dst);
+        error(eMsg, __FILE__, __LINE__);
+        return 1;  
+    }
+
+    char buff[ONE_KB];
+    while(fgets(buff, ONE_KB, fptr) != NULL) {}
+
+    if(pclose(fptr) == -1) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to close output pipe from command: %s", cmd);
+        error(eMsg, __FILE__, __LINE__);
+    }
+
+    return 0;
+}
+
+int dump2shp(const char *dst, const char *src) {
+    char cmd[ONE_KB];
+    sprintf(cmd, "ogr2ogr -f \"ESRI Shapefile\" %s %s", dst, src);
+
+    FILE *fptr = popen(cmd, "r");
+    if(fptr == NULL) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to convert src: %s to dst: %s", src, dst);
+        error(eMsg, __FILE__, __LINE__);
+        return 1;  
+    }
+
+    char buff[ONE_KB];
+    while(fgets(buff, ONE_KB, fptr) != NULL) {}
+
+    if(pclose(fptr) == -1) {
+        char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to close output pipe from command: %s", cmd);
+        error(eMsg, __FILE__, __LINE__);
+    }
+
+    return 0;
+}
+
+int produceShpOutput(char *iFp, const char *oDir, const char *vFp) {
+    char iMsg[ONE_KB];
+
+    if(remove(iFp) != 0) {
+		char eMsg[ONE_KB];
+        sprintf(eMsg, "failed to cleanup input file: %s", iFp);
+        error(eMsg, __FILE__, __LINE__);
+		return 1;			\
+	}
+	
+    const char *iDir = dirname(iFp);
+
+	char zPath[ONE_KB];
+	sprintf(zPath, "%s/output.zip", oDir);
+	if(zipDir(zPath, iDir) != 0) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to zip directory: %s", iDir);
+        error(eMsg, __FILE__, __LINE__);
+		return 1;	
+	}
+	sprintf(iMsg, "output zip: %s", zPath);
+	info(iMsg); 
+
+	char gPath[ONE_KB];
+	sprintf(gPath, "%s/output.json", oDir);
+	if(dump2geojson(gPath, vFp)) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to convert shp: %s to geojson: %s", vFp, gPath);
+        error(eMsg, __FILE__, __LINE__);
 		return 1;
 	}
-
-    *dataset = GDALCreate(driver, 
-                          filePath, 
-                          0, 0, 0, 
-                          GDT_Unknown, 
-                          NULL);
-    if(*dataset == NULL) {
-        error("failed to create vector dataset", __FILE__, __LINE__);
-        return 1;
-    }
-    
-    return 0;
-}
-
-int getShpDriver(GDALDriverH **driver) {
-    *driver = (GDALDriverH*) GDALGetDriverByName("ESRI Shapefile");
-    if(*driver == NULL) {
-        error("failed to get shp driver", __FILE__, __LINE__);
-        return 1;
-    }
+	sprintf(iMsg, "output json: %s", gPath);
+	info(iMsg); 
 
     return 0;
 }
 
-char* getOutputFilePath(const char *outputDir, const char filename[]) {
-    char *outputFilePath = (char*) calloc(ONE_KB, sizeof(char));
-    snprintf(outputFilePath, ONE_KB, "%s%s", outputDir, filename);
+int produceJsonOutput(char *iFp, const char *oDir) {
+    char iMsg[ONE_KB];
 
-    return outputFilePath;
-}
+    char iFpTmp[ONE_KB];
+    strcpy(iFpTmp, iFp);
+	const char *iDir = dirname(iFpTmp);
 
-int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir) {
-    char outputFilename[12] = "/output.shp";
-    char *outputFilePath = getOutputFilePath(outputDir, outputFilename);
-    fprintf(stdout, "output filepath: %s\n", outputFilePath);
-
-	GDALDatasetH inputDataset;
-	if(openVectorDataset(&inputDataset, inputFilePath)) {
-		error("failed to open input vector dataset", __FILE__, __LINE__);
-		return 1;
+	char sPath[ONE_KB];
+	sprintf(sPath, "%s/output.shp", iDir);
+	if(dump2shp(sPath, iFp)) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to convert geojson: %s to shp: %s", iFp, sPath);
+        error(eMsg, __FILE__, __LINE__);
+		return 1;		
 	}
-    gdalHandles->inputDataset = inputDataset;
-
-	GDALDriverH *driver;
-	if(getShpDriver(&driver)) {
-		error("failed to create driver", __FILE__, __LINE__);
-		return 1;
+	char gPath[ONE_KB];
+	sprintf(gPath, "%s/output.json", oDir);
+	if(rename(iFp, gPath) != 0) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to move geojson: %s to output: %s", iFp, gPath);
+        error(eMsg, __FILE__, __LINE__);
+		return 1;	
 	}
+	sprintf(iMsg, "output json: %s", gPath);
+	info(iMsg); 
 
-	int numberOfLayers = GDALDatasetGetLayerCount(inputDataset);
-	if(numberOfLayers > 0) {
-		OGRLayerH inputLayer = GDALDatasetGetLayer(inputDataset, 0);
-		if(inputLayer == NULL) {
-			error("failed to get layer from input dataset", __FILE__, __LINE__);
-			return 1;
-		}  
-        gdalHandles->inputLayer = inputLayer;
-
-		OGR_L_ResetReading(inputLayer);
-
-		GDALDatasetH outputDataset;
-		if(createVectorDataset(&outputDataset, driver, outputFilePath)) {
-			error("failed to create output vector dataset", __FILE__, __LINE__);
-			return 1;
-		}
-        gdalHandles->outputDataset = outputDataset;
-
-		OGRSpatialReferenceH inputSpatialRef = OGR_L_GetSpatialRef(inputLayer);
-        gdalHandles->inputSpatialRef = inputSpatialRef;
-		OGRLayerH outputLayer = GDALDatasetCreateLayer(outputDataset, 
-													   OGR_L_GetName(inputLayer),  
-													   inputSpatialRef, 
-													   wkbUnknown, 
-													   NULL);
-		if(outputLayer == NULL) {
-			error("failed to create output layer", __FILE__, __LINE__);
-			return 1;
-		}
-        gdalHandles->outputLayer = outputLayer;
-
-		OGRFeatureDefnH outputFeatureDefn = OGR_L_GetLayerDefn(outputLayer);
-		if(createOutputFields(inputLayer, &outputLayer, outputFeatureDefn)) {
-			error("failed to create fields on output layer", __FILE__, __LINE__);
-			return 1;
-		}
-        gdalHandles->outputFeatureDefn = outputFeatureDefn;
-    }
-
-    return 0;
-}
-
-
-int isExt(const char *filename, const char *suffix) {
-    size_t filenameLength = strlen(filename);
-    size_t suffixLength = strlen(suffix);
-
-    return strncmp(filename + filenameLength - suffixLength, suffix, suffixLength) == 0;
-}
-
-char *getShpFilePath(const char *unzipDir) {
-    char *shpFilePath;
-    DIR *d = opendir(unzipDir);
-    struct dirent *dir;
-    if(d) {
-        int shpFileFound = 0;
-        while((dir = readdir(d)) != NULL) {
-            if(isExt(dir->d_name, ".shp")) {
-                shpFileFound = 1;
-                int size = 0;
-                while(unzipDir[size] != '\0') ++size;
-                size += strlen(dir->d_name);
-                shpFilePath = (char*) malloc(size + 2);
-                snprintf(shpFilePath, size + 2, "%s/%s", unzipDir, dir->d_name);
-                break;
-            }
-        }
-
-        if(!shpFileFound) {
-            error("shp file not found in input", __FILE__, __LINE__);
-            return NULL;
-        }
-        closedir(d);
-    } else {
-        error("unable to open unzip directory", __FILE__, __LINE__);
-        return NULL;
-    }
-
-    return shpFilePath;
-}
-
-int zipShp(const char *outputDir) {
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s%s", "zip -j ", outputDir, "/output.zip ", outputDir, "/*");
-
-    int zipResult = system(cmd);
-    if(zipResult != 0) {
-        error("failed to zip up shp", __FILE__, __LINE__);
-        return 1;
-    }
-
-    return 0;
-}
-
-int dumpToGeojson(const char *outputDir) {
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "%s%s%s%s", "ogr2ogr -f GeoJSON ", outputDir, "/output.json ", outputDir);
-
-    int ogr2ogrResult = system(cmd);
-    if(ogr2ogrResult != 0) {
-        error("failed to convert shp to geojson", __FILE__, __LINE__);
-        return 1;
-    }
-
-    return 0;
-}
-
-int cleanup(const char *outputDir) {
-    DIR *d = opendir(outputDir);
-    struct dirent *dir;
-    if(d) {
-        while((dir = readdir(d)) != NULL) {
-            if(!isExt(dir->d_name, ".zip") && !isExt(dir->d_name, ".json")) {
-                int size = 0;
-                while(outputDir[size] != '\0') ++size;
-                size += strlen(dir->d_name);
-                char absolutePath[size + 2];
-                snprintf(absolutePath, size + 2, "%s/%s", outputDir, dir->d_name);
-                
-                struct stat path_stat;
-                stat(absolutePath, &path_stat);
-                if(S_ISREG(path_stat.st_mode)) {
-                    int result = remove(absolutePath);
-                    if(result) {
-                        error("failed to cleanup output", __FILE__, __LINE__);
-                        return 1; 
-                    }
-                }
-            }
-        }
-    }
+	char zPath[ONE_KB];
+	sprintf(zPath, "%s/output.zip", oDir);
+	if(zipDir(zPath, iDir) != 0) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to zip directory: %s", iDir);
+		error(eMsg, __FILE__, __LINE__);
+        return 1;	
+	}
+	sprintf(iMsg, "output zip: %s", zPath);
+	info(iMsg); 
 
     return 0;
 }

@@ -7,22 +7,22 @@ int main(int argc, char *argv[]) {
 
 	char iMsg[ONE_KB];
 
-	const char *ifp = getenv(ENV_VAR_INPUT_FILEPATH);
-	if(ifp == NULL) {
+	char *iFp = getenv(ENV_VAR_INPUT_FILEPATH);
+	if(iFp == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "env var: %s must be set", ENV_VAR_INPUT_FILEPATH);
 		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	sprintf(iMsg, "input filepath: %s", ifp);
+	sprintf(iMsg, "input filepath: %s", iFp);
 	info(iMsg);
 	
-	const char *od = getenv(ENV_VAR_OUTPUT_DIRECTORY);
-	if(od == NULL) {
+	const char *oDir = getenv(ENV_VAR_OUTPUT_DIRECTORY);
+	if(oDir == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
 		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	sprintf(iMsg, "output directory: %s", od);
+	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
 	const char *bdArg = getenv("GEOCLOUD_BUFFER_DISTANCE");
@@ -51,12 +51,14 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "quadrant segment count: %d", qsc);
 	info(iMsg);
 
-	char *vfp = NULL;
-	if(isZip(ifp)) {
-		char **fl = unzip(ifp);
+	int isInputShp = 0;
+	char *vFp = NULL;
+	if(isZip(iFp)) {
+		isInputShp = 1;
+		char **fl = unzip(iFp);
 		if(fl == NULL) {
 			char eMsg[ONE_KB];
-			sprintf(eMsg, "failed to unzip: %s", ifp);
+			sprintf(eMsg, "failed to unzip: %s", iFp);
 			fatalError(eMsg, __FILE__, __LINE__);	
 		}
 
@@ -64,55 +66,46 @@ int main(int argc, char *argv[]) {
 		int fc = 0;
 		while((f = fl[fc]) != NULL) {
 			if(isShp(f)) {
-				vfp = f;
+				vFp = f;
 			} else {
 				free(fl[fc]);
 			}
 			++fc;
 		}
 
-		if(vfp == NULL) {
+		if(vFp == NULL) {
 			fatalError("input zip must contain a shp file", __FILE__, __LINE__);
 		}
 
 		free(fl);
-	} else if(isGeojson(ifp)) {
-		vfp = strdup(ifp);
+	} else if(isGeojson(iFp)) {
+		vFp = strdup(iFp);
 	} else {
 		fatalError("input file must be a .zip or .geojson", __FILE__, __LINE__);
 	}
-	sprintf(iMsg, "vector filepath: %s", vfp);
+	sprintf(iMsg, "vector filepath: %s", vFp);
 	info(iMsg); 
 
-	GDALDatasetH iDs = GDALOpenEx(vfp, GDAL_OF_VECTOR, NULL, NULL, NULL);
+	GDALDatasetH iDs = OGROpen(vFp, 1, NULL);
 	if(iDs == NULL) {
 		char eMsg[ONE_KB];
-		sprintf(eMsg, "failed to open vector file: %s", vfp);
+		sprintf(eMsg, "failed to open vector file: %s", vFp);
 		fatalError(eMsg, __FILE__, __LINE__);	
 	}
-	free(vfp);
 
 	int lCount = GDALDatasetGetLayerCount(iDs);
 	if(lCount < 1) {
 		fatalError("input dataset has no layers", __FILE__, __LINE__);
 	}
-	OGRLayerH iLay = GDALDatasetGetLayer(iDs, 0);
+	OGRLayerH iLay = OGR_DS_GetLayer(iDs, 0);
 	if(iLay == NULL) {
 		fatalError("failed to get layer from input dataset", __FILE__, __LINE__);
 	}
 	OGR_L_ResetReading(iLay);
 	
-	GDALDriverH shpD = GDALGetDriverByName("ESRI Shapefile");
-	if(shpD == NULL) {
-		fatalError("failed to get shapefile driver", __FILE__, __LINE__);
-	}
-	// TODO create output file
-
-
-
 	OGRFeatureH iFeat;
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
-		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
+		OGRGeometryH iGeom = OGR_F_StealGeometry(iFeat);
 		if(iGeom == NULL) {
 			fatalError("failed to get input geometry", __FILE__, __LINE__);			
 		}
@@ -138,70 +131,31 @@ int main(int argc, char *argv[]) {
 			OGR_G_DestroyGeometry(buffGeom);
 		}
 
-		// TODO
+		if(OGR_F_SetGeometry(iFeat, rebuiltBuffGeom) != OGRERR_NONE) {
+			fatalError("failed set updated geometry on input feature", __FILE__, __LINE__);
+		}
+		
+		if(OGR_L_SetFeature(iLay, iFeat) != OGRERR_NONE) {
+			fatalError("failed to set updated feature on input layer", __FILE__, __LINE__);
+		}
+
+		OGR_G_DestroyGeometry(rebuiltBuffGeom);
+		OGR_F_Destroy(iFeat);
 	}
 
-	OGR_F_Destroy(iFeat);
-	// if(gdalHandles.inputLayer != NULL) {
-	// 	OGRFeatureH inputFeature;
-	// 	while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
-	// 		OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-	// 		if(inputGeometry == NULL) {
-	// 			error("failed to get input geometry", __FILE__, __LINE__);	
-	// 			fatalError();	
-	// 		}
-
-	// 		OGRGeometryH rebuiltBufferedGeometry = OGR_G_CreateGeometry(wkbMultiPolygon);
-	// 		OGRGeometryH splitGeoms[4096];
-	// 		int geomsCount = splitGeometries(splitGeoms, 0, inputGeometry);
-	// 		for(int i = 0; i < geomsCount; ++i) {
-	// 			OGRGeometryH bufferedGeometry = OGR_G_Buffer(splitGeoms[i], bufferDistanceDouble, quadSegCountInt);
-	// 			if(bufferedGeometry == NULL) {
-	// 				error("failed to buffer input geometry", __FILE__, __LINE__);
-	// 				fatalError();
-	// 			}
-
-	// 			if(OGR_G_AddGeometry(rebuiltBufferedGeometry, bufferedGeometry) != OGRERR_NONE) {
-	// 				error("failed to add buffered geometry to rebuilt geometry", __FILE__, __LINE__);
-	// 				fatalError();
-	// 			}
-				
-	// 			OGR_G_DestroyGeometry(splitGeoms[i]);
-	// 			OGR_G_DestroyGeometry(bufferedGeometry);
-	// 		}
-
-	// 		if(buildOutputVectorFeature(&gdalHandles, &rebuiltBufferedGeometry, &inputFeature)) {
-	// 			error("failed to build output vector feature", __FILE__, __LINE__);
-	// 			fatalError();
-	// 		}
-
-	// 		OGR_G_DestroyGeometry(rebuiltBufferedGeometry);
-	// 	}
-
-	// 	OGR_F_Destroy(inputFeature);
-	// 	OSRDestroySpatialReference(gdalHandles.inputSpatialRef);
-	// 	GDALClose(gdalHandles.outputDataset);
-	// } else {
-	// 	fprintf(stdout, "no layers found in input file\n");
-	// }
-
-
-	// if(zipShp(outputDir)) {
-	// 	error("failed to zip up shp", __FILE__, __LINE__);
-	// 	fatalError();
-	// }
-
-	// if(dumpToGeojson(outputDir)) {
-	// 	error("failed to convert shp to geojson", __FILE__, __LINE__);
-	// 	fatalError();
-	// }
-
-	// if(cleanup(outputDir)) {
-	// 	error("failed to cleanup output", __FILE__, __LINE__);
-	// 	fatalError();
-	// }
-
 	GDALClose(iDs);
+
+	if(isInputShp) {
+	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
+			 fatalError("failed to produce output", __FILE__, __LINE__);
+		 }
+	} else {
+		if(produceJsonOutput(iFp, oDir) != 0) {
+			fatalError("failed to produce output", __FILE__, __LINE__);
+		}
+	}
+
+	free(vFp);
 
 	info("buffer complete successfully");
 	return 0;

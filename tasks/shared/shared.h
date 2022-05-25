@@ -12,15 +12,6 @@ extern const char *ENV_VAR_OUTPUT_DIRECTORY;
 extern int MAX_UNZIPPED_FILES;
 extern int ONE_KB;
 
-struct GDALHandles {
-    GDALDatasetH *inputDataset;
-    GDALDatasetH *outputDataset;
-    OGRLayerH *inputLayer;
-    OGRSpatialReferenceH *inputSpatialRef;
-    OGRLayerH *outputLayer;
-    OGRFeatureDefnH *outputFeatureDefn;
-};
-
 void info(const char*);
 void error(const char*, const char*, int);
 void fatalError(const char*, const char*, int);
@@ -28,19 +19,16 @@ void fatalError(const char*, const char*, int);
 int isGeojson(const char*);
 int isZip(const char*);
 int isShp(const char*);
-// result of unzip must be free()'d
+// result of unzip() must be free()'d
 char **unzip(const char*);
+
+GDALDatasetH createVectorDataset(const char*);
 
 int splitGeometries(OGRGeometryH[], OGRGeometryH, int);
 
-// inputGeoFilePath needs free()'d
-char *getInputGeoFilePath(const char *inputFilePath);
+int zipDir(const char*, const char*);
 
-int vectorInitialize(struct GDALHandles *gdalHandles, const char *inputFilePath, const char *outputDir);
-int buildOutputVectorFeature(struct GDALHandles *gdalHandles, OGRFeatureH *inputFeature, OGRGeometryH *geometry);
-
-int dumpToGeojson(const char *outputDir);
-int zipShp(const char *outputDir);
-int cleanup(const char *outputDir);
+int produceShpOutput(char *, const char *, const char *);
+int produceJsonOutput(char *, const char *);
 
 #endif
