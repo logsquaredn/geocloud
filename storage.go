@@ -10,6 +10,7 @@ type Storage struct {
 	CustomerID string    `json:"-"`
 	Name       string    `json:"name,omitempty"`
 	LastUsed   time.Time `json:"last_used,omitempty"`
+	CreateTime time.Time `json:"create_time,omitempty"`
 }
 
 var _ Message = (*Storage)(nil)
