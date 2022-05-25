@@ -11,7 +11,7 @@ import (
 
 // @Summary      Get a list of jobs
 // @Description  Get a list of jobs based on API Key
-// @Tags         listJob
+// @Tags         Job
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -36,7 +36,7 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 
 // @Summary      Get a job
 // @Description  Get the metadata of a job. This can be used as a way to track job status
-// @Tags         getJob
+// @Tags         Job
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -59,7 +59,7 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's task
 // @Description  Get the metadata of a job's task
-// @Tags         getJobTask
+// @Tags         Task
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -88,7 +88,7 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's input
 // @Description  Get the metadata of a job's input
-// @Tags         getJobInput
+// @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -111,7 +111,7 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's input content
 // @Description  Gets the content of a job's input
-// @Tags         getJobInputContent
+// @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
 // @Param        api-key       query   string  false  "API Key via query parameter"
@@ -147,7 +147,7 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's output
 // @Description  Get the metadata of a job's output
-// @Tags         getJobOutput
+// @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -170,7 +170,7 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's output content
 // @Description  Gets the content of a job's output
-// @Tags         getJobOutputContent
+// @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
 // @Param        api-key       query   string  false  "API Key via query parameter"
@@ -218,7 +218,7 @@ type bufferQuery struct {
 // @Description  &emsp; - Pass the geospatial data to be processed in the request body.
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
-// @Tags         createBuffer
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key       query     string   false  "API Key via query parameter"
@@ -263,7 +263,7 @@ type filterQuery struct {
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
-// @Tags         createFilter
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key       query     string  false  "API Key via query parameter"
@@ -307,7 +307,7 @@ type reprojectQuery struct {
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
-// @Tags         createReproject
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key           query     string   false  "API Key via query parameter"
@@ -347,7 +347,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
-// @Tags         createRemovebadgeometry
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -385,7 +385,7 @@ type vectorlookupQuery struct {
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
-// @Tags         createVectorlookup
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -431,7 +431,7 @@ type rasterlookupQuery struct {
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff
 // @Description  &emsp; - This task will generate JSON output
-// @Tags         createVectorlookup
+// @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
