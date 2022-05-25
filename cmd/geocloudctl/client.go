@@ -1,15 +1,23 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"os/user"
+	"strconv"
 
 	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/viper"
 )
 
 func getClient() (*geocloud.Client, error) {
+	port, _ := strconv.Atoi(os.Getenv("GEOCLOUD_PORT"))
+	if port == 0 {
+		port = 8080
+	}
+
 	var (
-		baseURL = "http://localhost:8080/"
+		baseURL = fmt.Sprintf("http://localhost:%d/", port)
 		apiKey  = viper.GetString("api-key")
 	)
 	if c := viper.GetString("base-url"); c != "" {

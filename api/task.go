@@ -10,7 +10,7 @@ import (
 )
 
 func (a *API) getTask(ctx *gin.Context, rawTaskType string) (*geocloud.Task, int, error) {
-	taskType, err := geocloud.TaskTypeFrom(rawTaskType)
+	taskType, err := geocloud.ParseTaskType(rawTaskType)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}

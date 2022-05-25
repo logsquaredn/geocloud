@@ -4,14 +4,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/viper"
+	"github.com/spf13/cobra"
 )
 
-func getInput() ([]byte, error) {
-	f, err := os.Open(viper.GetString("file"))
-	if err != nil {
-		return nil, err
-	}
-
-	return io.ReadAll(f)
+func getInput(cmd *cobra.Command) (io.Reader, error) {
+	return os.Open(cmd.Flag("file").Value.String())
 }

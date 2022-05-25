@@ -13,6 +13,7 @@ ADD ${zip} /assets
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
 WORKDIR $GOPATH/src/github.com/logsquaredn/geocloud
+RUN apk add --no-cache git
 RUN go install github.com/swaggo/swag/cmd/swag@v1.7.8
 COPY go.mod go.sum ./
 RUN go mod download

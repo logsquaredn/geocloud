@@ -29,7 +29,7 @@ func (p *Postgres) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 	}
 
 	t.QueueID = queueID.String
-	t.Type, err = geocloud.TaskTypeFrom(taskType)
+	t.Type, err = geocloud.ParseTaskType(taskType)
 	return t, err
 }
 
@@ -48,7 +48,7 @@ func (p *Postgres) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	}
 
 	t.QueueID = queueID.String
-	t.Type, err = geocloud.TaskTypeFrom(taskType)
+	t.Type, err = geocloud.ParseTaskType(taskType)
 	return t, err
 }
 
@@ -79,7 +79,7 @@ func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, e
 		}
 
 		task.QueueID = queueID.String
-		task.Type, err = geocloud.TaskTypeFrom(taskType)
+		task.Type, err = geocloud.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}

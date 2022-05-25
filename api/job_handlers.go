@@ -224,8 +224,8 @@ type bufferQuery struct {
 // @Param        api-key       query     string   false  "API Key via query parameter"
 // @Param        X-API-Key     header    string   false  "API Key via header"
 // @Param        input         query     string   false  "ID of existing dataset to use"
-// @Param        input_of      query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output_of     query     string   false  "ID of existing job whose output dataset to use"
+// @Param        input-of      query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of     query     string   false  "ID of existing job whose output dataset to use"
 // @Param        distance      query     integer  true   "Buffer distance"
 // @Param        segmentCount  query     integer  true   "Segment count"
 // @Success      200           {object}  geocloud.Job
@@ -269,8 +269,8 @@ type filterQuery struct {
 // @Param        api-key       query     string  false  "API Key via query parameter"
 // @Param        X-API-Key     header    string  false  "API Key via header"
 // @Param        input         query     string  false  "ID of existing dataset to use"
-// @Param        input_of      query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output_of     query     string  false  "ID of existing job whose output dataset to use"
+// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
 // @Param        filterColumn  query     string  true   "Column to filter on"
 // @Param        filterValue   query     string  true   "Value to filter on"
 // @Success      200           {object}  geocloud.Job
@@ -313,8 +313,8 @@ type reprojectQuery struct {
 // @Param        api-key           query     string   false  "API Key via query parameter"
 // @Param        X-API-Key         header    string   false  "API Key via header"
 // @Param        input             query     string   false  "ID of existing dataset to use"
-// @Param        input_of          query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output_of         query     string   false  "ID of existing job whose output dataset to use"
+// @Param        input-of          query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of         query     string   false  "ID of existing job whose output dataset to use"
 // @Param        targetProjection  query     integer  true   "Target projection EPSG"
 // @Success      200               {object}  geocloud.Job
 // @Failure      400               {object}  geocloud.Error
@@ -353,8 +353,8 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input_of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output_of  query     string  false  "ID of existing job whose output dataset to use"
+// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
 // @Success      200        {object}  geocloud.Job
 // @Failure      400        {object}  geocloud.Error
 // @Failure      401        {object}  geocloud.Error
@@ -391,8 +391,8 @@ type vectorlookupQuery struct {
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input_of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output_of  query     string  false  "ID of existing job whose output dataset to use"
+// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
 // @Param        longitude  query     number  true   "Longitude"
 // @Param        latitude   query     number  true   "Latitude"
 // @Success      200        {object}  geocloud.Job
@@ -437,8 +437,8 @@ type rasterlookupQuery struct {
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input_of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output_of  query     string  false  "ID of existing job whose output dataset to use"
+// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
 // @Param        bands      query     string  true   "Comma separated list of bands"
 // @Param        longitude  query     number  true   "Longitude"
 // @Param        latitude   query     number  true   "Latitude"

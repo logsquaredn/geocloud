@@ -10,6 +10,7 @@ type Storage struct {
 	CustomerID string    `json:"-"`
 	Name       string    `json:"name,omitempty"`
 	LastUsed   time.Time `json:"last_used,omitempty"`
+	CreateTime time.Time `json:"create_time,omitempty"`
 }
 
 var _ Message = (*Storage)(nil)
@@ -62,13 +63,20 @@ func (c *Client) GetJobOutput(id string) (*Storage, error) {
 	return storage, c.get(url, storage)
 }
 
-func (c *Client) CreateStorage(b []byte) (*Storage, error) {
+func (c *Client) CreateStorage(r Request) (*Storage, error) {
 	var (
 		url     = c.baseURL
 		storage = &Storage{}
 	)
 
 	url.Path = path.Join(EndpointStorage)
+	values := url.Query()
+	for k, v := range r.Query() {
+		if k != "" && v != "" {
+			values.Add(k, v)
+		}
+	}
+	url.RawQuery = values.Encode()
 
-	return storage, c.post(url, b, storage)
+	return storage, c.post(url, r, storage)
 }
