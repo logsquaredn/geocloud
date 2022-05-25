@@ -11,7 +11,7 @@ import (
 
 // @Summary      Get a list of storage
 // @Description  Get a list of stored datasets based on API Key
-// @Tags         listStorage
+// @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -35,7 +35,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 
 // @Summary      Get a storage
 // @Description  Get the metadata of a stored dataset
-// @Tags         getStorage
+// @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
 // @Param        X-API-Key  header    string  false  "API Key via header"
@@ -65,7 +65,7 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 
 // @Summary      Get a storage's content
 // @Description  Gets the content of a stored dataset
-// @Tags         getStorageContent
+// @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
 // @Param        api-key       query   string  false  "API Key via query parameter"
@@ -107,7 +107,7 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 
 // @Summary      Create a storage
 // @Description  Stores a dataset. The ID of this stored dataset can be used as input to jobs
-// @Tags         createStorage
+// @Tags         Storage
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
