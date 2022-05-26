@@ -215,24 +215,25 @@ type bufferQuery struct {
 // @Description
 // @Description  &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description  &emsp; - API Key is required either as a query parameter or a header
-// @Description  &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description  &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key        query     string   false  "API Key via query parameter"
-// @Param        X-API-Key      header    string   false  "API Key via header"
-// @Param        input          query     string   false  "ID of existing dataset to use"
-// @Param        input-of       query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output-of      query     string   false  "ID of existing job whose output dataset to use"
-// @Param        distance       query     integer  true   "Buffer distance"
+// @Param        api-key                 query     string   false  "API Key via query parameter"
+// @Param        X-API-Key               header    string   false  "API Key via header"
+// @Param        input                   query     string   false  "ID of existing dataset to use"
+// @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of               query     string   false  "ID of existing job whose output dataset to use"
+// @Param        distance                query     integer  true   "Buffer distance"
 // @Param        quadrant-segment-count  query     integer  true   "Quadrant Segment count"
-// @Success      200            {object}  geocloud.Job
-// @Failure      400            {object}  geocloud.Error
-// @Failure      401            {object}  geocloud.Error
-// @Failure      403            {object}  geocloud.Error
-// @Failure      500            {object}  geocloud.Error
+// @Success      200                     {object}  geocloud.Job
+// @Failure      400                     {object}  geocloud.Error
+// @Failure      401                     {object}  geocloud.Error
+// @Failure      403                     {object}  geocloud.Error
+// @Failure      500                     {object}  geocloud.Error
 // @Router       /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
