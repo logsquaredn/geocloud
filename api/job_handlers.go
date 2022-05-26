@@ -205,7 +205,7 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 }
 
 type bufferQuery struct {
-	Distance     int `form:"distance"`
+	Distance     int `form:"buffer-distance"`
 	SegmentCount int `form:"quadrant-segment-count"`
 }
 
@@ -227,7 +227,7 @@ type bufferQuery struct {
 // @Param        input                   query     string   false  "ID of existing dataset to use"
 // @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
 // @Param        output-of               query     string   false  "ID of existing job whose output dataset to use"
-// @Param        distance                query     integer  true   "Buffer distance"
+// @Param        buffer-distance         query     integer  true   "Buffer distance"
 // @Param        quadrant-segment-count  query     integer  true   "Quadrant Segment count"
 // @Success      200                     {object}  geocloud.Job
 // @Failure      400                     {object}  geocloud.Error
