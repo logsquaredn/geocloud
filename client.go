@@ -68,7 +68,7 @@ func (c *Client) post(url *url.URL, r io.Reader, contentType string, i interface
 		body = bytes.NewReader(b)
 	}
 
-	res, err := c.httpClient.Post(url.String(), contentType, r)
+	res, err := c.httpClient.Post(url.String(), contentType, body)
 	if err != nil {
 		return err
 	}
