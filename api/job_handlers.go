@@ -205,8 +205,8 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 }
 
 type bufferQuery struct {
-	Distance     int `form:"buffer-distance"`
-	SegmentCount int `form:"quadrant-segment-count"`
+	Distance     int `form:"buffer-distance" binding:"required"`
+	SegmentCount int `form:"quadrant-segment-count" binding:"required"`
 }
 
 // @Summary      Create a buffer job
@@ -251,8 +251,8 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 type filterQuery struct {
-	FilterColumn string `form:"filter-column"`
-	FilterValue  string `form:"filter-value"`
+	FilterColumn string `form:"filter-column" binding:"required"`
+	FilterValue  string `form:"filter-value" binding:"required"`
 }
 
 // @Summary      Create a filter job
@@ -296,7 +296,7 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 }
 
 type reprojectQuery struct {
-	TargetProjection int `form:"target-projection"`
+	TargetProjection int `form:"target-projection" binding:"required"`
 }
 
 // @Summary      Create a reproject job
@@ -373,8 +373,8 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 }
 
 type vectorLookupQuery struct {
-	Longitude float64 `form:"longitude"`
-	Latitude  float64 `form:"latitude"`
+	Longitude float64 `form:"longitude" binding:"required"`
+	Latitude  float64 `form:"latitude" binding:"required"`
 }
 
 // @Summary      Create a vector lookup job
@@ -418,9 +418,9 @@ func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 }
 
 type rasterLookupQuery struct {
-	Bands     string  `form:"bands"`
-	Longitude float64 `form:"longitude"`
-	Latitude  float64 `form:"latitude"`
+	Bands     string  `form:"bands" binding:"required"`
+	Longitude float64 `form:"longitude" binding:"required"`
+	Latitude  float64 `form:"latitude" binding:"required"`
 }
 
 // @Summary      Create a raster lookup job
