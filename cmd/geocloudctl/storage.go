@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +31,7 @@ func init() {
 func init() {
 	flags := createStorageCmd.PersistentFlags()
 	flags.StringP("name", "n", "", "Name of storage")
+	flags.String("content-type", "", "Content-Type to send. Auto detected if not supplied and 'application/json' if auto detect fails")
 }
 
 func runGetStorage(cmd *cobra.Command, args []string) error {
@@ -71,7 +74,12 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, cmd.Flag("name").Value.String()))
+	contentType := cmd.Flag("content-type").Value.String()
+	if contentType != "application/json" && contentType != "application/zip" {
+		return fmt.Errorf("unknown Content-Type '%s'", contentType)
+	}
+
+	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
 	if err != nil {
 		return err
 	}

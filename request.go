@@ -8,11 +8,13 @@ import (
 type Request interface {
 	io.Reader
 	Query() map[string]string
+	ContentType() string
 }
 
 type request struct {
-	body  io.Reader
-	query map[string]string
+	body        io.Reader
+	contentType string
+	query       map[string]string
 }
 
 func (r *request) Read(p []byte) (n int, err error) {
@@ -23,22 +25,32 @@ func (r *request) Query() map[string]string {
 	return r.query
 }
 
-func NewStorageWithName(r io.Reader, name string) Request {
-	return &request{r, map[string]string{"name": name}}
+func (r *request) ContentType() string {
+	return r.contentType
 }
 
-func NewJobFromInput(r io.Reader) Request {
-	return &request{body: r}
+func NewStorageWithName(r io.Reader, contentType string, name string) Request {
+	return &request{r, contentType, map[string]string{"name": name}}
 }
 
-func NewJobWithInput(id string) Request {
-	return &request{new(bytes.Reader), map[string]string{"input": id}}
+func NewJobFromInput(r io.Reader, contentType string, query map[string]string) Request {
+	return &request{r, contentType, query}
 }
 
-func NewJobWithInputOfJob(id string) Request {
-	return &request{new(bytes.Reader), map[string]string{"input-of": id}}
+func NewJobWithInput(id string, query map[string]string) Request {
+	q := query
+	q["input"] = id
+	return &request{new(bytes.Reader), "", q}
 }
 
-func NewJobWithOutputOfJob(id string) Request {
-	return &request{new(bytes.Reader), map[string]string{"output-of": id}}
+func NewJobWithInputOfJob(id string, query map[string]string) Request {
+	q := query
+	q["input-of"] = id
+	return &request{new(bytes.Reader), "", q}
+}
+
+func NewJobWithOutputOfJob(id string, query map[string]string) Request {
+	q := query
+	q["output-of"] = id
+	return &request{new(bytes.Reader), "", q}
 }

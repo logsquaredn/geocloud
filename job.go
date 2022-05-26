@@ -96,7 +96,7 @@ func (c *Client) CreateJob(rawTaskType string, r Request) (*Job, error) {
 	}
 	url.RawQuery = values.Encode()
 
-	return job, c.post(url, r, job)
+	return job, c.post(url, r, r.ContentType(), job)
 }
 
 func (c *Client) RunJob(rawTaskType string, r Request) (*Job, error) {
