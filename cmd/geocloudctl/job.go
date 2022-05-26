@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/cobra"
 )
@@ -73,11 +71,8 @@ func runRunJob(cmd *cobra.Command, args []string) error {
 		req = geocloud.NewJobWithOutputOfJob(oo, jobQuery)
 	default:
 		contentType := cmd.Flag("content-type").Value.String()
-		if contentType != "application/json" && contentType != "application/zip" {
-			return fmt.Errorf("unknown Content-Type '%s'", contentType)
-		}
 
-		f, err := getInput(cmd)
+		f, contentType, err := getInput(cmd)
 		if err != nil {
 			return err
 		}
