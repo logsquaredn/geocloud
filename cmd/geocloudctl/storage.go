@@ -29,6 +29,7 @@ func init() {
 func init() {
 	flags := createStorageCmd.PersistentFlags()
 	flags.StringP("name", "n", "", "Name of storage")
+	flags.String("content-type", "", "Content-Type to send. Auto detected if not supplied and 'application/json' if auto detect fails")
 }
 
 func runGetStorage(cmd *cobra.Command, args []string) error {
@@ -66,12 +67,12 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	i, err := getInput(cmd)
+	i, contentType, err := getInput(cmd)
 	if err != nil {
 		return err
 	}
 
-	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, cmd.Flag("name").Value.String()))
+	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
 	if err != nil {
 		return err
 	}

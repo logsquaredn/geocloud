@@ -78,5 +78,5 @@ func (c *Client) CreateStorage(r Request) (*Storage, error) {
 	}
 	url.RawQuery = values.Encode()
 
-	return storage, c.post(url, r, storage)
+	return storage, c.post(url, r, r.ContentType(), storage)
 }

@@ -18,6 +18,7 @@ var (
 		RunE:    runRunJob,
 		Args:    cobra.ExactArgs(1),
 	}
+	jobQuery = map[string]string{}
 )
 
 func init() {
@@ -25,6 +26,8 @@ func init() {
 	flags.String("input", "", "Storage ID to use")
 	flags.String("input-of", "", "Job ID to use the input of")
 	flags.String("output-of", "", "Job ID to use the output of")
+	flags.String("content-type", "", "Content-Type to send. Auto detected if not supplied and 'application/json' if auto detect fails")
+	flags.StringToStringVarP(&jobQuery, "query", "q", map[string]string{}, "Query params to send")
 }
 
 func runGetJobs(cmd *cobra.Command, args []string) error {
@@ -61,17 +64,17 @@ func runRunJob(cmd *cobra.Command, args []string) error {
 	)
 	switch {
 	case i != "":
-		req = geocloud.NewJobWithInput(i)
+		req = geocloud.NewJobWithInput(i, jobQuery)
 	case io != "":
-		req = geocloud.NewJobWithInputOfJob(io)
+		req = geocloud.NewJobWithInputOfJob(io, jobQuery)
 	case oo != "":
-		req = geocloud.NewJobWithOutputOfJob(oo)
+		req = geocloud.NewJobWithOutputOfJob(oo, jobQuery)
 	default:
-		f, err := getInput(cmd)
+		f, contentType, err := getInput(cmd)
 		if err != nil {
 			return err
 		}
-		req = geocloud.NewJobFromInput(f)
+		req = geocloud.NewJobFromInput(f, contentType, jobQuery)
 	}
 
 	j, err := client.RunJob(args[0], req)

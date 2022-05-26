@@ -49,8 +49,8 @@ func (c *Client) get(url *url.URL, i interface{}) error {
 	return json.NewDecoder(res.Body).Decode(i)
 }
 
-func (c *Client) post(url *url.URL, r io.Reader, i interface{}) error {
-	res, err := c.httpClient.Post(url.String(), "application/json", r)
+func (c *Client) post(url *url.URL, r io.Reader, contentType string, i interface{}) error {
+	res, err := c.httpClient.Post(url.String(), contentType, r)
 	if err != nil {
 		return err
 	}
