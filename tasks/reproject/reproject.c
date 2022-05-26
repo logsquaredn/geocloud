@@ -3,92 +3,134 @@
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
-	if(argc != 4) {
-		error("reproject requires three arguments. Input file, output directory, and target projection in EPSG code format", __FILE__, __LINE__);
-		fatalError();	
-	}
+	GDALAllRegister();
 
-	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input filepath: %s\n", inputFilePath);
+	char iMsg[ONE_KB];
+
+	char *iFp = getenv(ENV_VAR_INPUT_FILEPATH);
+	if(iFp == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_INPUT_FILEPATH);
+		fatalError(eMsg, __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "input filepath: %s", iFp);
+	info(iMsg);
 	
-	const char *outputDir = argv[2];
-	fprintf(stdout, "output directory: %s\n", outputDir);
-
-	const char *targetProjection = argv[3];	
-	long targetProjectionLong = strtol(targetProjection, NULL, 10);
-	if(targetProjectionLong <= 0) {
-		error("EPSG code must be a positive integer", __FILE__, __LINE__);
-		fatalError();
+	const char *oDir = getenv(ENV_VAR_OUTPUT_DIRECTORY);
+	if(oDir == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
+		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	fprintf(stdout, "target projection: %ld\n", targetProjectionLong);
+	sprintf(iMsg, "output directory: %s", oDir);
+	info(iMsg);
 
-	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
-	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo filepath", __FILE__, __LINE__);
-		fatalError();
+	const char *tpArg = getenv("GEOCLOUD_TARGET_PROJECTION");	
+	long tp = strtol(tpArg, NULL, 10);
+	if(tp <= 0) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "EPSG code must be a positive integer. got: %s", tpArg);
+		fatalError(eMsg, __FILE__, __LINE__);
 	}
-	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
+	sprintf(iMsg, "target projection: %ld", tp);
+	info(iMsg);
 
-	struct GDALHandles gdalHandles;
-	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
-		error("failed to initialize", __FILE__, __LINE__);
-		fatalError();
-	}
-	free(inputGeoFilePath);
-	
-	if(gdalHandles.inputLayer != NULL) {	
-		OGRSpatialReferenceH outputSpatialRef = OSRNewSpatialReference("");
-		if(OSRImportFromEPSG(outputSpatialRef, targetProjectionLong) != OGRERR_NONE) {
-			error("failed to create output spatial ref", __FILE__, __LINE__);
-			fatalError();
-		}
-		OGRCoordinateTransformationH transformer = OCTNewCoordinateTransformation(gdalHandles.inputSpatialRef, outputSpatialRef);
-
-		OGRFeatureH inputFeature;
-		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
-            OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-			
-			if(OGR_G_Transform(inputGeometry, transformer) != OGRERR_NONE) {
-				error("failed to transform geometry", __FILE__, __LINE__);
-				fatalError();
-			}
-
-			if(buildOutputVectorFeature(&gdalHandles, &inputGeometry, &inputFeature)) {
-				error(" failed to build output vector feature", __FILE__, __LINE__);
-				fatalError();
-			}
-
-			OGR_G_DestroyGeometry(inputGeometry);
+	int isInputShp = 0;
+	char *vFp = NULL;
+	if(isZip(iFp)) {
+		isInputShp = 1;
+		char **fl = unzip(iFp);
+		if(fl == NULL) {
+			char eMsg[ONE_KB];
+			sprintf(eMsg, "failed to unzip: %s", iFp);
+			fatalError(eMsg, __FILE__, __LINE__);	
 		}
 
-		OSRDestroySpatialReference(outputSpatialRef);
-		OCTDestroyCoordinateTransformation(transformer);
-		OGR_F_Destroy(inputFeature);
-		OSRDestroySpatialReference(gdalHandles.inputSpatialRef);
-		GDALClose(gdalHandles.outputDataset);
+		char *f;
+		int fc = 0;
+		while((f = fl[fc]) != NULL) {
+			if(isShp(f)) {
+				vFp = f;
+			} else {
+				free(fl[fc]);
+			}
+			++fc;
+		}
+
+		if(vFp == NULL) {
+			fatalError("input zip must contain a shp file", __FILE__, __LINE__);
+		}
+
+		free(fl);
+	} else if(isGeojson(iFp)) {
+		vFp = strdup(iFp);
 	} else {
-		fprintf(stdout, "no layers found in input file\n");
+		fatalError("input file must be a .zip or .geojson", __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "vector filepath: %s", vFp);
+	info(iMsg); 
+
+	GDALDatasetH iDs = OGROpen(vFp, 1, NULL);
+	if(iDs == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to open vector file: %s", vFp);
+		fatalError(eMsg, __FILE__, __LINE__);	
 	}
 
-	// TODO this seg faults on some geojson input
-	// GDALClose(gdalHandles.inputDataset);
+	int lCount = GDALDatasetGetLayerCount(iDs);
+	if(lCount < 1) {
+		fatalError("input dataset has no layers", __FILE__, __LINE__);
+	}
+	OGRLayerH iLay = OGR_DS_GetLayer(iDs, 0);
+	if(iLay == NULL) {
+		fatalError("failed to get layer from input dataset", __FILE__, __LINE__);
+	}
+	OGR_L_ResetReading(iLay);
 
-	if(zipShp(outputDir)) {
-		error("failed to zip up shp", __FILE__, __LINE__);
-		fatalError();
+	OGRSpatialReferenceH iSr = OGR_L_GetSpatialRef(iLay);
+	if(iSr == NULL) {
+		fatalError("failed to get input spatial reference", __FILE__, __LINE__);
+	}
+	OGRSpatialReferenceH oSr = OSRNewSpatialReference("");
+	if(OSRImportFromEPSG(oSr, tp) != OGRERR_NONE) {
+		fatalError("failed to create output spatial reference", __FILE__, __LINE__);
+	}
+	OGRCoordinateTransformationH tf = OCTNewCoordinateTransformation(iSr, oSr);
+
+	OGRFeatureH iFeat;
+	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
+		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
+		
+		if(OGR_G_Transform(iGeom, tf) != OGRERR_NONE) {
+			fatalError("failed to transform geometry", __FILE__, __LINE__);
+		}
+
+		if(OGR_F_SetGeometry(iFeat, iGeom) != OGRERR_NONE) {
+			fatalError("failed set updated geometry on input feature", __FILE__, __LINE__);
+		}	
+
+		if(OGR_L_SetFeature(iLay, iFeat) != OGRERR_NONE) {
+			fatalError("failed to set updated feature on input layer", __FILE__, __LINE__);
+		}
+	}
+	
+	OSRDestroySpatialReference(oSr);
+	OSRDestroySpatialReference(iSr);
+	OCTDestroyCoordinateTransformation(tf);
+	GDALClose(iDs);
+
+	if(isInputShp) {
+	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
+			 fatalError("failed to produce output", __FILE__, __LINE__);
+		 }
+	} else {
+		if(produceJsonOutput(iFp, oDir) != 0) {
+			fatalError("failed to produce output", __FILE__, __LINE__);
+		}
 	}
 
-	if(dumpToGeojson(outputDir)) {
-		error("failed to convert shp to geojson", __FILE__, __LINE__);
-		fatalError();
-	}
+	free(vFp);
 
-	if(cleanup(outputDir)) {
-		error("failed to cleanup output", __FILE__, __LINE__);
-		fatalError();
-	}
-
-	fprintf(stdout, "reproject complete successfully\n");
+	info("reproject complete successfully");
 	return 0;
 }

@@ -205,8 +205,8 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 }
 
 type bufferQuery struct {
-	Distance     int `form:"distance"`
-	SegmentCount int `form:"segmentCount"`
+	Distance     int `form:"buffer-distance"`
+	SegmentCount int `form:"quadrant-segment-count"`
 }
 
 // @Summary      Create a buffer job
@@ -215,24 +215,25 @@ type bufferQuery struct {
 // @Description
 // @Description  &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
 // @Description  &emsp; - API Key is required either as a query parameter or a header
-// @Description  &emsp; - Pass the geospatial data to be processed in the request body.
+// @Description  &emsp; - Pass the geospatial data to be processed in the request body OR
+// @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
 // @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key       query     string   false  "API Key via query parameter"
-// @Param        X-API-Key     header    string   false  "API Key via header"
-// @Param        input         query     string   false  "ID of existing dataset to use"
-// @Param        input-of      query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output-of     query     string   false  "ID of existing job whose output dataset to use"
-// @Param        distance      query     integer  true   "Buffer distance"
-// @Param        segmentCount  query     integer  true   "Segment count"
-// @Success      200           {object}  geocloud.Job
-// @Failure      400           {object}  geocloud.Error
-// @Failure      401           {object}  geocloud.Error
-// @Failure      403           {object}  geocloud.Error
-// @Failure      500           {object}  geocloud.Error
+// @Param        api-key                 query     string   false  "API Key via query parameter"
+// @Param        X-API-Key               header    string   false  "API Key via header"
+// @Param        input                   query     string   false  "ID of existing dataset to use"
+// @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of               query     string   false  "ID of existing job whose output dataset to use"
+// @Param        buffer-distance         query     integer  true   "Buffer distance"
+// @Param        quadrant-segment-count  query     integer  true   "Quadrant Segment count"
+// @Success      200                     {object}  geocloud.Job
+// @Failure      400                     {object}  geocloud.Error
+// @Failure      401                     {object}  geocloud.Error
+// @Failure      403                     {object}  geocloud.Error
+// @Failure      500                     {object}  geocloud.Error
 // @Router       /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
@@ -250,8 +251,8 @@ func (a *API) createBufferJobHandler(ctx *gin.Context) {
 }
 
 type filterQuery struct {
-	FilterColumn string `form:"filterColumn"`
-	FilterValue  string `form:"filterValue"`
+	FilterColumn string `form:"filter-column"`
+	FilterValue  string `form:"filter-value"`
 }
 
 // @Summary      Create a filter job
@@ -266,18 +267,18 @@ type filterQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key       query     string  false  "API Key via query parameter"
-// @Param        X-API-Key     header    string  false  "API Key via header"
-// @Param        input         query     string  false  "ID of existing dataset to use"
-// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
-// @Param        filterColumn  query     string  true   "Column to filter on"
-// @Param        filterValue   query     string  true   "Value to filter on"
-// @Success      200           {object}  geocloud.Job
-// @Failure      400           {object}  geocloud.Error
-// @Failure      401           {object}  geocloud.Error
-// @Failure      403           {object}  geocloud.Error
-// @Failure      500           {object}  geocloud.Error
+// @Param        api-key        query     string  false  "API Key via query parameter"
+// @Param        X-API-Key      header    string  false  "API Key via header"
+// @Param        input          query     string  false  "ID of existing dataset to use"
+// @Param        input-of       query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of      query     string  false  "ID of existing job whose output dataset to use"
+// @Param        filter-column  query     string  true   "Column to filter on"
+// @Param        filter-value   query     string  true   "Value to filter on"
+// @Success      200            {object}  geocloud.Job
+// @Failure      400            {object}  geocloud.Error
+// @Failure      401            {object}  geocloud.Error
+// @Failure      403            {object}  geocloud.Error
+// @Failure      500            {object}  geocloud.Error
 // @Router       /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
@@ -295,7 +296,7 @@ func (a *API) createFilterJobHandler(ctx *gin.Context) {
 }
 
 type reprojectQuery struct {
-	TargetProjection int `form:"targetProjection"`
+	TargetProjection int `form:"target-projection"`
 }
 
 // @Summary      Create a reproject job
@@ -371,7 +372,7 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type vectorlookupQuery struct {
+type vectorLookupQuery struct {
 	Longitude float64 `form:"longitude"`
 	Latitude  float64 `form:"latitude"`
 }
@@ -402,7 +403,7 @@ type vectorlookupQuery struct {
 // @Failure      500        {object}  geocloud.Error
 // @Router       /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&vectorlookupQuery{}); err != nil {
+	if err := ctx.ShouldBindQuery(&vectorLookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}
@@ -416,7 +417,7 @@ func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type rasterlookupQuery struct {
+type rasterLookupQuery struct {
 	Bands     string  `form:"bands"`
 	Longitude float64 `form:"longitude"`
 	Latitude  float64 `form:"latitude"`
@@ -449,7 +450,7 @@ type rasterlookupQuery struct {
 // @Failure      500        {object}  geocloud.Error
 // @Router       /job/rasterlookup [post]
 func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&rasterlookupQuery{}); err != nil {
+	if err := ctx.ShouldBindQuery(&rasterLookupQuery{}); err != nil {
 		a.err(ctx, http.StatusBadRequest, err)
 		return
 	}

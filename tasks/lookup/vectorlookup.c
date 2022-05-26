@@ -3,99 +3,138 @@
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
-	if(argc != 5) {
-		error("vector lookup requires four arguments. Input file, output directory, longitude, and latitude", __FILE__, __LINE__);
-		fatalError();
+	GDALAllRegister();
+
+	char iMsg[ONE_KB];
+
+	char *iFp = getenv(ENV_VAR_INPUT_FILEPATH);
+	if(iFp == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_INPUT_FILEPATH);
+		fatalError(eMsg, __FILE__, __LINE__);
 	}
-
-	const char *inputFilePath = argv[1];
-	fprintf(stdout, "input filepath: %s\n", inputFilePath);
+	sprintf(iMsg, "input filepath: %s", iFp);
+	info(iMsg);
 	
-	const char *outputDir = argv[2];
-	fprintf(stdout, "output directory: %s\n", outputDir);
+	const char *oDir = getenv(ENV_VAR_OUTPUT_DIRECTORY);
+	if(oDir == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
+		fatalError(eMsg, __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "output directory: %s", oDir);
+	info(iMsg);
 
-    const char* lonArg = argv[3];
+    const char *lonArg = getenv("GEOCLOUD_LONGITUDE");
+	if(lonArg == NULL) {
+		fatalError("env var: GEOCLOUD_LONGITUDE must be set", __FILE__, __LINE__);
+	}
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
-        error("longitude must be a double between -180 & 180", __FILE__, __LINE__);
-		fatalError();
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
+        fatalError(eMsg, __FILE__, __LINE__);
     }
-	fprintf(stdout, "lon: %f\n", lon);
+	sprintf(iMsg, "lon: %f", lon);
+	info(iMsg);
 
-    const char* latArg = argv[4];
+    const char *latArg = getenv("GEOCLOUD_LATITUDE");
+	if(latArg == NULL) {
+		fatalError("env var: GEOCLOUD_LATITUDE must be set", __FILE__, __LINE__);
+	}
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {
-        error("latitude must be a double between -90 & 90", __FILE__, __LINE__);
-		fatalError();
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
+        fatalError(eMsg, __FILE__, __LINE__);
     }
-	fprintf(stdout, "lat: %f\n", lat);
+	sprintf(iMsg, "lat: %f", lat);
+	info(iMsg);
 
-	char *inputGeoFilePath = getInputGeoFilePath(inputFilePath);
-	if(inputGeoFilePath == NULL) {
-		error("failed to find input geo filepath", __FILE__, __LINE__);
-		fatalError();
-	}
-	fprintf(stdout, "input geo filepath: %s\n", inputGeoFilePath);
-
-	struct GDALHandles gdalHandles;
-	gdalHandles.inputLayer = NULL;
-	if(vectorInitialize(&gdalHandles, inputGeoFilePath, outputDir)) {
-		error("failed to initialize", __FILE__, __LINE__);
-		fatalError();
-	}
-	free(inputGeoFilePath);
-
-	if(gdalHandles.inputLayer != NULL) {
-        OGRGeometryH point = OGR_G_CreateGeometry(wkbPoint);
-        if(point == NULL) {
-            error("failed to create point geometry", __FILE__, __LINE__);
-            fatalError();
-        }
-        OGR_G_AddPoint_2D(point, lon, lat);
-
-		OGRFeatureH inputFeature;
-		while((inputFeature = OGR_L_GetNextFeature(gdalHandles.inputLayer)) != NULL) {
-            OGRGeometryH inputGeometry = OGR_F_GetGeometryRef(inputFeature);
-            if(OGR_G_Intersects(inputGeometry, point)) {
-                OGRGeometryH intersection = OGR_G_Intersection(inputGeometry, point);
-                if(intersection != NULL) {
-                    if(buildOutputVectorFeature(&gdalHandles, &intersection, &inputFeature)) {
-                        error("failed to build output vector feature", __FILE__, __LINE__);
-                        fatalError();     
-                    }
-                }
-
-                OGR_G_DestroyGeometry(intersection);
-            }
-
-			OGR_G_DestroyGeometry(inputGeometry);
+	int isInputShp = 0;
+	char *vFp = NULL;
+	if(isZip(iFp)) {
+		isInputShp = 1;
+		char **fl = unzip(iFp);
+		if(fl == NULL) {
+			char eMsg[ONE_KB];
+			sprintf(eMsg, "failed to unzip: %s", iFp);
+			fatalError(eMsg, __FILE__, __LINE__);	
 		}
 
-		OGR_F_Destroy(inputFeature);
-		OSRDestroySpatialReference(gdalHandles.inputSpatialRef);
-		GDALClose(gdalHandles.outputDataset);
+		char *f;
+		int fc = 0;
+		while((f = fl[fc]) != NULL) {
+			if(isShp(f)) {
+				vFp = f;
+			} else {
+				free(fl[fc]);
+			}
+			++fc;
+		}
+
+		if(vFp == NULL) {
+			fatalError("input zip must contain a shp file", __FILE__, __LINE__);
+		}
+
+		free(fl);
+	} else if(isGeojson(iFp)) {
+		vFp = strdup(iFp);
 	} else {
-		fprintf(stdout, "no layers found in input file\n");
+		fatalError("input file must be a .zip or .geojson", __FILE__, __LINE__);
+	}
+	sprintf(iMsg, "vector filepath: %s", vFp);
+	info(iMsg); 
+
+	GDALDatasetH iDs = OGROpen(vFp, 1, NULL);
+	if(iDs == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to open vector file: %s", vFp);
+		fatalError(eMsg, __FILE__, __LINE__);	
 	}
 
-	// TODO this seg faults on some geojson input
-	// GDALClose(gdalHandles.inputDataset);
+	int lCount = GDALDatasetGetLayerCount(iDs);
+	if(lCount < 1) {
+		fatalError("input dataset has no layers", __FILE__, __LINE__);
+	}
+	OGRLayerH iLay = OGR_DS_GetLayer(iDs, 0);
+	if(iLay == NULL) {
+		fatalError("failed to get layer from input dataset", __FILE__, __LINE__);
+	}
+	OGR_L_ResetReading(iLay);
 
-	if(zipShp(outputDir)) {
-		error("failed to zip up shp", __FILE__, __LINE__);
-		fatalError();
+	OGRGeometryH point = OGR_G_CreateGeometry(wkbPoint);
+	if(point == NULL) {
+		fatalError("failed to create point geometry", __FILE__, __LINE__);
+	}
+	OGR_G_AddPoint_2D(point, lon, lat);
+
+	OGRFeatureH iFeat;
+	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
+		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
+		if(!OGR_G_Intersects(iGeom, point)) {
+			if(OGR_L_DeleteFeature(iLay, OGR_F_GetFID(iFeat)) != OGRERR_NONE) {
+				fatalError("failed to delete feature from input", __FILE__, __LINE__);			
+			}
+		}
+
+		OGR_G_DestroyGeometry(iGeom);
 	}
 
-	if(dumpToGeojson(outputDir)) {
-		error("failed to convert shp to geojson", __FILE__, __LINE__);
-		fatalError();
+	GDALClose(iDs);
+
+	if(isInputShp) {
+	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
+			 fatalError("failed to produce output", __FILE__, __LINE__);
+		 }
+	} else {
+		if(produceJsonOutput(iFp, oDir) != 0) {
+			fatalError("failed to produce output", __FILE__, __LINE__);
+		}
 	}
 
-	if(cleanup(outputDir)) {
-		error("failed to cleanup output", __FILE__, __LINE__);
-		fatalError();
-	}
+	free(vFp);
 
-	fprintf(stdout, "vector lookup completed successfully\n");
+	info("vector lookup complete successfully");
 	return 0;
 }

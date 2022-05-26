@@ -22,6 +22,11 @@ type Worker struct {
 	workdir string
 }
 
+const (
+	envVarInputFile = "GEOCLOUD_INPUT_FILE"
+	envVarOutputDir = "GEOCLOUD_OUTPUT_DIR"
+)
+
 func New(opts *Opts) (*Worker, error) {
 	return &Worker{
 		ds:      opts.Datastore,
@@ -136,19 +141,38 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return fmt.Errorf("no input found")
 	}
 
-	args := append(
-		[]string{
-			filepath.Join(o.inputVolumePath(j), filename),
-			o.outputVolumePath(j),
-		},
-		j.Args...,
-	)
-	// TODO pass args as env
-	task := exec.Command(t.Type.Name(), args...) //nolint:gosec
-	// don't let tasks see potentially sensitive environment variables
+	task := exec.Command(t.Type.Name()) //nolint:gosec
+	// start with current env minus configuration that might contain secrets
+	// e.g. GEOCLOUD_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
 		return !(strings.HasPrefix(e, "GEOCLOUD_") || strings.HasPrefix(e, "AWS_"))
 	})
+	// add input file path and output dir path
+	task.Env = append(task.Env,
+		fmt.Sprintf(
+			"%s=%s",
+			envVarInputFile,
+			filepath.Join(o.inputVolumePath(j), filename),
+		),
+		fmt.Sprintf(
+			"%s=%s",
+			envVarOutputDir,
+			o.outputVolumePath(j),
+		),
+	)
+	// add arbitrary args defined by the task entry in the datastore
+	// e.g. task.type = 'reproject'
+	//		=> task.params = ['target-projection'],
+	//      => GEOCLOUD_TARGET_PROJECTION=${?target-projection}
+	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
+		return fmt.Sprintf(
+			"GEOCLOUD_%s=%s",
+			strings.ToUpper(
+				geocloud.QueryParamToEnvVarReplacer.Replace(t.Params[i]),
+			),
+			a,
+		)
+	})...)
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
 	task.Stderr = stderr

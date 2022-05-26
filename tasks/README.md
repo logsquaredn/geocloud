@@ -26,10 +26,10 @@ gcc -Wall tasks/lookup/rasterlookup.c tasks/shared/shared.c -l gdal -o assets/ra
 
 Local run:
 ```sh
-../assets/reproject /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape 2000
-../assets/buffer /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape 2 50
-../assets/filter /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape 'BASIN' 'al'
-../assets/removebadgeometry /home/phish3y/Downloads/input_shape/zip/input_shape.zip /home/phish3y/Downloads/output_shape
-../assets/vectorlookup /home/phish3y/Documents/input_shape/mmi/mmi.zip /home/phish3y/Documents/output_shape 97.5679 34.6970
-../assets/rasterlookup /home/phish3y/Documents/input_shape/input.tif /home/phish3y/Documents/output_shape 2,4 -89.9383 29.95313
+../assets/reproject
+../assets/buffer
+../assets/filter
+../assets/removebadgeometry 
+../assets/vectorlookup
+../assets/rasterlookup
 ```
