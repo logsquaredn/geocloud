@@ -21,7 +21,7 @@ void fatalError(const char *msg, const char *file, int line) {
 
 int isGeojson(const char *fp) {
     char *ext = strrchr(fp, '.');
-    if(ext != NULL && !strcmp(ext, ".geojson")) {
+    if(ext != NULL && !strcmp(ext, ".json")) {
         return 1;
     }
 
