@@ -316,7 +316,7 @@ type reprojectQuery struct {
 // @Param        input             query     string   false  "ID of existing dataset to use"
 // @Param        input-of          query     string   false  "ID of existing job whose input dataset to use"
 // @Param        output-of         query     string   false  "ID of existing job whose output dataset to use"
-// @Param        targetProjection  query     integer  true   "Target projection EPSG"
+// @Param        target-projection  query     integer  true   "Target projection EPSG"
 // @Success      200               {object}  geocloud.Job
 // @Failure      400               {object}  geocloud.Error
 // @Failure      401               {object}  geocloud.Error
