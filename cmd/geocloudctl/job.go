@@ -70,8 +70,6 @@ func runRunJob(cmd *cobra.Command, args []string) error {
 	case oo != "":
 		req = geocloud.NewJobWithOutputOfJob(oo, jobQuery)
 	default:
-		contentType := cmd.Flag("content-type").Value.String()
-
 		f, contentType, err := getInput(cmd)
 		if err != nil {
 			return err
