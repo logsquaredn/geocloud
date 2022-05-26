@@ -5,7 +5,7 @@ INSERT INTO task (
     task_params
 ) VALUES (
     'buffer',
-    ARRAY['distance', 'quadrant-segment-count']
+    ARRAY['buffer-distance', 'quadrant-segment-count']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
