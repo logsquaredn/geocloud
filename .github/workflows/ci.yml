@@ -68,8 +68,8 @@ jobs:
           context: .
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
           push: true
-          build-args: revision=${{ steps.get-tag.outputs.tag }}
-          tags: ghcr.io/${{ github.repository }}:${{ steps.get-tag.outputs.tag }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.get-tag.outputs.tag }}
     outputs:
       digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
@@ -79,8 +79,8 @@ jobs:
     container:
       image: ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}@${{ needs.push.outputs.digest }}
       credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: version
         run: |

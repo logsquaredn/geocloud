@@ -36,7 +36,6 @@ jobs:
           push: true
           build-args: |
             version=${{ steps.get-tag.outputs.tag }}
-            revision=${{ steps.get-short-sha.outputs.short-sha }}
           tags: |
             ghcr.io/${{ github.repository }}:${{ steps.get-tag.outputs.tag }}
             ghcr.io/${{ github.repository }}:latest
@@ -49,8 +48,8 @@ jobs:
     container:
       image: ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}@${{ needs.push.outputs.digest }}
       credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: get-version
         id: get-version
