@@ -311,17 +311,17 @@ type reprojectQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key           query     string   false  "API Key via query parameter"
-// @Param        X-API-Key         header    string   false  "API Key via header"
-// @Param        input             query     string   false  "ID of existing dataset to use"
-// @Param        input-of          query     string   false  "ID of existing job whose input dataset to use"
-// @Param        output-of         query     string   false  "ID of existing job whose output dataset to use"
+// @Param        api-key            query     string   false  "API Key via query parameter"
+// @Param        X-API-Key          header    string   false  "API Key via header"
+// @Param        input              query     string   false  "ID of existing dataset to use"
+// @Param        input-of           query     string   false  "ID of existing job whose input dataset to use"
+// @Param        output-of          query     string   false  "ID of existing job whose output dataset to use"
 // @Param        target-projection  query     integer  true   "Target projection EPSG"
-// @Success      200               {object}  geocloud.Job
-// @Failure      400               {object}  geocloud.Error
-// @Failure      401               {object}  geocloud.Error
-// @Failure      403               {object}  geocloud.Error
-// @Failure      500               {object}  geocloud.Error
+// @Success      200                {object}  geocloud.Job
+// @Failure      400                {object}  geocloud.Error
+// @Failure      401                {object}  geocloud.Error
+// @Failure      403                {object}  geocloud.Error
+// @Failure      500                {object}  geocloud.Error
 // @Router       /job/reproject [post]
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&reprojectQuery{}); err != nil {
