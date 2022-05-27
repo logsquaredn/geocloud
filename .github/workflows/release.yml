@@ -65,5 +65,5 @@ jobs:
           release_name: v${{ needs.push.outputs.tag }}
           body: |
             **Image**:   `ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}`
-            **Digest**:  `@${{ needs.push.outputs.digest }}`
+            **Digest**:  `${{ needs.push.outputs.digest }}`
             **Version**: `${{ steps.get-version.outputs.version }}`
