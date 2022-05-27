@@ -7,7 +7,7 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
@@ -28,9 +28,24 @@ func NewServer(opts *Opts) (*API, error) {
 		}
 	)
 
+	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
+
+	a.router.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
+	})
+
 	swagger := a.router.Group("/swagger")
 	{
-		swagger.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		v1 := swagger.Group("/v1")
+		{
+			v1.GET("/*any", func(ctx *gin.Context) {
+				if ctx.Param("any") == "" {
+					ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
+				} else {
+					swaggerHandler(ctx)
+				}
+			})
+		}
 	}
 	api := a.router.Group("/api")
 	{
