@@ -7,7 +7,7 @@ import (
 	"github.com/logsquaredn/geocloud/datastore"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/logsquaredn/geocloud/objectstore"
-	"github.com/swaggo/gin-swagger"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
