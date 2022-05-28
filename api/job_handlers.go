@@ -11,6 +11,8 @@ import (
 
 // @Summary      Get a list of jobs
 // @Description  Get a list of jobs based on API Key
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -36,6 +38,8 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 
 // @Summary      Get a job
 // @Description  Get the metadata of a job. This can be used as a way to track job status
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -59,6 +63,8 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's task
 // @Description  Get the metadata of a job's task
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Task
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -88,6 +94,8 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's input
 // @Description  Get the metadata of a job's input
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -111,6 +119,8 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's input content
 // @Description  Gets the content of a job's input
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
@@ -147,6 +157,8 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's output
 // @Description  Get the metadata of a job's output
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -170,6 +182,8 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 
 // @Summary      Get a job's output content
 // @Description  Gets the content of a job's output
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
