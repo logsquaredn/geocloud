@@ -10,18 +10,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const fromStdin = "-"
+
 func getInput(cmd *cobra.Command) (io.Reader, string, error) {
-	path := cmd.Flag("file").Value.String()
-	if path == "" {
+	var (
+		path = cmd.Flag("file").Value.String()
+		r    io.Reader
+		err  error
+	)
+	switch path {
+	case "":
 		return nil, "", fmt.Errorf("--file or -f is required")
+	case fromStdin:
+		r = os.Stdin
+	default:
+		r, err = os.Open(path)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var r io.Reader = f
 	contentType := cmd.Flag("content-type").Value.String()
 	if contentType == "" {
 		b, err := io.ReadAll(r)

@@ -1,9 +1,6 @@
 package main
 
-import (
-	"github.com/logsquaredn/geocloud"
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var (
 	getJobsCmd = &cobra.Command{
@@ -56,25 +53,9 @@ func runRunJob(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var (
-		req geocloud.Request
-		i   = cmd.Flag("input").Value.String()
-		io  = cmd.Flag("input-of").Value.String()
-		oo  = cmd.Flag("output-of").Value.String()
-	)
-	switch {
-	case i != "":
-		req = geocloud.NewJobWithInput(i, jobQuery)
-	case io != "":
-		req = geocloud.NewJobWithInputOfJob(io, jobQuery)
-	case oo != "":
-		req = geocloud.NewJobWithOutputOfJob(oo, jobQuery)
-	default:
-		f, contentType, err := getInput(cmd)
-		if err != nil {
-			return err
-		}
-		req = geocloud.NewJobFromInput(f, contentType, jobQuery)
+	req, err := getRequest(cmd)
+	if err != nil {
+		return err
 	}
 
 	j, err := client.RunJob(args[0], req)
