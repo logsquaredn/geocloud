@@ -75,7 +75,7 @@ services:
     build: .
     image: *image
     command: w
-    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud]
+    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud:z]
     networks: [worker]
     depends_on: *depends_on
     environment: *environment
