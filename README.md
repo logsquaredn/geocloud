@@ -40,6 +40,23 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 geocloud migrate
 ```
 
+### deploy to cluster
+```sh
+# We use semantic versioning
+# Repo: [geocloud]
+git tag -a 0.7.0 -m 0.7.0 
+git push --follow-tags
+
+# (Only need to do this once) Repo: [geocloud-chart]
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm dependency build
+
+# Repo: [geocloud-gitops]
+update tag in values.yaml
+make geocloud
+git add/commit/push
+```
+
 #### Example API calls
 
 ```sh
