@@ -40,7 +40,7 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 geocloud migrate
 ```
 
-### deploy to cluster
+#### Deploy to cluster
 ```sh
 # We use semantic versioning
 # Repo: [geocloud]
@@ -57,6 +57,22 @@ make geocloud
 git add/commit/push
 ```
 
+#### Example k8 commands
+```sh
+# list all namespaces
+kubectl get ns
+# get specific namespace
+kubectl get pod -n <namespace>
+# list all secrets in namespace
+kubectl get secret -n <namespace>
+# get secret yaml
+kubectl get secret -n <namespace> <kind> -o yaml
+# decode password
+echo <password> | base64 -d
+# execute into container
+kubectl exec -n <namespace> <kind> -it -- <cmd> 
+```
+
 #### Example API calls
 
 ```sh
@@ -64,4 +80,6 @@ git add/commit/push
 curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/job/buffer?buffer-distance=5&quadrant-segment-count=50"
 # get job result
 curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://geocloud.logsquaredn.io/api/v1/job/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
+# create storage
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/storage?name=<name>"
 ```
