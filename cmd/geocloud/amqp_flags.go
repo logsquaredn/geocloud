@@ -4,18 +4,43 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/messagequeue"
 	"github.com/spf13/viper"
 )
 
 func init() {
-	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
-		{"amqp-address", defaultAMQPAddress, "AMQP address"},
-		{"amqp-user", defaultAMQPUser, "AMQP user"},
-		{"amqp-password", "", "AMQP password"},
-		{"amqp-retries", int64(5), "AMQP retries"},
-		{"amqp-retry-delay", s5, "AMQP retry delay"},
-		{"amqp-queue-name", defaultAMQPQueueName, "AMQP queue name"},
+	_ = conf.BindToFlags(rootCmd.PersistentFlags(), nil, []*conf.Conf{
+		{
+			Arg:         "amqp-address",
+			Default:     defaultAMQPAddress,
+			Description: "AMQP address",
+		},
+		{
+			Arg:         "amqp-user",
+			Default:     defaultAMQPUser,
+			Description: "AMQP user",
+		},
+		{
+			Arg:         "amqp-password",
+			Default:     "",
+			Description: "AMQP password",
+		},
+		{
+			Arg:         "amqp-retries",
+			Default:     int64(5),
+			Description: "AMQP retries",
+		},
+		{
+			Arg:         "amqp-retry-delay",
+			Default:     s5,
+			Description: "AMQP retry delay",
+		},
+		{
+			Arg:         "amqp-queue-name",
+			Default:     defaultAMQPQueueName,
+			Description: "AMQP queue name",
+		},
 	}...)
 }
 

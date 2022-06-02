@@ -1,12 +1,16 @@
 package main
 
 import (
-	"github.com/logsquaredn/geocloud"
-	"github.com/spf13/viper"
+	"fmt"
+
+	"github.com/logsquaredn/geocloud/internal/conf"
+)
+
+var (
+	envVarAccessKeyID     = fmt.Sprintf("%sACCESS_KEY_ID", conf.EnvPrefix)
+	envVarSecretAccessKey = fmt.Sprintf("%sACCESS_KEY_ID", conf.EnvPrefix)
 )
 
 func init() {
-	viper.SetEnvPrefix("geocloud")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(geocloud.QueryParamToEnvVarReplacer)
+	conf.Coil(nil)
 }

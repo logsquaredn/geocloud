@@ -12,6 +12,7 @@ import (
 	"github.com/frantjc/go-js"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 )
@@ -22,9 +23,9 @@ type Worker struct {
 	workdir string
 }
 
-const (
-	envVarInputFile = "GEOCLOUD_INPUT_FILE"
-	envVarOutputDir = "GEOCLOUD_OUTPUT_DIR"
+var (
+	envVarInputFile = fmt.Sprintf("%sINPUT_FILE", conf.EnvPrefix)
+	envVarOutputDir = fmt.Sprintf("%sOUTPUT_DIR", conf.EnvPrefix)
 )
 
 func New(opts *Opts) (*Worker, error) {
@@ -145,7 +146,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	// start with current env minus configuration that might contain secrets
 	// e.g. GEOCLOUD_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
-		return !(strings.HasPrefix(e, "GEOCLOUD_") || strings.HasPrefix(e, "AWS_"))
+		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_"))
 	})
 	// add input file path and output dir path
 	task.Env = append(task.Env,
@@ -166,9 +167,10 @@ func (o *Worker) Send(m geocloud.Message) error {
 	//      => GEOCLOUD_TARGET_PROJECTION=${?target-projection}
 	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
 		return fmt.Sprintf(
-			"GEOCLOUD_%s=%s",
+			"%s%s=%s",
+			conf.EnvPrefix,
 			strings.ToUpper(
-				geocloud.QueryParamToEnvVarReplacer.Replace(t.Params[i]),
+				conf.HyphenToUnderscoreReplacer.Replace(t.Params[i]),
 			),
 			a,
 		)

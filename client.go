@@ -42,8 +42,8 @@ func (c *Client) get(url *url.URL, i interface{}) error {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode > 299 || res.StatusCode < 200 {
-		return fmt.Errorf("http %d", res.StatusCode)
+	if err = c.err(res); err != nil {
+		return err
 	}
 
 	return json.NewDecoder(res.Body).Decode(i)
@@ -56,9 +56,22 @@ func (c *Client) post(url *url.URL, r io.Reader, contentType string, i interface
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode > 299 || res.StatusCode < 200 {
-		return fmt.Errorf("http %d", res.StatusCode)
+	if err = c.err(res); err != nil {
+		return err
 	}
 
 	return json.NewDecoder(res.Body).Decode(i)
+}
+
+func (c *Client) err(res *http.Response) error {
+	if res.StatusCode < 299 && res.StatusCode >= 200 {
+		return nil
+	}
+
+	e := &Error{}
+	if err := json.NewDecoder(res.Body).Decode(e); err != nil && e.Message != "" {
+		return fmt.Errorf("HTTP %d: unable to parse message", res.StatusCode)
+	}
+
+	return fmt.Errorf("HTTP %d: %s", res.StatusCode, e.Message)
 }

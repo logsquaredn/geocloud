@@ -1,5 +1,5 @@
 package geocloud
 
 type Error struct {
-	Message string `json:"message,omitempty"`
+	Message string `json:"error,omitempty"`
 }
