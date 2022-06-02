@@ -1,12 +1,7 @@
 package main
 
-import (
-	"github.com/logsquaredn/geocloud"
-	"github.com/spf13/viper"
-)
+import "github.com/logsquaredn/geocloud/internal/conf"
 
 func init() {
-	viper.SetEnvPrefix("geocloud")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(geocloud.QueryParamToEnvVarReplacer)
+	conf.Coil(nil)
 }

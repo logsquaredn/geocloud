@@ -8,6 +8,7 @@ import (
 
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -31,7 +32,11 @@ func init() {
 	flags := secretaryCmd.Flags()
 	flags.DurationVar(&workJobsBefore, "work-jobs-before", h24, "Work jobs before")
 	flags.DurationVar(&workStorageBefore, "work-storage-before", h24, "Work storage before")
-	bindConfToFlags(flags, &conf{"stripe-api-key", "", "Stripe API key"})
+	_ = conf.BindToFlags(flags, nil, &conf.Conf{
+		Arg:         "stripe-api-key",
+		Default:     "",
+		Description: "Stripe API key",
+	})
 }
 
 func runSecretary(cmd *cobra.Command, args []string) error {

@@ -18,7 +18,6 @@ func getRequest(cmd *cobra.Command) (geocloud.Request, error) {
 	)
 	switch {
 	case i == fromStdin:
-	case io == fromStdin:
 		storage := &geocloud.Storage{}
 		if err := dec.Decode(storage); err != nil {
 			return nil, nil

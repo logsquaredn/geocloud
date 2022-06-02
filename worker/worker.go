@@ -12,6 +12,7 @@ import (
 	"github.com/frantjc/go-js"
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 )
@@ -168,7 +169,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return fmt.Sprintf(
 			"GEOCLOUD_%s=%s",
 			strings.ToUpper(
-				geocloud.QueryParamToEnvVarReplacer.Replace(t.Params[i]),
+				conf.HyphenToUnderscoreReplacer.Replace(t.Params[i]),
 			),
 			a,
 		)

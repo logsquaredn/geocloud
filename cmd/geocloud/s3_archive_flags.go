@@ -1,6 +1,8 @@
+//nolint:dupl
 package main
 
 import (
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/spf13/viper"
 )
@@ -8,15 +10,47 @@ import (
 func init() {
 	_ = viper.BindEnv("s3-archive-access-key-id", "GEOCLOUD_ACCESS_KEY_ID")
 	_ = viper.BindEnv("s3-archive-secret-access-key", "GEOCLOUD_SECRET_ACCESS_KEY")
-	bindConfToFlags(secretaryCmd.Flags(), []*conf{
-		{"s3-archive-bucket", "", "S3 bucket"},
-		{"s3-archive-prefix", "", "S3 prefix"},
-		{"s3-archive-endpoint", "", "S3 endpoint"},
-		{"s3-archive-disable-ssl", false, "S3 disable SSL"},
-		{"s3-archive-force-path-style", false, "S3 force path style"},
-		{"s3-archive-region", "us-east-1", "S3 region"},
-		{"s3-archive-access-key-id", "", "S3 access key ID"},
-		{"s3-archive-secret-access-key", "", "S3 secret access key"},
+	_ = conf.BindToFlags(secretaryCmd.Flags(), nil, []*conf.Conf{
+		{
+			Arg:         "s3-archive-bucket",
+			Default:     "",
+			Description: "S3 bucket",
+		},
+		{
+			Arg:         "s3-archive-prefix",
+			Default:     "",
+			Description: "S3 prefix",
+		},
+		{
+			Arg:         "s3-archive-endpoint",
+			Default:     "",
+			Description: "S3 endpoint",
+		},
+		{
+			Arg:         "s3-archive-disable-ssl",
+			Default:     false,
+			Description: "S3 disable SSL",
+		},
+		{
+			Arg:         "s3-archive-force-path-style",
+			Default:     false,
+			Description: "S3 force path style",
+		},
+		{
+			Arg:         "s3-archive-region",
+			Default:     "us-east-1",
+			Description: "S3 region",
+		},
+		{
+			Arg:         "s3-archive-access-key-id",
+			Default:     "",
+			Description: "S3 access key ID",
+		},
+		{
+			Arg:         "s3-archive-secret-access-key",
+			Default:     "",
+			Description: "S3 secret access key",
+		},
 	}...)
 }
 

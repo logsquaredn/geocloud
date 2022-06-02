@@ -5,17 +5,42 @@ import (
 	"strings"
 
 	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/spf13/viper"
 )
 
 func init() {
-	bindConfToFlags(rootCmd.PersistentFlags(), []*conf{
-		{"postgres-address", defaultPostgresAddress, "Postgres address"},
-		{"postgres-user", defaultPostgresUser, "Postgres user"},
-		{"postgres-password", "", "Postgres password"},
-		{"postgres-retries", int64(5), "Postgres retries"},
-		{"postgres-retry-delay", s5, "Postgres retry delay"},
-		{"postgres-sslmode", "", "Postgres SSL mode"},
+	_ = conf.BindToFlags(rootCmd.PersistentFlags(), nil, []*conf.Conf{
+		{
+			Arg:         "postgres-address",
+			Default:     defaultPostgresAddress,
+			Description: "Postgres address",
+		},
+		{
+			Arg:         "postgres-user",
+			Default:     defaultPostgresUser,
+			Description: "Postgres user",
+		},
+		{
+			Arg:         "postgres-password",
+			Default:     "",
+			Description: "Postgres password",
+		},
+		{
+			Arg:         "postgres-retries",
+			Default:     int64(5),
+			Description: "Postgres retries",
+		},
+		{
+			Arg:         "postgres-retry-delay",
+			Default:     s5,
+			Description: "Postgres retry delay",
+		},
+		{
+			Arg:         "postgres-sslmode",
+			Default:     "",
+			Description: "Postgres SSL mode",
+		},
 	}...)
 }
 
