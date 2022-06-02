@@ -11,6 +11,8 @@ import (
 
 // @Summary      Get a list of storage
 // @Description  Get a list of stored datasets based on API Key
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -35,6 +37,8 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 
 // @Summary      Get a storage
 // @Description  Get the metadata of a stored dataset
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key via query parameter"
@@ -65,6 +69,8 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 
 // @Summary      Get a storage's content
 // @Description  Gets the content of a stored dataset
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
@@ -107,6 +113,9 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 
 // @Summary      Create a storage
 // @Description  Stores a dataset. The ID of this stored dataset can be used as input to jobs
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
+// @Description  &emsp; - Pass the geospatial data to be stored in the request body
 // @Tags         Storage
 // @Accept       application/json, application/zip
 // @Produce      application/json
