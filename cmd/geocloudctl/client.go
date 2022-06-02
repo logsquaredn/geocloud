@@ -2,16 +2,14 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/user"
-	"strconv"
 
 	"github.com/logsquaredn/geocloud"
 	"github.com/spf13/viper"
 )
 
 func getClient() (*geocloud.Client, error) {
-	port, _ := strconv.Atoi(os.Getenv("GEOCLOUD_PORT"))
+	port := viper.GetInt64("port")
 	if port == 0 {
 		port = 8080
 	}

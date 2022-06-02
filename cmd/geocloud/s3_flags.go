@@ -8,8 +8,8 @@ import (
 )
 
 func init() {
-	_ = viper.BindEnv("s3-access-key-id", "GEOCLOUD_ACCESS_KEY_ID")
-	_ = viper.BindEnv("s3-secret-access-key", "GEOCLOUD_SECRET_ACCESS_KEY")
+	_ = viper.BindEnv("s3-access-key-id", envVarAccessKeyID)
+	_ = viper.BindEnv("s3-secret-access-key", envVarSecretAccessKey)
 	_ = conf.BindToFlags(rootCmd.PersistentFlags(), nil, []*conf.Conf{
 		{
 			Arg:         "s3-bucket",

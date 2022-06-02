@@ -33,6 +33,8 @@ func init() {
 	_ = viper.BindPFlag("api-key", flags.Lookup("api-key"))
 	flags.String("base-url", "", "Geocloud base URL")
 	_ = viper.BindPFlag("base-url", flags.Lookup("base-url"))
+	flags.String("port", "", "Geocloud port")
+	_ = viper.BindPFlag("port", flags.Lookup("port"))
 }
 
 func init() {
