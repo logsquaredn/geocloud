@@ -52,7 +52,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dependency build
 
 # Repo: [geocloud-gitops]
-update tag in values.yaml
+# update tag in values.yaml
 make geocloud
 git add/commit/push
 ```
@@ -63,13 +63,17 @@ git add/commit/push
 kubectl get ns
 # get specific namespace
 kubectl get pod -n <namespace>
+# set default namespace
+kubectl config set-context --current --namespace <namespace>
 # list all secrets in namespace
 kubectl get secret -n <namespace>
-# get secret yaml
+# get a secret yaml
 kubectl get secret -n <namespace> <kind> -o yaml
-# decode password
+# decode a password
 echo <password> | base64 -d
-# execute into container
+# get postgres password (default namespace geocloud-gitops must be set)
+kubectl get secret -o json geocloud-postgresql | jq -r '.data["postgresql-password"]' | base64 -d
+# execute into a container
 kubectl exec -n <namespace> <kind> -it -- <cmd> 
 ```
 
