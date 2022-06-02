@@ -53,7 +53,7 @@ func NewServer(opts *Opts) (*API, error) {
 		{
 			task := v1.Group("/task")
 			{
-				task.GET("/", a.listTasksHandler)
+				task.GET("", a.listTasksHandler)
 				task.GET("/:type", a.getTaskHandler)
 			}
 			authenticated := v1.Group("/")
@@ -61,8 +61,8 @@ func NewServer(opts *Opts) (*API, error) {
 				authenticated.Use(a.customerMiddleware)
 				storage := authenticated.Group("/storage")
 				{
-					storage.POST("/", a.createStorageHandler)
-					storage.GET("/", a.listStorageHandler)
+					storage.POST("", a.createStorageHandler)
+					storage.GET("", a.listStorageHandler)
 					storage.GET("/:id", a.getStorageHandler)
 					storage.GET("/:id/content", a.getStorageContentHandler)
 				}
@@ -74,7 +74,7 @@ func NewServer(opts *Opts) (*API, error) {
 					job.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
 					job.POST("/vectorlookup", a.createVectorLookupJobHandler)
 					job.POST("/rasterlookup", a.createRasterLookupJobHandler)
-					job.GET("/", a.listJobHandler)
+					job.GET("", a.listJobHandler)
 					job.GET("/:id", a.getJobHandler)
 					job.GET("/:id/input", a.getJobInputHandler)
 					job.GET("/:id/output", a.getJobOutputHandler)
