@@ -50,7 +50,7 @@ services:
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
-    volumes: [./hack/minio:/var/lib/minio]
+    volumes: [./hack/minio:/var/lib/minio:z]
     networks: [api, worker, secretary]
     ports: [9000:9000, 9001:9001]
     environment:
@@ -69,7 +69,8 @@ services:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     networks: [api, worker]
     ports: [5672:5672, 15672:15672]
-    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
+    privileged: true
+    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq:z, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
   worker:
     build: .
     image: *image
