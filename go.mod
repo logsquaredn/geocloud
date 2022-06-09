@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.40.58
+	github.com/bufbuild/connect-go v0.1.1
 	github.com/frantjc/go-js v0.0.0-20220513183439-51192246b70d
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -18,6 +19,8 @@ require (
 	github.com/stripe/stripe-go/v72 v72.106.0
 	github.com/swaggo/gin-swagger v1.3.3
 	github.com/swaggo/swag v1.8.2
+	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
+	google.golang.org/protobuf v1.28.0
 )
 
 require (
@@ -62,10 +65,8 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

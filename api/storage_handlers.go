@@ -1,12 +1,16 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
+	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	storagev1 "github.com/logsquaredn/geocloud/api/storage/v1"
 )
 
 // @Summary      Get a list of storage
@@ -109,6 +113,37 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	}
 
 	ctx.Data(http.StatusOK, contentType, b)
+}
+
+// @Summary      Get a storage's content via RPC
+// @Description  Gets the content of a stored dataset via RPC
+// @Description
+// @Description  &emsp; - API Key is required either as a query parameter or a header
+// @Tags         RPC,Content
+// @Produce      application/json, application/zip
+// @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
+// @Param        X-API-Key     header  string  false  "API Key via header"
+// @Success      200
+// @Failure      400  {object}  geocloud.Error
+// @Failure      401  {object}  geocloud.Error
+// @Failure      403  {object}  geocloud.Error
+// @Failure      404  {object}  geocloud.Error
+// @Failure      500  {object}  geocloud.Error
+// @Router       /api.storage.v1.StorageService/GetStorage [post]
+func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest], stream *connect.ServerStream[storagev1.GetStorageResponse]) error {
+	for i := 0; i < 5; i++ {
+		res := &storagev1.GetStorageResponse{}
+		res.Data = []byte("bullshit")
+
+		err := stream.Send(res)
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(3 * time.Second)
+	}
+
+	return nil
 }
 
 // @Summary      Create a storage

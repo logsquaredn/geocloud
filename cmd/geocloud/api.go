@@ -11,6 +11,8 @@ import (
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 var (
@@ -64,5 +66,5 @@ func runAPI(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Info().Msgf("serving on %s", addr)
-	return http.Serve(l, srv)
+	return http.Serve(l, h2c.NewHandler(srv, &http2.Server{}))
 }
