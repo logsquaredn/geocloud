@@ -30,8 +30,8 @@ func NewServer(opts *Opts) (*API, error) {
 		router = gin.Default()
 	)
 
-	a.router.GET("/healthz", a.healthzHandler)
-	a.router.GET("/readyz", a.readyzHandler)
+	router.GET("/healthz", a.healthzHandler)
+	router.GET("/readyz", a.readyzHandler)
 
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
 
