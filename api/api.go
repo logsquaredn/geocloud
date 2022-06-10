@@ -28,6 +28,9 @@ func NewServer(opts *Opts) (*API, error) {
 		}
 	)
 
+	a.router.GET("/healthz", a.healthzHandler)
+	a.router.GET("/readyz", a.readyzHandler)
+
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
 
 	a.router.GET("/", func(ctx *gin.Context) {
