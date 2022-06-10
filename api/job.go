@@ -58,6 +58,8 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 		if err != nil {
 			return nil, statusCode, err
 		}
+
+		defer ctx.Request.Body.Close()
 	}
 
 	job, err := a.ds.CreateJob(&geocloud.Job{

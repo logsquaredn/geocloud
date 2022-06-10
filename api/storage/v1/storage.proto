@@ -12,6 +12,15 @@ message GetStorageResponse {
     bytes data = 1;
 }
 
+message CreateStorageRequest {
+    bytes data = 1;
+}
+
+message CreateStorageResponse {
+    string id = 1;
+}
+
 service StorageService {
     rpc GetStorage(GetStorageRequest) returns (stream GetStorageResponse) {}
+    rpc CreateStorage(stream CreateStorageRequest) returns (CreateStorageResponse) {}
 }
