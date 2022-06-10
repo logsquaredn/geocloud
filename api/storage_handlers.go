@@ -1,12 +1,16 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"io"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	storagev1 "github.com/logsquaredn/geocloud/api/storage/v1"
 )
 
 // @Summary      Get a list of storage
@@ -111,6 +115,56 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, contentType, b)
 }
 
+func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest], stream *connect.ServerStream[storagev1.GetStorageResponse]) error {
+	// TODO
+	// for i := 0; i < 5; i++ {
+	// 	res := &storagev1.GetStorageResponse{}
+	// 	res.Data = []byte("blah")
+
+	// 	err := stream.Send(res)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	time.Sleep(3 * time.Second)
+	// }
+
+	return nil
+}
+
+func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[storagev1.CreateStorageRequest]) (*connect.Response[storagev1.CreateStorageResponse], error) {
+	buf := []byte{}
+	for stream.Receive() {
+		buf = append(buf, stream.Msg().Data...)
+	}
+	if err := stream.Err(); err != nil {
+		return nil, connect.NewError(connect.CodeUnknown, err)
+	}
+
+	volume, _, err := a.getRequestVolume(stream.RequestHeader().Get("X-Content-Type"), buf)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnknown, err)
+	}
+
+	storage, err := a.ds.CreateStorage(&geocloud.Storage{
+		CustomerID: stream.RequestHeader().Get("X-API-Key"),
+		Name:       stream.RequestHeader().Get("X-Storage-Name"),
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnknown, err)
+	}
+
+	if err = a.os.PutObject(storage, volume); err != nil {
+		return nil, connect.NewError(connect.CodeUnknown, err)
+	}
+
+	// TODO return actual storage object
+	res := connect.NewResponse(&storagev1.CreateStorageResponse{
+		Id: storage.ID,
+	})
+	return res, nil
+}
+
 // @Summary      Create a storage
 // @Description  Stores a dataset. The ID of this stored dataset can be used as input to jobs
 // @Description
@@ -128,13 +182,18 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Failure      500        {object}  geocloud.Error
 // @Router       /storage [post]
 func (a *API) createStorageHandler(ctx *gin.Context) {
-	storage, statusCode, err := a.createStorage(ctx)
+	data, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		a.err(ctx, http.StatusInternalServerError, err)
+	}
+	defer ctx.Request.Body.Close()
+	volume, statusCode, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), data)
 	if err != nil {
 		a.err(ctx, statusCode, err)
 		return
 	}
 
-	volume, statusCode, err := a.getRequestVolume(ctx)
+	storage, statusCode, err := a.createStorage(ctx)
 	if err != nil {
 		a.err(ctx, statusCode, err)
 		return

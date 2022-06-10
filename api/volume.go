@@ -14,7 +14,11 @@ import (
 )
 
 func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
-	volume, statusCode, err := a.getRequestVolume(ctx)
+	data, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	volume, statusCode, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), data)
 	if err != nil {
 		return nil, statusCode, err
 	}
@@ -31,14 +35,8 @@ func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.C
 	return storage, 0, nil
 }
 
-func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
-	data, err := io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
-
+func (a *API) getRequestVolume(contentType string, data []byte) (geocloud.Volume, int, error) {
 	var (
-		contentType     = ctx.Request.Header.Get("Content-Type")
 		applicationJSON = strings.Contains(contentType, "application/json")
 		applicationZip  = strings.Contains(contentType, "application/zip")
 		inputName       = js.Ternary(applicationZip, "input.zip", "input.json")
