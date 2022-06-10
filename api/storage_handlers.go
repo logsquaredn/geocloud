@@ -158,6 +158,7 @@ func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[st
 		return nil, connect.NewError(connect.CodeUnknown, err)
 	}
 
+	// TODO return actual storage object
 	res := connect.NewResponse(&storagev1.CreateStorageResponse{
 		Id: storage.ID,
 	})
