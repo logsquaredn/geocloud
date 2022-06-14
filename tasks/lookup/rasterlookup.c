@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	if(ifp == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "env var: %s must be set", ENV_VAR_INPUT_FILEPATH);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
 	}
 	sprintf(iMsg, "input filepath: %s", ifp);
 	info(iMsg);
@@ -20,14 +20,14 @@ int main(int argc, char *argv[]) {
 	if(od == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
 	}
 	sprintf(iMsg, "output directory: %s", od);
 	info(iMsg);
 
 	char *bands = getenv("GEOCLOUD_BANDS");
 	if(bands == NULL) {
-		fatalError("env var: GEOCLOUD_BANDS must be set", __FILE__, __LINE__);
+		fatalErrorWithCode("env var: GEOCLOUD_BANDS must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
 	const char delim[2] = ",";
 	char *tok = strtok(bands, delim);
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 		if(bNum <= 0) {
 			char eMsg[ONE_KB];
 			sprintf(eMsg, "invalid band: %s. must be an interger greater than zero", tok);
-			fatalError(eMsg, __FILE__, __LINE__);
+			fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
 		}
 		bNums[bCt] = bNum;
 
@@ -49,44 +49,44 @@ int main(int argc, char *argv[]) {
 		tok = strtok(NULL, delim);
 	}
 	if(bCt < 1) {
-		fatalError("at least one band required as input", __FILE__, __LINE__);
+		fatalErrorWithCode("at least one band required as input", __FILE__, __LINE__, EX_CONFIG);
 	}
 
     const char *lonArg = getenv("GEOCLOUD_LONGITUDE");
 	if(lonArg == NULL) {
-		fatalError("env var: GEOCLOUD_LONGITUDE must be set", __FILE__, __LINE__);
+		fatalErrorWithCode("env var: GEOCLOUD_LONGITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
-        fatalError(eMsg, __FILE__, __LINE__);
+        fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
     }
 	sprintf(iMsg, "lon: %f", lon);
 	info(iMsg);
 
     const char *latArg = getenv("GEOCLOUD_LATITUDE");
 	if(latArg == NULL) {
-		fatalError("env var: GEOCLOUD_LATITUDE must be set", __FILE__, __LINE__);
+		fatalErrorWithCode("env var: GEOCLOUD_LATITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
-        fatalError(eMsg, __FILE__, __LINE__);
+        fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
     }
 	sprintf(iMsg, "lat: %f", lat);
 	info(iMsg);
 
 	if(!isZip(ifp)) {
-		fatalError("input file must be a .zip", __FILE__, __LINE__);
+		fatalErrorWithCode("input file must be a .zip", __FILE__, __LINE__, EX_NOINPUT);
 	}
 
 	char **fl = unzip(ifp);
 	if(fl == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "failed to unzip: %s", ifp);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_NOINPUT);
 	}
 
 	char *f;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 	if(fc != 1) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "input zip must contain exactly one raster file. found: %d", fc);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_NOINPUT);
 	}
 
 	char *rfp = fl[0];
@@ -108,13 +108,13 @@ int main(int argc, char *argv[]) {
 	if(gd == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "failed to open raster file: %s", rfp);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_DATAERR);
 	}
 	free(fl);
 
 	double *buff = (double*) calloc(6, sizeof(double));
 	if(GDALGetGeoTransform(gd, buff) != OGRERR_NONE) {
-		fatalError("failed to get geotransform", __FILE__, __LINE__);
+		fatalErrorWithCode("failed to get geotransform", __FILE__, __LINE__, EX_DATAERR);
 	}
 	double xOrigin = buff[0];
 	double yOrigin = buff[3];
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 	if(fptr == NULL) {
 		char eMsg[ONE_KB];
 		sprintf(eMsg, "failed to open output file: %s", ofp);
-		fatalError(eMsg, __FILE__, __LINE__);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CANTCREAT);
 	}
 	if(fputs("{\"results\":[", fptr) == EOF) {
 		fatalError("failed to write beginning results to output file", __FILE__, __LINE__);

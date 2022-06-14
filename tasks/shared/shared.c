@@ -15,8 +15,12 @@ void error(const char *msg, const char *file, int line) {
 }
 
 void fatalError(const char *msg, const char *file, int line) {
+    fatalErrorWithCode(msg, file, line, 1);
+}
+
+void fatalErrorWithCode(const char *msg, const char *file, int line, int code) {
     error(msg, file, line);
-	exit(1);
+	exit(code);
 }
 
 int isGeojson(const char *fp) {
