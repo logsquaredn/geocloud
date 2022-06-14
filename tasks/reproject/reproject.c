@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 	} else if(isGeojson(iFp)) {
 		vFp = strdup(iFp);
 	} else {
-		fatalErrorWithCode("input file must be a .zip or .geojson", __FILE__, __LINE__, EX_NOINPUT);
+		fatalErrorWithCode("input file must be a .zip or .json", __FILE__, __LINE__, EX_NOINPUT);
 	}
 	sprintf(iMsg, "vector filepath: %s", vFp);
 	info(iMsg); 
