@@ -2,47 +2,59 @@ BEGIN;
 
 INSERT INTO task (
     task_type,
+    task_kind,
     task_params
 ) VALUES (
     'buffer',
+    'transformation',
     ARRAY['buffer-distance', 'quadrant-segment-count']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
     task_type,
+    task_kind,
     task_params
 ) VALUES (
     'filter',
+    'transformation',
     ARRAY['filter-column', 'filter-value']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
     task_type,
+    task_kind,
     task_params
 ) VALUES (
-    'reproject', 
+    'reproject',
+    'transformation',
     ARRAY['target-projection']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
-    task_type
+    task_type,
+    task_kind
 ) VALUES (
-    'removebadgeometry'
+    'removebadgeometry',
+    'transformation'
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
     task_type,
+    task_kind,
     task_params
 ) VALUES (
     'vectorlookup', 
+    'lookup',
     ARRAY['longitude', 'latitude']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (
     task_type,
+    task_kind,
     task_params
 ) VALUES (
-    'rasterlookup', 
+    'rasterlookup',
+    'lookup',
     ARRAY['bands', 'longitude', 'latitude']
 ) ON CONFLICT DO NOTHING;
 

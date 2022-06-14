@@ -45,8 +45,37 @@ func ParseTaskType(taskType string) (TaskType, error) {
 	return "", fmt.Errorf("unknown task type '%s'", taskType)
 }
 
+type TaskKind string
+
+const (
+	TaskKindLookup         TaskKind = "lookup"
+	TaskKindTransformation TaskKind = "transformation"
+)
+
+func (k TaskKind) Type() string {
+	return string(k)
+}
+
+func (k TaskKind) Name() string {
+	return k.Type()
+}
+
+func (k TaskKind) String() string {
+	return k.Type()
+}
+
+func ParseTaskKind(taskKind string) (TaskKind, error) {
+	for _, k := range []TaskKind{TaskKindLookup, TaskKindTransformation} {
+		if strings.EqualFold(taskKind, k.String()) {
+			return k, nil
+		}
+	}
+	return "", fmt.Errorf("unknown task type '%s'", taskKind)
+}
+
 type Task struct {
 	Type    TaskType `json:"type,omitempty"`
+	Kind    TaskKind `json:"kind,omitempty"`
 	Params  []string `json:"params,omitempty"`
 	QueueID string   `json:"-"`
 }

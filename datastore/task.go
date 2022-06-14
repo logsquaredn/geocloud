@@ -21,15 +21,21 @@ func (p *Postgres) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 		t        = &geocloud.Task{}
 		queueID  sql.NullString
 		taskType string
+		taskKind string
 	)
 
-	err := p.stmt.getTaskByJobID.QueryRow(m.GetID()).Scan(&taskType, pq.Array(&t.Params), &queueID)
+	err := p.stmt.getTaskByJobID.QueryRow(m.GetID()).Scan(&taskType, &taskKind, pq.Array(&t.Params), &queueID)
 	if err != nil {
 		return t, err
 	}
 
 	t.QueueID = queueID.String
 	t.Type, err = geocloud.ParseTaskType(taskType)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Kind, err = geocloud.ParseTaskKind(taskKind)
 	return t, err
 }
 
@@ -41,14 +47,20 @@ func (p *Postgres) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 		t        = &geocloud.Task{}
 		queueID  sql.NullString
 		taskType string
+		taskKind string
 	)
-	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, pq.Array(&t.Params), &queueID)
+	err := p.stmt.getTaskByType.QueryRow(tt.String()).Scan(&taskType, &taskKind, pq.Array(&t.Params), &queueID)
 	if err != nil {
 		return t, err
 	}
 
 	t.QueueID = queueID.String
 	t.Type, err = geocloud.ParseTaskType(taskType)
+	if err != nil {
+		return nil, err
+	}
+
+	t.Kind, err = geocloud.ParseTaskKind(taskKind)
 	return t, err
 }
 
@@ -71,15 +83,20 @@ func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, e
 			task     = &geocloud.Task{}
 			queueID  sql.NullString
 			taskType string
+			taskKind string
 		)
 
-		err = rows.Scan(&taskType, pq.Array(&task.Params), &queueID)
-		if err != nil {
+		if err = rows.Scan(&taskType, &taskKind, pq.Array(&task.Params), &queueID); err != nil {
 			return nil, err
 		}
 
 		task.QueueID = queueID.String
 		task.Type, err = geocloud.ParseTaskType(taskType)
+		if err != nil {
+			return nil, err
+		}
+
+		task.Kind, err = geocloud.ParseTaskKind(taskKind)
 		if err != nil {
 			return nil, err
 		}
