@@ -33,7 +33,7 @@ func init() {
 		},
 		{
 			Arg:         "amqp-retry-delay",
-			Default:     s5,
+			Default:     s4,
 			Description: "AMQP retry delay",
 		},
 		{

@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -102,13 +103,15 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 		return
 	}
 
-	b, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
+	r, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
 	if err != nil {
 		a.err(ctx, statusCode, err)
 		return
 	}
+	defer r.Close()
 
-	ctx.Data(http.StatusOK, contentType, b)
+	ctx.Writer.Header().Add("Content-Type", contentType)
+	_, _ = io.Copy(ctx.Writer, r)
 }
 
 // @Summary      Create a storage

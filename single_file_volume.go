@@ -1,13 +1,12 @@
 package geocloud
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 )
 
-func NewSingleFileVolume(name string, content []byte) Volume {
-	return &singleFileVolume{name, bytes.NewReader(content)}
+func NewSingleFileVolume(name string, r io.Reader) Volume {
+	return &singleFileVolume{name, r}
 }
 
 type singleFileVolume struct {
@@ -24,6 +23,11 @@ func (v *singleFileVolume) Name() string {
 
 func (v *singleFileVolume) Read(p []byte) (int, error) {
 	return v.reader.Read(p)
+}
+
+func (v *singleFileVolume) Close() error {
+	// not implemented
+	return nil
 }
 
 func (v *singleFileVolume) Size() int {

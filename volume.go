@@ -4,7 +4,7 @@ import "io"
 
 // File ...
 type File interface {
-	io.Reader
+	io.ReadCloser
 
 	// Name returns the path to the file relative to the
 	// File's Volume
