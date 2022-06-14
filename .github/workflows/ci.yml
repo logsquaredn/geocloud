@@ -13,12 +13,38 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      - uses: golangci/golangci-lint-action@v3.1.0
-  build-push:
+      - uses: golangci/golangci-lint-action@v3.2.0
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      # - name: setup-qemu
+      #   uses: docker/setup-qemu-action@v1
+      - name: setup-buildx
+        uses: docker/setup-buildx-action@v2
+      - name: up
+        run: |
+          make services sleep migrate detach geocloudctl
+      - name: geocloudctl
+        run: |
+          ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json
+          ./bin/geocloudctl get jobs
+          ./bin/geocloudctl get storage
+      - name: test
+        run: |
+          make test
+      - name: down
+        run: |
+          make down
+  push:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       # - name: setup-qemu
@@ -34,15 +60,28 @@ jobs:
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::${GITHUB_SHA::7}"
-      - name: build-push
-        id: build-push
+      - uses: actions/checkout@v3
+      - name: build
+        id: build
         uses: docker/build-push-action@v3
         with:
-          cache-from: type=registry,ref=ghcr.io/logsquaredn/geocloud:latest
-          push: ${{ github.event_name == 'push' }}
-          load: ${{ github.event_name != 'push' }}
-          build-args: revision=${{ steps.get-tag.outputs.tag }}
-          tags: ghcr.io/logsquaredn/geocloud:${{ steps.get-tag.outputs.tag }}
+          context: .
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.get-tag.outputs.tag }}
     outputs:
-      digest: ${{ steps.build-push.outputs.digest }}
+      digest: ${{ steps.build.outputs.digest }}
       tag: ${{ steps.get-tag.outputs.tag }}
+  pull:
+    runs-on: ubuntu-latest
+    needs: push
+    container:
+      image: ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}@${{ needs.push.outputs.digest }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: version
+        run: |
+          geocloud -v

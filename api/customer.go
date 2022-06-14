@@ -32,7 +32,7 @@ func (a *API) getAssumedCustomer(ctx *gin.Context) *geocloud.Customer {
 // and returns a 401 if not found
 func (a *API) customerMiddleware(ctx *gin.Context) {
 	if _, statusCode, err := a.getCustomer(ctx); err != nil {
-		a.err(ctx, statusCode, fmt.Errorf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", apiKeyQueryParam, apiKeyHeader, apiKeyCookie))
+		a.err(ctx, statusCode, fmt.Errorf("query parameter '%s', header '%s' or cookie '%s' must be a valid API Key", geocloud.APIKeyQueryParam, geocloud.APIKeyHeader, geocloud.APIKeyCookie))
 		ctx.Abort()
 		return
 	}
@@ -40,20 +40,14 @@ func (a *API) customerMiddleware(ctx *gin.Context) {
 	ctx.Next()
 }
 
-const (
-	apiKeyQueryParam = "api-key"
-	apiKeyHeader     = "X-API-Key" //nolint:gosec
-	apiKeyCookie     = apiKeyHeader
-)
-
 var getCustomerID = getAPIKey
 
 func getAPIKey(ctx *gin.Context) string {
-	apiKey := ctx.Query(apiKeyQueryParam)
+	apiKey := ctx.Query(geocloud.APIKeyQueryParam)
 	if apiKey == "" {
-		apiKey = ctx.GetHeader(apiKeyHeader)
+		apiKey = ctx.GetHeader(geocloud.APIKeyHeader)
 		if apiKey == "" {
-			apiKey, _ = ctx.Cookie(apiKeyCookie)
+			apiKey, _ = ctx.Cookie(geocloud.APIKeyCookie)
 		}
 	}
 	return apiKey

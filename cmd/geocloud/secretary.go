@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/logsquaredn/geocloud"
 	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/customer"
 )
@@ -25,13 +26,17 @@ var secretaryCmd = &cobra.Command{
 var (
 	workJobsBefore    time.Duration
 	workStorageBefore time.Duration
-	stripeAPIKey      string
 )
 
 func init() {
-	secretaryCmd.Flags().DurationVar(&workJobsBefore, "work-jobs-before", h24, "Work jobs before")
-	secretaryCmd.Flags().DurationVar(&workStorageBefore, "work-storage-before", h24, "Work storage before")
-	secretaryCmd.Flags().StringVar(&stripeAPIKey, "stripe-api-key", os.Getenv("GEOCLOUD_STRIPE_API_KEY"), "Work jobs before")
+	flags := secretaryCmd.Flags()
+	flags.DurationVar(&workJobsBefore, "work-jobs-before", h24, "Work jobs before")
+	flags.DurationVar(&workStorageBefore, "work-storage-before", h24, "Work storage before")
+	_ = conf.BindToFlags(flags, nil, &conf.Conf{
+		Arg:         "stripe-api-key",
+		Default:     "",
+		Description: "Stripe API key",
+	})
 }
 
 func runSecretary(cmd *cobra.Command, args []string) error {
@@ -59,7 +64,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stripe.Key = stripeAPIKey
+	stripe.Key = viper.GetString("stripe-api-key")
 
 	log.Info().Msg("importing customers")
 	i := customer.List(&stripe.CustomerListParams{})

@@ -67,19 +67,21 @@ func NewPostgres(opts *PostgresOpts) (*Postgres, error) {
 		err error
 		i   int64 = 1
 	)
-	for p.db, err = sql.Open("postgres", opts.connectionString()); err != nil; i++ {
+	for p.db, err = sql.Open("postgres", opts.connectionString()); err != nil; p.db, err = sql.Open("postgres", opts.connectionString()) {
 		if i >= opts.Retries && opts.Retries > 0 {
 			return nil, fmt.Errorf("failed to connect to db after %d attempts: %w", i, err)
 		}
 		time.Sleep(opts.RetryDelay)
+		i++
 	}
 
 	i = 1
-	for err = p.db.Ping(); err != nil; i++ {
+	for ; err != nil; err = p.db.Ping() {
 		if i >= opts.Retries && opts.Retries > 0 {
 			return nil, fmt.Errorf("failed to ping db after %d attempts: %w", i, err)
 		}
 		time.Sleep(opts.RetryDelay)
+		i++
 	}
 
 	if p.stmt.createJob, err = p.db.Prepare(createJobSQL); err != nil {

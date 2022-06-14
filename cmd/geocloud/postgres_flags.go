@@ -1,70 +1,67 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"strconv"
 	"strings"
 
 	"github.com/logsquaredn/geocloud/datastore"
-)
-
-var (
-	postgresAddress string
-	postgresOpts    = &datastore.PostgresOpts{}
+	"github.com/logsquaredn/geocloud/internal/conf"
+	"github.com/spf13/viper"
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(
-		&postgresAddress,
-		"postgres-address",
-		coalesceString(
-			os.Getenv("GEOCLOUD_POSTGRES_ADDRESS"),
-			fmt.Sprintf(":%d", defaultPostgresPort),
-		),
-		"Postgres address",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&postgresOpts.User,
-		"postgres-user",
-		coalesceString(
-			os.Getenv("GEOCLOUD_POSTGRES_USER"),
-			"geocloud",
-		),
-		"Postgres user",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&postgresOpts.Password,
-		"postgres-password",
-		os.Getenv("GEOCLOUD_POSTGRES_PASSWORD"),
-		"Postgres password",
-	)
-	rootCmd.PersistentFlags().StringVar(
-		&postgresOpts.SSLMode,
-		"postgres-sslmode",
-		os.Getenv("GEOCLOUD_POSTGRES_SSLMODE"),
-		"Postgres SSL mode",
-	)
-	rootCmd.PersistentFlags().Int64Var(
-		&postgresOpts.Retries,
-		"postgres-retries",
-		parseInt64(os.Getenv("GEOCLOUD_POSTGRES_RETRIES")),
-		"Postgres retries",
-	)
-	rootCmd.PersistentFlags().DurationVar(
-		&postgresOpts.RetryDelay,
-		"postgres-retry-delay",
-		s5,
-		"Postgres retry delay",
-	)
+	_ = conf.BindToFlags(rootCmd.PersistentFlags(), nil, []*conf.Conf{
+		{
+			Arg:         "postgres-address",
+			Default:     defaultPostgresAddress,
+			Description: "Postgres address",
+		},
+		{
+			Arg:         "postgres-user",
+			Default:     defaultPostgresUser,
+			Description: "Postgres user",
+		},
+		{
+			Arg:         "postgres-password",
+			Default:     "",
+			Description: "Postgres password",
+		},
+		{
+			Arg:         "postgres-retries",
+			Default:     int64(5),
+			Description: "Postgres retries",
+		},
+		{
+			Arg:         "postgres-retry-delay",
+			Default:     s5,
+			Description: "Postgres retry delay",
+		},
+		{
+			Arg:         "postgres-sslmode",
+			Default:     "",
+			Description: "Postgres SSL mode",
+		},
+	}...)
 }
 
 func getPostgresOpts() *datastore.PostgresOpts {
-	delimiter := strings.Index(postgresAddress, ":")
+	var (
+		postgresOpts = &datastore.PostgresOpts{
+			User:       viper.GetString("postgres-user"),
+			Password:   viper.GetString("postgres-password"),
+			Retries:    viper.GetInt64("postgres-retries"),
+			RetryDelay: viper.GetDuration("postgres-retry-delay"),
+			SSLMode:    viper.GetString("postgres-sslmode"),
+		}
+		postgresAddress = viper.GetString("postgres-address")
+		delimiter       = strings.Index(postgresAddress, ":")
+	)
 	if delimiter < 0 {
 		postgresOpts.Host = postgresAddress
 	} else {
 		postgresOpts.Host = postgresAddress[:delimiter]
-		postgresOpts.Port = parseInt64(postgresAddress[delimiter:])
+		port, _ := strconv.Atoi(postgresAddress[delimiter:])
+		postgresOpts.Port = int64(port)
 	}
 
 	if postgresOpts.Host == "" {

@@ -13,6 +13,7 @@ ADD ${zip} /assets
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
 WORKDIR $GOPATH/src/github.com/logsquaredn/geocloud
+RUN apk add --no-cache git
 RUN go install github.com/swaggo/swag/cmd/swag@v1.7.8
 COPY go.mod go.sum ./
 RUN go mod download
@@ -36,8 +37,8 @@ RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterloo
 FROM build_image AS build
 ARG version=0.0.0
 ARG prerelease=
-ARG build=
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${verision} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease} -X github.com/logsquaredn/geocloud.Build=${build}" -o /assets/geocloud ./cmd/geocloud/
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${version} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloud ./cmd/geocloud
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${version} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloudctl ./cmd/geocloudctl
 
 FROM base_image AS geocloud
 RUN apk add --no-cache ca-certificates

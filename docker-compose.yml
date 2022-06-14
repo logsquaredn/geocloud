@@ -50,7 +50,7 @@ services:
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
-    volumes: [./hack/minio:/var/lib/minio]
+    volumes: [./hack/minio:/var/lib/minio:z]
     networks: [api, worker, secretary]
     ports: [9000:9000, 9001:9001]
     environment:
@@ -69,48 +69,43 @@ services:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     networks: [api, worker]
     ports: [5672:5672, 15672:15672]
-    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
+    privileged: true
+    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq:z, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
   worker:
     build: .
     image: *image
     command: w
-    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud]
+    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud:z]
     networks: [worker]
     depends_on: *depends_on
     environment: *environment
   removebadgeometry:
     build: .
     image: *image
-    entrypoint: removebadgeometry
-    command: /tmp/input/input.json /tmp
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
+    entrypoint: removebadgeometry
   buffer:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: buffer
-    command: /tmp/input/input.json /tmp 2
   filter:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: filter
-    command: /tmp/input/input.json /tmp prop0 value0
   reproject:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: reproject
-    command: /tmp/input/input.json /tmp 2000
   vectorlookup:
     build: .
     image: *image
     volumes: [./testdata/geojson/featurecollection.json:/tmp/input/input.json:ro]
     entrypoint: vectorlookup
-    command: /tmp/input/input.json /tmp 97.5679 34.6970
   rasterlookup:
     build: .
     image: *image
     volumes: [./testdata/raster/input.tif:/tmp/input/input.tif:ro]
     entrypoint: rasterlookup
-    command: /tmp/input/input.tif /tmp 2,4 -89.9383 29.95313
