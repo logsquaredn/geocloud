@@ -13,7 +13,7 @@ import (
 )
 
 func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
-	volume, statusCode, err := a.getRequestVolume(ctx)
+	volume, statusCode, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), ctx.Request.Body)
 	if err != nil {
 		return nil, statusCode, err
 	}
@@ -30,9 +30,8 @@ func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, customer *geocloud.C
 	return storage, 0, nil
 }
 
-func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
+func (a *API) getRequestVolume(contentType string, r io.Reader) (geocloud.Volume, int, error) {
 	var (
-		contentType     = ctx.Request.Header.Get("Content-Type")
 		applicationJSON = strings.Contains(contentType, "application/json")
 		applicationZip  = strings.Contains(contentType, "application/zip")
 		inputName       = js.Ternary(applicationZip, "input.zip", "input.json")
@@ -46,7 +45,7 @@ func (a *API) getRequestVolume(ctx *gin.Context) (geocloud.Volume, int, error) {
 		return nil, http.StatusBadRequest, fmt.Errorf("must specify one Content-Type among 'application/json' and 'application/zip'")
 	}
 
-	return geocloud.NewSingleFileVolume(inputName, ctx.Request.Body), 0, nil
+	return geocloud.NewSingleFileVolume(inputName, r), 0, nil
 }
 
 func (a *API) getVolumeContent(ctx *gin.Context, volume geocloud.Volume) (io.ReadCloser, string, int, error) {
