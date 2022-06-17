@@ -38,7 +38,7 @@ func getClient() (*geocloud.Client, error) {
 		opts = append(opts, geocloud.WithRPC)
 	}
 
-	client, err := geocloud.NewClient(baseURL, apiKey, geocloud.WithRPC)
+	client, err := geocloud.NewClient(baseURL, apiKey, opts...)
 	if err != nil {
 		return nil, err
 	}
