@@ -78,7 +78,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}()
 
 	go func() {
-		ist, err := o.ds.GetStorage(geocloud.NewMessage(j.InputID))
+		ist, err := o.ds.GetStorage(geocloud.Msg(j.InputID))
 		if err == nil {
 			_, err = o.ds.UpdateStorage(ist)
 			if err != nil {
@@ -110,7 +110,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	defer os.RemoveAll(o.jobDir(m))
 
 	log.Trace().Str(k, v).Msg("getting input")
-	input, err := o.os.GetObject(geocloud.NewMessage(j.InputID))
+	input, err := o.os.GetObject(geocloud.Msg(j.InputID))
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	j.OutputID = ost.ID
 
 	log.Debug().Str(k, v).Msg("uploading output")
-	return o.os.PutObject(geocloud.NewMessage(j.OutputID), outvol)
+	return o.os.PutObject(geocloud.Msg(j.OutputID), outvol)
 }
 
 func (o *Worker) inputVolumePath(m geocloud.Message) string {

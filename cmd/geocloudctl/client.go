@@ -30,7 +30,15 @@ func getClient() (*geocloud.Client, error) {
 		}
 	}
 
-	client, err := geocloud.NewClient(baseURL, apiKey)
+	var (
+		disableRPC = viper.GetBool("disable-rpc")
+		opts       = []geocloud.ClientOpt{}
+	)
+	if !disableRPC {
+		opts = append(opts, geocloud.WithRPC)
+	}
+
+	client, err := geocloud.NewClient(baseURL, apiKey, geocloud.WithRPC)
 	if err != nil {
 		return nil, err
 	}

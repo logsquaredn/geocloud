@@ -7,6 +7,11 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"time"
+
+	"github.com/bufbuild/connect-go"
+	"github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/logsquaredn/geocloud/api/storage/v1/storagev1connect"
 )
 
 func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
@@ -15,7 +20,12 @@ func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 		return nil, err
 	}
 
-	c := &Client{baseURL, http.DefaultClient}
+	c := &Client{
+		baseURL:      baseURL,
+		httpClient:   http.DefaultClient,
+		pollInterval: time.Second / 2,
+		bufferSize:   8 * 1024,
+	}
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
 			return nil, err
@@ -31,6 +41,12 @@ func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 			Value: apiKey,
 		},
 	})
+
+	c.storageClient = storagev1connect.NewStorageServiceClient(
+		c.httpClient,
+		c.baseURL.String(),
+		connect.WithSendGzip(),
+	)
 
 	return c, nil
 }
@@ -68,7 +84,7 @@ func (c *Client) err(res *http.Response) error {
 		return nil
 	}
 
-	e := &Error{}
+	e := &errv1.Error{}
 	if err := json.NewDecoder(res.Body).Decode(e); err != nil && e.Message != "" {
 		return fmt.Errorf("HTTP %d: unable to parse message", res.StatusCode)
 	}

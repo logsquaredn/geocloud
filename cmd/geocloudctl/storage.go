@@ -62,7 +62,10 @@ func runGetStorage(cmd *cobra.Command, args []string) error {
 }
 
 func runCreateStorage(cmd *cobra.Command, args []string) error {
-	client, err := getClient()
+	var (
+		ctx         = cmd.Context()
+		client, err = getClient()
+	)
 	if err != nil {
 		return err
 	}
@@ -72,7 +75,7 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	s, err := client.CreateStorage(geocloud.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
+	s, err := client.CreateStorage(ctx, geocloud.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
 	if err != nil {
 		return err
 	}

@@ -1,8 +1,13 @@
 package geocloud
 
 import (
+	"context"
+	"io"
 	"path"
 	"time"
+
+	"github.com/logsquaredn/geocloud/api/storage/v1"
+	"github.com/logsquaredn/geocloud/internal/rpcio"
 )
 
 type Storage struct {
@@ -63,7 +68,45 @@ func (c *Client) GetJobOutput(id string) (*Storage, error) {
 	return storage, c.get(url, storage)
 }
 
-func (c *Client) CreateStorage(r Request) (*Storage, error) {
+func (c *Client) CreateStorage(ctx context.Context, r Request) (*Storage, error) {
+	if c.rpc {
+		var (
+			stream  = c.storageClient.CreateStorage(ctx)
+			cookies = c.httpClient.Jar.Cookies(c.baseURL)
+		)
+		stream.RequestHeader().Add("X-Content-Type", r.ContentType())
+		stream.RequestHeader().Add("X-Storage-Name", r.Query()["name"])
+
+		for _, cookie := range cookies {
+			if cookie.Name == APIKeyCookie {
+				stream.RequestHeader().Add(APIKeyHeader, cookie.Value)
+			}
+		}
+
+		_, err := io.CopyBuffer(
+			rpcio.NewClientStreamWriter(stream, func(b []byte) *storagev1.CreateStorageRequest {
+				return &storagev1.CreateStorageRequest{
+					Data: b,
+				}
+			}),
+			r,
+			make([]byte, c.bufferSize),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := stream.CloseAndReceive()
+		if err != nil {
+			return nil, err
+		}
+
+		return &Storage{
+			ID:   res.Msg.Storage.Id,
+			Name: res.Msg.Storage.Name,
+		}, nil
+	}
+
 	var (
 		url     = c.baseURL
 		storage = &Storage{}

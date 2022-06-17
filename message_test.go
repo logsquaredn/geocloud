@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewMessage(t *testing.T) {
+func TestMsg(t *testing.T) {
 	var (
 		expected = uuid.NewString()
-		actual   = geocloud.NewMessage(expected)
+		actual   = geocloud.Msg(expected)
 	)
 	assert.Equal(t, expected, actual.GetID())
 }

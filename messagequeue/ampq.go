@@ -76,7 +76,7 @@ func (a *AMQP) Poll(f func(geocloud.Message) error) error {
 	for m := range msgs {
 		go func(m amqp.Delivery) {
 			id := string(m.Body)
-			if err := f(geocloud.NewMessage(id)); err == nil {
+			if err := f(geocloud.Msg(id)); err == nil {
 				if err = m.Ack(false); err != nil {
 					log.Err(err).Msgf("unable to acknowledge message '%s'", id)
 				}

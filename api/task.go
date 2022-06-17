@@ -5,27 +5,27 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
 )
 
-func (a *API) getTask(ctx *gin.Context, rawTaskType string) (*geocloud.Task, int, error) {
+func (a *API) getTask(rawTaskType string) (*geocloud.Task, error) {
 	taskType, err := geocloud.ParseTaskType(rawTaskType)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, errv1.New(err, http.StatusBadRequest)
 	}
 
-	return a.getTaskType(ctx, taskType)
+	return a.getTaskType(taskType)
 }
 
-func (a *API) getTaskType(ctx *gin.Context, taskType geocloud.TaskType) (*geocloud.Task, int, error) {
+func (a *API) getTaskType(taskType geocloud.TaskType) (*geocloud.Task, error) {
 	task, err := a.ds.GetTask(taskType)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, http.StatusNotFound, err
+		return nil, errv1.New(err, http.StatusNotFound)
 	case err != nil:
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return task, 0, nil
+	return task, nil
 }
