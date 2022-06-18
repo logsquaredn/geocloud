@@ -142,7 +142,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return fmt.Errorf("no input found")
 	}
 
-	task := exec.Command(t.Type.Name()) //nolint:gosec
+	task := exec.Command(t.Type.String()) //nolint:gosec
 	// start with current env minus configuration that might contain secrets
 	// e.g. GEOCLOUD_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {

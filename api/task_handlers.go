@@ -35,7 +35,8 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 }
 
 // @Summary      Get a task type
-// @Description  &emsp; - API Key is required either as a query parameter or a header// @Tags     Task
+// @Description  &emsp; - API Key is required either as a query parameter or a header
+// @Tags         Task
 // @Produce      application/json
 // @Param        type  path      string  true  "Task type"
 // @Success      200   {object}  geocloud.Task
