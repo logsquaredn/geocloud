@@ -9,6 +9,7 @@ import (
 	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
 )
 
 const (
@@ -17,10 +18,10 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType, customer *geocloud.Customer) (*geocloud.Job, int, error) {
-	task, statusCode, err := a.getTaskType(ctx, taskType)
+func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType, customer *geocloud.Customer) (*geocloud.Job, error) {
+	task, err := a.getTaskType(taskType)
 	if err != nil {
-		return nil, statusCode, err
+		return nil, err
 	}
 
 	var (
@@ -37,26 +38,26 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 	)
 	switch {
 	case len(inputIDs) > 1:
-		return nil, 400, fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf)
+		return nil, errv1.New(fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf), http.StatusBadRequest)
 	case input != "":
-		storage, statusCode, err = a.getStorageForCustomer(ctx, geocloud.NewMessage(input), customer)
+		storage, err = a.getStorageForCustomer(geocloud.Msg(input), customer)
 		if err != nil {
-			return nil, statusCode, err
+			return nil, err
 		}
 	case inputOf != "":
-		storage, statusCode, err = a.getJobInputStorageForCustomer(ctx, geocloud.NewMessage(inputOf), customer)
+		storage, err = a.getJobInputStorageForCustomer(ctx, geocloud.Msg(inputOf), customer)
 		if err != nil {
-			return nil, statusCode, err
+			return nil, err
 		}
 	case outputOf != "":
-		storage, statusCode, err = a.getJobOutputStorageForCustomer(ctx, geocloud.NewMessage(outputOf), customer)
+		storage, err = a.getJobOutputStorageForCustomer(ctx, geocloud.Msg(outputOf), customer)
 		if err != nil {
-			return nil, statusCode, err
+			return nil, err
 		}
 	default:
-		storage, statusCode, err = a.putRequestVolumeForCustomer(ctx, customer)
+		storage, err = a.putRequestVolumeForCustomer(ctx.GetHeader("Content-Type"), ctx.Query("name"), ctx.Request.Body, customer)
 		if err != nil {
-			return nil, statusCode, err
+			return nil, err
 		}
 
 		defer ctx.Request.Body.Close()
@@ -69,42 +70,42 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 		InputID:    storage.ID,
 	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
 	if err = a.mq.Send(job); err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return job, 0, nil
+	return job, nil
 }
 
-func (a *API) createJob(ctx *gin.Context, taskType geocloud.TaskType) (*geocloud.Job, int, error) {
-	return a.createJobForCustomer(ctx, taskType, a.getAssumedCustomer(ctx))
+func (a *API) createJob(ctx *gin.Context, taskType geocloud.TaskType) (*geocloud.Job, error) {
+	return a.createJobForCustomer(ctx, taskType, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJob(ctx *gin.Context, m geocloud.Message) (*geocloud.Job, int, error) {
-	return a.getJobForCustomer(ctx, m, a.getAssumedCustomer(ctx))
+func (a *API) getJob(ctx *gin.Context, m geocloud.Message) (*geocloud.Job, error) {
+	return a.getJobForCustomer(ctx, m, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Job, int, error) {
+func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Job, error) {
 	job, err := a.ds.GetJob(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, http.StatusNotFound, fmt.Errorf("job '%s' not found", m.GetID())
+		return nil, errv1.New(fmt.Errorf("job '%s' not found", m.GetID()), http.StatusNotFound)
 	case err != nil:
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
 	return a.checkJobOwnershipForCustomer(job, customer)
 }
 
-func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, int, error) {
+func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, error) {
 	if job.CustomerID != customer.ID {
-		return nil, http.StatusForbidden, fmt.Errorf("customer does not own job '%s'", job.ID)
+		return nil, errv1.New(fmt.Errorf("customer does not own job '%s'", job.ID), http.StatusForbidden)
 	}
 
-	return job, 0, nil
+	return job, nil
 }
 
 func buildJobArgs(ctx *gin.Context, taskParams []string) []string {

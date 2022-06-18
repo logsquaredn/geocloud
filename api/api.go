@@ -17,6 +17,8 @@ type API struct {
 	mq  *messagequeue.AMQP
 	os  *objectstore.S3
 	mux *http.ServeMux
+
+	storagev1connect.UnimplementedStorageServiceHandler
 }
 
 func NewServer(opts *Opts) (*API, error) {
@@ -52,6 +54,7 @@ func NewServer(opts *Opts) (*API, error) {
 			})
 		}
 	}
+
 	api := router.Group("/api")
 	{
 		v1 := api.Group("/v1")
@@ -91,9 +94,17 @@ func NewServer(opts *Opts) (*API, error) {
 		}
 	}
 
-	path, handler := storagev1connect.NewStorageServiceHandler(a)
-	a.mux.Handle(path, handler)
-	a.mux.Handle("/", router)
+	for _, f := range []func(*API) (string, http.Handler){
+		func(a *API) (string, http.Handler) {
+			return storagev1connect.NewStorageServiceHandler(a)
+		},
+		func(a *API) (string, http.Handler) {
+			return "/", router
+		},
+	} {
+		path, handler := f(a)
+		a.mux.Handle(path, handler)
+	}
 
 	return a, nil
 }

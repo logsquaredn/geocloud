@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/rs/zerolog/log"
 )
 
 // @Summary      Get a list of jobs
@@ -16,20 +18,21 @@ import (
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Success      200        {object}  []geocloud.Job
-// @Failure      401        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
-	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomer(ctx))
+	log.Info().Msg("IDOT")
+	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx))
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		jobs = []*geocloud.Job{}
 	case err != nil:
-		a.err(ctx, http.StatusInternalServerError, err)
-		return
+		// a.err(ctx, err)
+		// return
 	case jobs == nil:
 		jobs = []*geocloud.Job{}
 	}
@@ -43,19 +46,19 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Job
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      404        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      404        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/{id} [get]
 func (a *API) getJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
+	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -68,25 +71,25 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Task
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Task
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      404        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      404        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/{id}/task [get]
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
-	job, statusCode, err := a.getJob(ctx, geocloud.NewMessage(ctx.Param("id")))
+	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
-	task, statusCode, err := a.getTaskType(ctx, job.TaskType)
+	task, err := a.getTaskType(job.TaskType)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -99,19 +102,19 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Storage
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      404        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      404        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/{id}/input [get]
 func (a *API) getJobInputHandler(ctx *gin.Context) {
-	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
+	storage, err := a.getJobInputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -125,31 +128,31 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 // @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
-// @Param        api-key       query   string  false  "API Key via query parameter"
-// @Param        X-API-Key     header  string  false  "API Key via header"
+// @Param        api-key       query   string  false  "API Key query parameter"
+// @Param        X-API-Key     header  string  false  "API Key header"
 // @Param        id            path    string  true   "Job ID"
 // @Success      200
-// @Failure      401  {object}  geocloud.Error
-// @Failure      403  {object}  geocloud.Error
-// @Failure      404  {object}  geocloud.Error
-// @Failure      500  {object}  geocloud.Error
+// @Failure      401  {object}  errv1.Error
+// @Failure      403  {object}  errv1.Error
+// @Failure      404  {object}  errv1.Error
+// @Failure      500  {object}  errv1.Error
 // @Router       /job/{id}/input/content [get]
 func (a *API) getJobInputContentHandler(ctx *gin.Context) {
-	storage, statusCode, err := a.getJobInputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
+	storage, err := a.getJobInputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
 	volume, err := a.os.GetObject(storage)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
-	r, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
+	r, contentType, err := a.getVolumeContent(ctx.GetHeader("Accept"), volume)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 	defer r.Close()
@@ -164,19 +167,19 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Storage
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Storage
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      404        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      404        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/{id}/output [get]
 func (a *API) getJobOutputHandler(ctx *gin.Context) {
-	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
+	storage, err := a.getJobOutputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -190,31 +193,31 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 // @Tags         Content
 // @Produce      application/json, application/zip
 // @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
-// @Param        api-key       query   string  false  "API Key via query parameter"
-// @Param        X-API-Key     header  string  false  "API Key via header"
+// @Param        api-key       query   string  false  "API Key query parameter"
+// @Param        X-API-Key     header  string  false  "API Key header"
 // @Param        id            path    string  true   "Job ID"
 // @Success      200
-// @Failure      401  {object}  geocloud.Error
-// @Failure      403  {object}  geocloud.Error
-// @Failure      404  {object}  geocloud.Error
-// @Failure      500  {object}  geocloud.Error
+// @Failure      401  {object}  errv1.Error
+// @Failure      403  {object}  errv1.Error
+// @Failure      404  {object}  errv1.Error
+// @Failure      500  {object}  errv1.Error
 // @Router       /job/{id}/output/content [get]
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
-	storage, statusCode, err := a.getJobOutputStorage(ctx, geocloud.NewMessage(ctx.Param("id")))
+	storage, err := a.getJobOutputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
 	volume, err := a.os.GetObject(storage)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
-	r, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
+	r, contentType, err := a.getVolumeContent(ctx.GetHeader("accept"), volume)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 	defer r.Close()
@@ -241,28 +244,28 @@ type bufferQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key                 query     string   false  "API Key via query parameter"
-// @Param        X-API-Key               header    string   false  "API Key via header"
+// @Param        api-key                 query     string   false  "API Key query parameter"
+// @Param        X-API-Key               header    string   false  "API Key header"
 // @Param        input                   query     string   false  "ID of existing dataset to use"
 // @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
 // @Param        output-of               query     string   false  "ID of existing job whose output dataset to use"
 // @Param        buffer-distance         query     integer  true   "Buffer distance"
 // @Param        quadrant-segment-count  query     integer  true   "Quadrant Segment count"
 // @Success      200                     {object}  geocloud.Job
-// @Failure      400                     {object}  geocloud.Error
-// @Failure      401                     {object}  geocloud.Error
-// @Failure      403                     {object}  geocloud.Error
-// @Failure      500                     {object}  geocloud.Error
+// @Failure      400                     {object}  errv1.Error
+// @Failure      401                     {object}  errv1.Error
+// @Failure      403                     {object}  errv1.Error
+// @Failure      500                     {object}  errv1.Error
 // @Router       /job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
-		a.err(ctx, http.StatusBadRequest, err)
+		a.err(ctx, errv1.New(err, http.StatusBadRequest))
 		return
 	}
 
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeBuffer)
+	job, err := a.createJob(ctx, geocloud.TaskTypeBuffer)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -286,28 +289,28 @@ type filterQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key        query     string  false  "API Key via query parameter"
-// @Param        X-API-Key      header    string  false  "API Key via header"
+// @Param        api-key        query     string  false  "API Key query parameter"
+// @Param        X-API-Key      header    string  false  "API Key header"
 // @Param        input          query     string  false  "ID of existing dataset to use"
 // @Param        input-of       query     string  false  "ID of existing job whose input dataset to use"
 // @Param        output-of      query     string  false  "ID of existing job whose output dataset to use"
 // @Param        filter-column  query     string  true   "Column to filter on"
 // @Param        filter-value   query     string  true   "Value to filter on"
 // @Success      200            {object}  geocloud.Job
-// @Failure      400            {object}  geocloud.Error
-// @Failure      401            {object}  geocloud.Error
-// @Failure      403            {object}  geocloud.Error
-// @Failure      500            {object}  geocloud.Error
+// @Failure      400            {object}  errv1.Error
+// @Failure      401            {object}  errv1.Error
+// @Failure      403            {object}  errv1.Error
+// @Failure      500            {object}  errv1.Error
 // @Router       /job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
-		a.err(ctx, http.StatusBadRequest, err)
+		a.err(ctx, errv1.New(err, http.StatusBadRequest))
 		return
 	}
 
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeFilter)
+	job, err := a.createJob(ctx, geocloud.TaskTypeFilter)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -330,27 +333,27 @@ type reprojectQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key            query     string   false  "API Key via query parameter"
-// @Param        X-API-Key          header    string   false  "API Key via header"
+// @Param        api-key            query     string   false  "API Key query parameter"
+// @Param        X-API-Key          header    string   false  "API Key header"
 // @Param        input              query     string   false  "ID of existing dataset to use"
 // @Param        input-of           query     string   false  "ID of existing job whose input dataset to use"
 // @Param        output-of          query     string   false  "ID of existing job whose output dataset to use"
 // @Param        target-projection  query     integer  true   "Target projection EPSG"
 // @Success      200                {object}  geocloud.Job
-// @Failure      400                {object}  geocloud.Error
-// @Failure      401                {object}  geocloud.Error
-// @Failure      403                {object}  geocloud.Error
-// @Failure      500                {object}  geocloud.Error
+// @Failure      400                {object}  errv1.Error
+// @Failure      401                {object}  errv1.Error
+// @Failure      403                {object}  errv1.Error
+// @Failure      500                {object}  errv1.Error
 // @Router       /job/reproject [post]
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&reprojectQuery{}); err != nil {
-		a.err(ctx, http.StatusBadRequest, err)
+		a.err(ctx, errv1.New(err, http.StatusBadRequest))
 		return
 	}
 
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeReproject)
+	job, err := a.createJob(ctx, geocloud.TaskTypeReproject)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -370,21 +373,21 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
 // @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
 // @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
 // @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  geocloud.Error
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      400        {object}  errv1.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/removebadgeometry [post]
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
+	job, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -408,28 +411,28 @@ type vectorLookupQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
 // @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
 // @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
 // @Param        longitude  query     number  true   "Longitude"
 // @Param        latitude   query     number  true   "Latitude"
 // @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  geocloud.Error
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      400        {object}  errv1.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&vectorLookupQuery{}); err != nil {
-		a.err(ctx, http.StatusBadRequest, err)
+		a.err(ctx, errv1.New(err, http.StatusBadRequest))
 		return
 	}
 
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
+	job, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 
@@ -454,8 +457,8 @@ type rasterLookupQuery struct {
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key via query parameter"
-// @Param        X-API-Key  header    string  false  "API Key via header"
+// @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        input      query     string  false  "ID of existing dataset to use"
 // @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
 // @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
@@ -463,20 +466,20 @@ type rasterLookupQuery struct {
 // @Param        longitude  query     number  true   "Longitude"
 // @Param        latitude   query     number  true   "Latitude"
 // @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  geocloud.Error
-// @Failure      401        {object}  geocloud.Error
-// @Failure      403        {object}  geocloud.Error
-// @Failure      500        {object}  geocloud.Error
+// @Failure      400        {object}  errv1.Error
+// @Failure      401        {object}  errv1.Error
+// @Failure      403        {object}  errv1.Error
+// @Failure      500        {object}  errv1.Error
 // @Router       /job/rasterlookup [post]
 func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&rasterLookupQuery{}); err != nil {
-		a.err(ctx, http.StatusBadRequest, err)
+		a.err(ctx, errv1.New(err, http.StatusBadRequest))
 		return
 	}
 
-	job, statusCode, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
+	job, err := a.createJob(ctx, geocloud.TaskTypeVectorLookup)
 	if err != nil {
-		a.err(ctx, statusCode, err)
+		a.err(ctx, err)
 		return
 	}
 

@@ -106,7 +106,7 @@ func (c *Client) RunJob(rawTaskType string, r Request) (*Job, error) {
 	}
 
 	for ; err == nil; job, err = c.GetJob(job.ID) {
-		time.Sleep(time.Second)
+		time.Sleep(c.pollInterval)
 		switch job.Status {
 		case JobStatusComplete, JobStatusError:
 			return job, nil

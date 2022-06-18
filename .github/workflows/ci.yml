@@ -31,7 +31,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: up
         run: |
-          make services sleep migrate detach geocloudctl
+          make services sleep migrate local detach geocloudctl
       - name: geocloudctl
         run: |
           ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json
