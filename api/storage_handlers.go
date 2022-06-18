@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -106,13 +107,15 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 		return
 	}
 
-	b, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
+	r, contentType, statusCode, err := a.getVolumeContent(ctx, volume)
 	if err != nil {
 		a.err(ctx, statusCode, err)
 		return
 	}
+	defer r.Close()
 
-	ctx.Data(http.StatusOK, contentType, b)
+	ctx.Writer.Header().Add("Content-Type", contentType)
+	_, _ = io.Copy(ctx.Writer, r)
 }
 
 func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest], stream *connect.ServerStream[storagev1.GetStorageResponse]) error {
@@ -141,7 +144,8 @@ func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[st
 		return nil, connect.NewError(connect.CodeUnknown, err)
 	}
 
-	volume, _, err := a.getRequestVolume(stream.RequestHeader().Get("X-Content-Type"), buf)
+	// TODO wrap the stream in io.Reader interface and pass it directly here
+	volume, _, err := a.getRequestVolume(stream.RequestHeader().Get("X-Content-Type"), bytes.NewReader(buf))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnknown, err)
 	}
@@ -159,10 +163,9 @@ func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[st
 	}
 
 	// TODO return actual storage object
-	res := connect.NewResponse(&storagev1.CreateStorageResponse{
+	return connect.NewResponse(&storagev1.CreateStorageResponse{
 		Id: storage.ID,
-	})
-	return res, nil
+	}), nil
 }
 
 // @Summary      Create a storage
@@ -182,12 +185,8 @@ func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[st
 // @Failure      500        {object}  geocloud.Error
 // @Router       /storage [post]
 func (a *API) createStorageHandler(ctx *gin.Context) {
-	data, err := io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		a.err(ctx, http.StatusInternalServerError, err)
-	}
 	defer ctx.Request.Body.Close()
-	volume, statusCode, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), data)
+	volume, statusCode, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), ctx.Request.Body)
 	if err != nil {
 		a.err(ctx, statusCode, err)
 		return

@@ -25,10 +25,12 @@ var defaultAMQPQueueName = "geocloud"
 
 var (
 	s5  time.Duration
+	s4  time.Duration
 	h24 time.Duration
 )
 
 func init() {
 	s5, _ = time.ParseDuration("5s")
+	s4, _ = time.ParseDuration("4s")
 	h24, _ = time.ParseDuration("24h")
 }

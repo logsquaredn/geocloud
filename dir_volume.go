@@ -32,6 +32,10 @@ func (f *dirFile) Size() int {
 	return int(i.Size())
 }
 
+func (f *dirFile) Close() error {
+	return f.file.Close()
+}
+
 type dirVolume struct {
 	path string
 }
