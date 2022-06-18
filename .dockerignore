@@ -12,3 +12,4 @@ testdata/
 docker-compose.yml
 Dockerfile
 Makefile
+*.mk

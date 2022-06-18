@@ -16,7 +16,7 @@ else
 	endif
 endif
 
--include Makefile.$(GOOS)
+-include $(GOOS).mk
 
 PKGS ?= $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
 SWAG ?= swag
@@ -102,7 +102,10 @@ migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
 
 .PHONY: infra infrastructure
-infra infrastructure: services sleep migrate secretary
+infra infrastructure: services sleep migrate secretary local
+
+.PHONY: local
+local:
 	@$(DOCKER-COMPOSE) exec -T datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: up
