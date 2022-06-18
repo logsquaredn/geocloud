@@ -24,16 +24,8 @@ var (
 	}
 )
 
-func (t TaskType) Type() string {
-	return string(t)
-}
-
-func (t TaskType) Name() string {
-	return t.Type()
-}
-
 func (t TaskType) String() string {
-	return t.Type()
+	return string(t)
 }
 
 func ParseTaskType(taskType string) (TaskType, error) {
@@ -42,6 +34,7 @@ func ParseTaskType(taskType string) (TaskType, error) {
 			return t, nil
 		}
 	}
+
 	return "", fmt.Errorf("unknown task type '%s'", taskType)
 }
 
@@ -52,16 +45,8 @@ const (
 	TaskKindTransformation TaskKind = "transformation"
 )
 
-func (k TaskKind) Type() string {
-	return string(k)
-}
-
-func (k TaskKind) Name() string {
-	return k.Type()
-}
-
 func (k TaskKind) String() string {
-	return k.Type()
+	return string(k)
 }
 
 func ParseTaskKind(taskKind string) (TaskKind, error) {
@@ -70,7 +55,8 @@ func ParseTaskKind(taskKind string) (TaskKind, error) {
 			return k, nil
 		}
 	}
-	return "", fmt.Errorf("unknown task type '%s'", taskKind)
+
+	return "", fmt.Errorf("unknown task kind '%s'", taskKind)
 }
 
 type Task struct {
