@@ -21,6 +21,7 @@ require (
 	github.com/swaggo/swag v1.8.2
 	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
 	google.golang.org/protobuf v1.28.0
+	mellium.im/sysexit v0.4.0
 )
 
 require (
@@ -65,8 +66,10 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.10 // indirect
+	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

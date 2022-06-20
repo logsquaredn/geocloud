@@ -15,6 +15,7 @@ import (
 	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
+	"mellium.im/sysexit"
 )
 
 type Worker struct {
@@ -77,15 +78,20 @@ func (o *Worker) Send(m geocloud.Message) error {
 		}
 	}()
 
-	go func() {
-		ist, err := o.ds.GetStorage(geocloud.Msg(j.InputID))
-		if err == nil {
-			_, err = o.ds.UpdateStorage(ist)
-			if err != nil {
-				log.Err(err).Msg("updating input storage")
-			}
-		} else {
-			log.Err(err).Msg("getting input storage")
+	inputStorage, err := o.ds.GetStorage(geocloud.Msg(j.InputID))
+	if err != nil {
+		return err
+	}
+
+	switch inputStorage.Status {
+	case geocloud.StorageStatusFinal, geocloud.StorageStatusUnusable:
+		return fmt.Errorf("input storage status '%s'", inputStorage.Status)
+	}
+
+	defer func() {
+		_, err = o.ds.UpdateStorage(inputStorage)
+		if err != nil {
+			log.Err(err).Msg("updating input storage")
 		}
 	}()
 
@@ -184,9 +190,25 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return err
 	}
 
+	switch task.ProcessState.ExitCode() {
+	case int(sysexit.Ok):
+		inputStorage.Status = geocloud.StorageStatusTransformable
+	case int(sysexit.ErrData), int(sysexit.ErrNoInput):
+		inputStorage.Status = geocloud.StorageStatusUnusable
+		return fmt.Errorf("unusable input")
+	case int(sysexit.ErrCantCreat):
+		return fmt.Errorf("can't create output file")
+	case int(sysexit.ErrConfig):
+		return fmt.Errorf("configuration error")
+	default:
+		inputStorage.Status = geocloud.StorageStatusUnknown
+		return fmt.Errorf("unknown error")
+	}
+
 	log.Trace().Str(k, v).Msg("creating output storage")
 	ost, err := o.ds.CreateStorage(&geocloud.Storage{
 		CustomerID: j.CustomerID,
+		Status:     js.Ternary(t.Kind == geocloud.TaskKindLookup, geocloud.StorageStatusFinal, geocloud.StorageStatusTransformable),
 	})
 	if err != nil {
 		return err
