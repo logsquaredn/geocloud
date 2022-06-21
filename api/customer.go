@@ -11,7 +11,7 @@ import (
 )
 
 // getCustomerFromApiKey given an API key, actually checks the database for the customer
-func (a *API) getCustomerFromApiKey(apiKey string) (*geocloud.Customer, error) {
+func (a *API) getCustomerFromAPIKey(apiKey string) (*geocloud.Customer, error) {
 	c, err := a.ds.GetCustomer(
 		geocloud.Msg(apiKey),
 	)
@@ -27,7 +27,7 @@ func (a *API) getCustomerFromApiKey(apiKey string) (*geocloud.Customer, error) {
 
 // getCustomerFromGinContext given an Gin context, actually checks the database for the customer
 func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*geocloud.Customer, error) {
-	c, err := a.getCustomerFromApiKey(a.getCustomerIDFromContext(ctx))
+	c, err := a.getCustomerFromAPIKey(a.getCustomerIDFromContext(ctx))
 	if err != nil {
 		return nil, errv1.New(
 			fmt.Errorf(
@@ -43,7 +43,7 @@ func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*geocloud.Customer, e
 
 // getCustomerFromConnectHeader given a Connect header, actually checks the database for the customer
 func (a *API) getCustomerFromConnectHeader(header http.Header) (*geocloud.Customer, error) {
-	c, err := a.getCustomerFromApiKey(header.Get(geocloud.APIKeyHeader))
+	c, err := a.getCustomerFromAPIKey(header.Get(geocloud.APIKeyHeader))
 	if err != nil {
 		return nil, errv1.New(
 			fmt.Errorf("header '%s' must be a valid API Key", geocloud.APIKeyHeader),

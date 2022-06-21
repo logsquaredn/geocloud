@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
-	"github.com/logsquaredn/geocloud/api/err/v1"
+	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
 	"github.com/rs/zerolog/log"
 )
 
@@ -23,7 +23,7 @@ import (
 // @Success      200        {object}  []geocloud.Job
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job [get]
+// @Router       /api/v1/job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
 	log.Info().Msg("IDOT")
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx))
@@ -54,7 +54,7 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/{id} [get]
+// @Router       /api/v1/job/{id} [get]
 func (a *API) getJobHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -79,7 +79,7 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/{id}/task [get]
+// @Router       /api/v1/job/{id}/task [get]
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -110,7 +110,7 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/{id}/input [get]
+// @Router       /api/v1/job/{id}/input [get]
 func (a *API) getJobInputHandler(ctx *gin.Context) {
 	storage, err := a.getJobInputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -127,16 +127,16 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
-// @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
-// @Param        api-key       query   string  false  "API Key query parameter"
-// @Param        X-API-Key     header  string  false  "API Key header"
-// @Param        id            path    string  true   "Job ID"
+// @Param        Accept     header  string  false  "Request results as a Zip or JSON. Default Zip"
+// @Param        api-key    query   string  false  "API Key query parameter"
+// @Param        X-API-Key  header  string  false  "API Key header"
+// @Param        id         path    string  true   "Job ID"
 // @Success      200
 // @Failure      401  {object}  errv1.Error
 // @Failure      403  {object}  errv1.Error
 // @Failure      404  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
-// @Router       /job/{id}/input/content [get]
+// @Router       /api/v1/job/{id}/input/content [get]
 func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 	storage, err := a.getJobInputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -175,7 +175,7 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/{id}/output [get]
+// @Router       /api/v1/job/{id}/output [get]
 func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	storage, err := a.getJobOutputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -192,16 +192,16 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
-// @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
-// @Param        api-key       query   string  false  "API Key query parameter"
-// @Param        X-API-Key     header  string  false  "API Key header"
-// @Param        id            path    string  true   "Job ID"
+// @Param        Accept     header  string  false  "Request results as a Zip or JSON. Default Zip"
+// @Param        api-key    query   string  false  "API Key query parameter"
+// @Param        X-API-Key  header  string  false  "API Key header"
+// @Param        id         path    string  true   "Job ID"
 // @Success      200
 // @Failure      401  {object}  errv1.Error
 // @Failure      403  {object}  errv1.Error
 // @Failure      404  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
-// @Router       /job/{id}/output/content [get]
+// @Router       /api/v1/job/{id}/output/content [get]
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	storage, err := a.getJobOutputStorage(ctx, geocloud.Msg(ctx.Param("id")))
 	if err != nil {
@@ -215,7 +215,7 @@ func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 		return
 	}
 
-	r, contentType, err := a.getVolumeContent(ctx.GetHeader("accept"), volume)
+	r, contentType, err := a.getVolumeContent(ctx.GetHeader("Accept"), volume)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -256,7 +256,7 @@ type bufferQuery struct {
 // @Failure      401                     {object}  errv1.Error
 // @Failure      403                     {object}  errv1.Error
 // @Failure      500                     {object}  errv1.Error
-// @Router       /job/buffer [post]
+// @Router       /api/v1/job/buffer [post]
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
 		a.err(ctx, errv1.New(err, http.StatusBadRequest))
@@ -301,7 +301,7 @@ type filterQuery struct {
 // @Failure      401            {object}  errv1.Error
 // @Failure      403            {object}  errv1.Error
 // @Failure      500            {object}  errv1.Error
-// @Router       /job/filter [post]
+// @Router       /api/v1/job/filter [post]
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
 		a.err(ctx, errv1.New(err, http.StatusBadRequest))
@@ -344,7 +344,7 @@ type reprojectQuery struct {
 // @Failure      401                {object}  errv1.Error
 // @Failure      403                {object}  errv1.Error
 // @Failure      500                {object}  errv1.Error
-// @Router       /job/reproject [post]
+// @Router       /api/v1/job/reproject [post]
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&reprojectQuery{}); err != nil {
 		a.err(ctx, errv1.New(err, http.StatusBadRequest))
@@ -383,7 +383,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/removebadgeometry [post]
+// @Router       /api/v1/job/removebadgeometry [post]
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	job, err := a.createJob(ctx, geocloud.TaskTypeRemoveBadGeometry)
 	if err != nil {
@@ -423,7 +423,7 @@ type vectorLookupQuery struct {
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/vectorlookup [post]
+// @Router       /api/v1/job/vectorlookup [post]
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&vectorLookupQuery{}); err != nil {
 		a.err(ctx, errv1.New(err, http.StatusBadRequest))
@@ -470,7 +470,7 @@ type rasterLookupQuery struct {
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /job/rasterlookup [post]
+// @Router       /api/v1/job/rasterlookup [post]
 func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&rasterLookupQuery{}); err != nil {
 		a.err(ctx, errv1.New(err, http.StatusBadRequest))

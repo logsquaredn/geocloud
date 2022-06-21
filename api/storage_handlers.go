@@ -22,11 +22,11 @@ import (
 // @Tags         Storage
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key query parameter"
-// @Param        X-API-Key  header    string  false  "API Key header"
+// @Param        X-API-Key       header    string  false  "API Key header"
 // @Success      200        {object}  []geocloud.Storage
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /storage [get]
+// @Router       /api/v1/storage [get]
 func (a *API) listStorageHandler(ctx *gin.Context) {
 	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomerFromContext(ctx))
 	switch {
@@ -55,7 +55,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /storage/{id} [get]
+// @Router       /api/v1/storage/{id} [get]
 func (a *API) getStorageHandler(ctx *gin.Context) {
 	var (
 		storage, err = a.getStorageForCustomer(
@@ -79,17 +79,17 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Content
 // @Produce      application/json, application/zip
-// @Param        Content-Type  header  string  false  "Request results as a Zip or JSON. Default Zip"
-// @Param        api-key       query   string  false  "API Key query parameter"
-// @Param        X-API-Key     header  string  false  "API Key header"
-// @Param        id            path    string  true   "Storage ID"
+// @Param        Accept     header  string  false  "Request results as a Zip or JSON. Default Zip"
+// @Param        api-key    query   string  false  "API Key query parameter"
+// @Param        X-API-Key  header  string  false  "API Key header"
+// @Param        id         path    string  true   "Storage ID"
 // @Success      200
 // @Failure      400  {object}  errv1.Error
 // @Failure      401  {object}  errv1.Error
 // @Failure      403  {object}  errv1.Error
 // @Failure      404  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
-// @Router       /storage/{id}/content [get]
+// @Router       /api/v1/storage/{id}/content [get]
 func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	storage, err := a.getStorageForCustomer(
 		geocloud.Msg(
@@ -134,7 +134,7 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Failure      400        {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /storage [post]
+// @Router       /api/v1/storage [post]
 func (a *API) createStorageHandler(ctx *gin.Context) {
 	defer ctx.Request.Body.Close()
 	volume, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), ctx.Request.Body)
@@ -157,6 +157,15 @@ func (a *API) createStorageHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, storage)
 }
 
+// @Summary      RPC Get a storage's content
+// @Description  RPC Gets the content of a stored dataset
+// @Tags         Content
+// @Produce      application/json, application/zip
+// @Param        Accept     header    string  false  "Request results as a Zip or JSON. Default Zip"
+// @Param        X-API-Key  header    string  false  "API Key header"
+// @Failure      2               {object}  errv1.Error
+// @Failure      16              {object}  errv1.Error
+// @Router       /api.storage.v1.StorageService/GetStorageContent [get]
 func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storagev1.GetStorageContentRequest], stream *connect.ServerStream[storagev1.GetStorageContentResponse]) error {
 	// TODO refactor into interceptor https://connect.build/docs/go/streaming#interceptors
 	_, err := a.getCustomerFromConnectHeader(req.Header())
@@ -197,9 +206,22 @@ func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storag
 		),
 		r,
 	)
-	return connect.NewError(errv1.New(err).ConnectCode, err)
+	if err != nil {
+		return connect.NewError(errv1.New(err).ConnectCode, err)
+	}
+
+	return nil
 }
 
+// @Summary      RPC Get a storage
+// @Description  RPC Get the metadata of a stored dataset
+// @Tags         Storage
+// @Produce      application/json
+// @Param        X-API-Key  header    string  false  "API Key header"
+// @Failure      2          {object}  errv1.Error
+// @Failure      5               {object}  errv1.Error
+// @Failure      16         {object}  errv1.Error
+// @Router       /api.storage.v1.StorageService/GetStorage [get]
 func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest]) (*connect.Response[storagev1.GetStorageResponse], error) {
 	_, err := a.getCustomerFromConnectHeader(req.Header())
 	if err != nil {
@@ -224,6 +246,17 @@ func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.Get
 	}), nil
 }
 
+// @Summary      RPC Create a storage
+// @Description  RPC Stores a dataset. The ID of this stored dataset can be used as input to jobs
+// @Tags         Storage
+// @Accept       application/json, application/zip
+// @Produce      application/json
+// @Param        X-Content-Type  header    string  true   "Content type to be stored"
+// @Param        X-API-Key  header    string  false  "API Key header"
+// @Failure      2          {object}  errv1.Error
+// @Failure      5          {object}  errv1.Error
+// @Failure      16         {object}  errv1.Error
+// @Router       /api.storage.v1.StorageService/CreateStorage [post]
 func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[storagev1.CreateStorageRequest]) (*connect.Response[storagev1.CreateStorageResponse], error) {
 	_, err := a.getCustomerFromConnectHeader(stream.RequestHeader())
 	if err != nil {

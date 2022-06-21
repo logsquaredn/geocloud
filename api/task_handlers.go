@@ -16,7 +16,7 @@ import (
 // @Success      200  {object}  []geocloud.Task
 // @Failure      401  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
-// @Router       /task [get]
+// @Router       /api/v1/task [get]
 func (a *API) listTasksHandler(ctx *gin.Context) {
 	tasks, err := a.ds.GetTasks(
 		geocloud.AllTaskTypes...,
@@ -44,7 +44,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 // @Failure      401   {object}  errv1.Error
 // @Failure      404   {object}  errv1.Error
 // @Failure      500   {object}  errv1.Error
-// @Router       /task/{type} [get]
+// @Router       /api/v1/task/{type} [get]
 func (a *API) getTaskHandler(ctx *gin.Context) {
 	task, err := a.getTask(ctx.Param("type"))
 	if err != nil {

@@ -1,6 +1,7 @@
 package rpcio
 
 import (
+	"errors"
 	"io"
 
 	"github.com/bufbuild/connect-go"
@@ -21,5 +22,15 @@ type ClientStreamWriter[T1, T2 any] struct {
 var _ io.Writer = &ClientStreamWriter[any, any]{}
 
 func (w *ClientStreamWriter[T1, T2]) Write(p []byte) (int, error) {
-	return len(p), w.ClientStream.Send(w.Convert(p))
+	err := w.ClientStream.Send(w.Convert(p))
+	switch {
+	case errors.Is(err, io.EOF):
+		_, err = w.ClientStream.CloseAndReceive()
+		return 0, err
+	// this should never happen according to connect (see godoc for ClientStream.Send)
+	case err != nil:
+		return 0, err
+	}
+
+	return len(p), nil
 }
