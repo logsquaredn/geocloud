@@ -10,19 +10,13 @@ import (
 	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
 )
 
-// getCustomerFromApiKey given an API key, actually checks the database for the customer
+// getCustomerFromAPIKey given an API key, actually checks the database for the customer
 func (a *API) getCustomerFromAPIKey(apiKey string) (*geocloud.Customer, error) {
 	c, err := a.ds.GetCustomer(
 		geocloud.Msg(apiKey),
 	)
-	if err != nil {
-		return nil, errv1.New(
-			fmt.Errorf("header '%s' must be a valid API Key", geocloud.APIKeyHeader),
-			http.StatusUnauthorized, int(connect.CodeUnauthenticated),
-		)
-	}
 
-	return c, nil
+	return c, err
 }
 
 // getCustomerFromGinContext given an Gin context, actually checks the database for the customer
