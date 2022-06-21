@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
 	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
@@ -23,7 +24,7 @@ func (a *API) getStorageForCustomer(m geocloud.Message, customer *geocloud.Custo
 	storage, err := a.ds.GetStorage(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, errv1.New(fmt.Errorf("storage '%s' not found", m.GetID()), http.StatusNotFound)
+		return nil, errv1.New(fmt.Errorf("storage '%s' not found", m.GetID()), http.StatusNotFound, int(connect.CodeNotFound))
 	case err != nil:
 		return nil, err
 	}
