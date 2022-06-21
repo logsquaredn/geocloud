@@ -35,8 +35,8 @@ func init() {
 	_ = viper.BindPFlag("base-url", flags.Lookup("base-url"))
 	flags.String("port", "", "Geocloud port")
 	_ = viper.BindPFlag("port", flags.Lookup("port"))
-	flags.BoolP("disable-rpc", "d", false, "Disable RPC use")
-	_ = viper.BindPFlag("disable-rpc", flags.Lookup("disable-rpc"))
+	flags.BoolP("rpc", "d", false, "use RPC")
+	_ = viper.BindPFlag("rpc", flags.Lookup("rpc"))
 }
 
 func init() {
