@@ -165,7 +165,7 @@ func (a *API) createStorageHandler(ctx *gin.Context) {
 // @Param        X-API-Key  header    string  false  "API Key header"
 // @Failure      2               {object}  errv1.Error
 // @Failure      16              {object}  errv1.Error
-// @Router       /api.storage.v1.StorageService/GetStorageContent [get]
+// @Router       /api.storage.v1.StorageService/GetStorageContent [pst]
 func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storagev1.GetStorageContentRequest], stream *connect.ServerStream[storagev1.GetStorageContentResponse]) error {
 	// TODO refactor into interceptor https://connect.build/docs/go/streaming#interceptors
 	_, err := a.getCustomerFromConnectHeader(req.Header())
@@ -221,7 +221,7 @@ func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storag
 // @Failure      2          {object}  errv1.Error
 // @Failure      5               {object}  errv1.Error
 // @Failure      16         {object}  errv1.Error
-// @Router       /api.storage.v1.StorageService/GetStorage [get]
+// @Router       /api.storage.v1.StorageService/GetStorage [post]
 func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest]) (*connect.Response[storagev1.GetStorageResponse], error) {
 	_, err := a.getCustomerFromConnectHeader(req.Header())
 	if err != nil {

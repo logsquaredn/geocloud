@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
 	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
-	"github.com/rs/zerolog/log"
 )
 
 // @Summary      Get a list of jobs
@@ -25,7 +24,6 @@ import (
 // @Failure      500        {object}  errv1.Error
 // @Router       /api/v1/job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
-	log.Info().Msg("IDOT")
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx))
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
