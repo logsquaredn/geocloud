@@ -31,10 +31,10 @@ func getClient() (*geocloud.Client, error) {
 	}
 
 	var (
-		disableRPC = viper.GetBool("disable-rpc")
-		opts       = []geocloud.ClientOpt{}
+		rpc  = viper.GetBool("rpc")
+		opts = []geocloud.ClientOpt{}
 	)
-	if !disableRPC {
+	if rpc {
 		opts = append(opts, geocloud.WithRPC)
 	}
 
