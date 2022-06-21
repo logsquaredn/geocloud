@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logsquaredn/geocloud/api/storage/v1"
+	storagev1 "github.com/logsquaredn/geocloud/api/storage/v1"
 	"github.com/logsquaredn/geocloud/internal/rpcio"
 )
 

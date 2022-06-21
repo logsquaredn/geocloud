@@ -158,6 +158,12 @@ func (a *API) createStorageHandler(ctx *gin.Context) {
 }
 
 func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storagev1.GetStorageContentRequest], stream *connect.ServerStream[storagev1.GetStorageContentResponse]) error {
+	// TODO refactor into interceptor https://connect.build/docs/go/streaming#interceptors
+	_, err := a.getCustomerFromConnectHeader(req.Header())
+	if err != nil {
+		return connect.NewError(errv1.New(err).ConnectCode, err)
+	}
+
 	storage, err := a.getStorageForCustomer(
 		geocloud.Msg(
 			req.Msg.Id,
@@ -195,6 +201,11 @@ func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storag
 }
 
 func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.GetStorageRequest]) (*connect.Response[storagev1.GetStorageResponse], error) {
+	_, err := a.getCustomerFromConnectHeader(req.Header())
+	if err != nil {
+		return nil, connect.NewError(errv1.New(err).ConnectCode, err)
+	}
+
 	storage, err := a.getStorageForCustomer(
 		geocloud.Msg(
 			req.Msg.GetId(),
@@ -214,6 +225,11 @@ func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.Get
 }
 
 func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[storagev1.CreateStorageRequest]) (*connect.Response[storagev1.CreateStorageResponse], error) {
+	_, err := a.getCustomerFromConnectHeader(stream.RequestHeader())
+	if err != nil {
+		return nil, connect.NewError(errv1.New(err).ConnectCode, err)
+	}
+
 	volume, err := a.getRequestVolume(
 		stream.RequestHeader().Get("X-Content-Type"),
 		rpcio.NewClientStreamReader(
