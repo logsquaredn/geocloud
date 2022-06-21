@@ -17,11 +17,11 @@ import (
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key query parameter"
-// @Param        X-API-Key  header    string  false  "API Key header"
+// @Param        api-key       query     string  false  "API Key query parameter"
+// @Param        X-API-Key     header    string  false  "API Key header"
 // @Success      200        {object}  []geocloud.Job
-// @Failure      401        {object}  errv1.Error
-// @Failure      500        {object}  errv1.Error
+// @Failure      401           {object}  errv1.Error
+// @Failure      500           {object}  errv1.Error
 // @Router       /api/v1/job [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
 	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx))
@@ -44,14 +44,14 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key query parameter"
-// @Param        X-API-Key  header    string  false  "API Key header"
+// @Param        api-key       query     string  false  "API Key query parameter"
+// @Param        X-API-Key     header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
-// @Success      200        {object}  geocloud.Job
-// @Failure      401        {object}  errv1.Error
-// @Failure      403        {object}  errv1.Error
+// @Success      200           {object}  geocloud.Job
+// @Failure      401           {object}  errv1.Error
+// @Failure      403           {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
-// @Failure      500        {object}  errv1.Error
+// @Failure      500           {object}  errv1.Error
 // @Router       /api/v1/job/{id} [get]
 func (a *API) getJobHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
@@ -69,14 +69,14 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Task
 // @Produce      application/json
-// @Param        api-key    query     string  false  "API Key query parameter"
-// @Param        X-API-Key  header    string  false  "API Key header"
+// @Param        api-key       query     string  false  "API Key query parameter"
+// @Param        X-API-Key     header    string  false  "API Key header"
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Task
-// @Failure      401        {object}  errv1.Error
-// @Failure      403        {object}  errv1.Error
+// @Failure      401           {object}  errv1.Error
+// @Failure      403           {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
-// @Failure      500        {object}  errv1.Error
+// @Failure      500           {object}  errv1.Error
 // @Router       /api/v1/job/{id}/task [get]
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, geocloud.Msg(ctx.Param("id")))
@@ -105,7 +105,7 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 // @Param        id         path      string  true   "Job ID"
 // @Success      200        {object}  geocloud.Storage
 // @Failure      401        {object}  errv1.Error
-// @Failure      403        {object}  errv1.Error
+// @Failure      403           {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
 // @Router       /api/v1/job/{id}/input [get]
@@ -243,6 +243,7 @@ type bufferQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key                 query     string   false  "API Key query parameter"
+// @Param        Content-Type   header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key               header    string   false  "API Key header"
 // @Param        input                   query     string   false  "ID of existing dataset to use"
 // @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
@@ -288,6 +289,7 @@ type filterQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key        query     string  false  "API Key query parameter"
+// @Param        Content-Type       header    string   false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key      header    string  false  "API Key header"
 // @Param        input          query     string  false  "ID of existing dataset to use"
 // @Param        input-of       query     string  false  "ID of existing job whose input dataset to use"
@@ -332,6 +334,7 @@ type reprojectQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key            query     string   false  "API Key query parameter"
+// @Param        Content-Type  header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key          header    string   false  "API Key header"
 // @Param        input              query     string   false  "ID of existing dataset to use"
 // @Param        input-of           query     string   false  "ID of existing job whose input dataset to use"
@@ -372,12 +375,13 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        Content-Type  header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key  header    string  false  "API Key header"
-// @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
-// @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  errv1.Error
+// @Param        input         query     string  false  "ID of existing dataset to use"
+// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
+// @Success      200           {object}  geocloud.Job
+// @Failure      400           {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
@@ -410,14 +414,15 @@ type vectorLookupQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        Content-Type  header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key  header    string  false  "API Key header"
-// @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
-// @Param        longitude  query     number  true   "Longitude"
-// @Param        latitude   query     number  true   "Latitude"
-// @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  errv1.Error
+// @Param        input         query     string  false  "ID of existing dataset to use"
+// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
+// @Param        longitude     query     number  true   "Longitude"
+// @Param        latitude      query     number  true   "Latitude"
+// @Success      200           {object}  geocloud.Job
+// @Failure      400           {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
@@ -456,15 +461,16 @@ type rasterLookupQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key    query     string  false  "API Key query parameter"
+// @Param        Content-Type            header    string   false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key  header    string  false  "API Key header"
-// @Param        input      query     string  false  "ID of existing dataset to use"
-// @Param        input-of   query     string  false  "ID of existing job whose input dataset to use"
-// @Param        output-of  query     string  false  "ID of existing job whose output dataset to use"
-// @Param        bands      query     string  true   "Comma separated list of bands"
-// @Param        longitude  query     number  true   "Longitude"
-// @Param        latitude   query     number  true   "Latitude"
+// @Param        input         query     string  false  "ID of existing dataset to use"
+// @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
+// @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
+// @Param        bands         query     string  true   "Comma separated list of bands"
+// @Param        longitude     query     number  true   "Longitude"
+// @Param        latitude      query     number  true   "Latitude"
 // @Success      200        {object}  geocloud.Job
-// @Failure      400        {object}  errv1.Error
+// @Failure      400           {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
