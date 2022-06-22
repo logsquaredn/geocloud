@@ -45,7 +45,7 @@ INSERT INTO task (
 ) VALUES (
     'vectorlookup', 
     'lookup',
-    ARRAY['longitude', 'latitude']
+    ARRAY['attributes', 'longitude', 'latitude']
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO task (

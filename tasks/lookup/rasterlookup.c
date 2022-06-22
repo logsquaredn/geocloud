@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 			fatalError("failed to read raster value", __FILE__, __LINE__);
 		}
 
-		char result[128];
+		char result[ONE_KB];
 		if(bCt - 1 < 0) {
 			sprintf(result, "{\"band%d\": %f}", bNums[bCt], rasterIOBuff[0]);	
 		} else {
