@@ -59,8 +59,12 @@ func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		err           error
 	)
 
+	if s.Status == "" {
+		s.Status = geocloud.StorageStatusUnknown
+	}
+
 	if err = p.stmt.createStorage.QueryRow(
-		id, s.CustomerID, s.Name,
+		id, s.Status, s.CustomerID, s.Name,
 	).Scan(
 		&s.ID, &storageStatus, &s.CustomerID,
 		&s.Name, &s.LastUsed, &s.CreateTime,
