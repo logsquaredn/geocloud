@@ -61,7 +61,7 @@ func (c *Client) GetJobs() ([]*Job, error) {
 		jobs = []*Job{}
 	)
 
-	url.Path = EndpointJob
+	url.Path = EndpointJobs
 
 	return jobs, c.get(url, &jobs)
 }
@@ -72,7 +72,7 @@ func (c *Client) GetJob(id string) (*Job, error) {
 		job = &Job{}
 	)
 
-	url.Path = path.Join(EndpointJob, id)
+	url.Path = path.Join(EndpointJobs, id)
 
 	return job, c.get(url, job)
 }
@@ -87,7 +87,7 @@ func (c *Client) CreateJob(rawTaskType string, r Request) (*Job, error) {
 		return nil, err
 	}
 
-	url.Path = path.Join(EndpointJob, taskType.String())
+	url.Path = path.Join(EndpointJobs, taskType.String())
 	values := url.Query()
 	for k, v := range r.Query() {
 		if k != "" && v != "" {

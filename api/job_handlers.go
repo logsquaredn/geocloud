@@ -243,7 +243,7 @@ type bufferQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key                 query     string   false  "API Key query parameter"
-// @Param        Content-Type   header    string  false  "Required if passing geospatial data in request body"
+// @Param        Content-Type  header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key               header    string   false  "API Key header"
 // @Param        input                   query     string   false  "ID of existing dataset to use"
 // @Param        input-of                query     string   false  "ID of existing job whose input dataset to use"
@@ -289,7 +289,7 @@ type filterQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key        query     string  false  "API Key query parameter"
-// @Param        Content-Type       header    string   false  "Required if passing geospatial data in request body"
+// @Param        Content-Type   header    string  false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key      header    string  false  "API Key header"
 // @Param        input          query     string  false  "ID of existing dataset to use"
 // @Param        input-of       query     string  false  "ID of existing job whose input dataset to use"
@@ -334,7 +334,7 @@ type reprojectQuery struct {
 // @Accept       application/json, application/zip
 // @Produce      application/json
 // @Param        api-key            query     string   false  "API Key query parameter"
-// @Param        Content-Type  header    string  false  "Required if passing geospatial data in request body"
+// @Param        Content-Type       header    string   false  "Required if passing geospatial data in request body"
 // @Param        X-API-Key          header    string   false  "API Key header"
 // @Param        input              query     string   false  "ID of existing dataset to use"
 // @Param        input-of           query     string   false  "ID of existing job whose input dataset to use"
