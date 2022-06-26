@@ -85,7 +85,7 @@ curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQg
 # get job result
 curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://geocloud.logsquaredn.io/api/v1/jobs/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
 # create storage
-curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/storage?name=<name>"
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/storages?name=<name>"
 # create vector lookup job
-curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/home/phish3y/Documents/input/hurricane.zip' "http://localhost:8080/api/v1/job/vectorlookup?attributes=RADII,ADVNUM&latitude=20.33&longitude=64.23"
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "http://localhost:8080/api/v1/jobs/vectorlookup?attributes=RADII,ADVNUM&latitude=20.33&longitude=-64.23"
 ```
