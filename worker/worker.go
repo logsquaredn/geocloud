@@ -195,14 +195,18 @@ func (o *Worker) Send(m geocloud.Message) error {
 		inputStorage.Status = geocloud.StorageStatusTransformable
 	case int(sysexit.ErrData), int(sysexit.ErrNoInput):
 		inputStorage.Status = geocloud.StorageStatusUnusable
-		return fmt.Errorf("unusable input")
+		err = fmt.Errorf("unusable input")
+		return err
 	case int(sysexit.ErrCantCreat):
-		return fmt.Errorf("can't create output file")
+		err = fmt.Errorf("can't create output file")
+		return err
 	case int(sysexit.ErrConfig):
-		return fmt.Errorf("configuration error")
+		err = fmt.Errorf("configuration error")
+		return err
 	default:
 		inputStorage.Status = geocloud.StorageStatusUnknown
-		return fmt.Errorf("unknown error")
+		err = fmt.Errorf("unknown error")
+		return err
 	}
 
 	log.Trace().Str(k, v).Msg("creating output storage")
