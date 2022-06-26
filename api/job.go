@@ -63,6 +63,13 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 		defer ctx.Request.Body.Close()
 	}
 
+	switch storage.Status {
+	case geocloud.StorageStatusFinal:
+		return nil, errv1.New(fmt.Errorf("cannot create job, storage id %s is final", storage.ID), http.StatusBadRequest)
+	case geocloud.StorageStatusUnusable:
+		return nil, errv1.New(fmt.Errorf("cannot create job, storage id %s is unsusable", storage.ID), http.StatusBadRequest)
+	}
+
 	job, err := a.ds.CreateJob(&geocloud.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
