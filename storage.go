@@ -59,7 +59,7 @@ func (c *Client) GetStorages() ([]*Storage, error) {
 		storage = []*Storage{}
 	)
 
-	url.Path = EndpointStorage
+	url.Path = EndpointStorages
 
 	return storage, c.get(url, &storage)
 }
@@ -70,7 +70,7 @@ func (c *Client) GetStorage(id string) (*Storage, error) {
 		storage = &Storage{}
 	)
 
-	url.Path = path.Join(EndpointStorage, id)
+	url.Path = path.Join(EndpointStorages, id)
 
 	return storage, c.get(url, storage)
 }
@@ -81,7 +81,7 @@ func (c *Client) GetJobInput(id string) (*Storage, error) {
 		storage = &Storage{}
 	)
 
-	url.Path = path.Join(EndpointJob, id, "input")
+	url.Path = path.Join(EndpointJobs, id, "storages", "input")
 
 	return storage, c.get(url, storage)
 }
@@ -92,7 +92,7 @@ func (c *Client) GetJobOutput(id string) (*Storage, error) {
 		storage = &Storage{}
 	)
 
-	url.Path = path.Join(EndpointJob, id, "output")
+	url.Path = path.Join(EndpointJobs, id, "storages", "output")
 
 	return storage, c.get(url, storage)
 }
@@ -141,7 +141,7 @@ func (c *Client) CreateStorage(ctx context.Context, r Request) (*Storage, error)
 		storage = &Storage{}
 	)
 
-	url.Path = path.Join(EndpointStorage)
+	url.Path = EndpointStorages
 	values := url.Query()
 	for k, v := range r.Query() {
 		if k != "" && v != "" {
