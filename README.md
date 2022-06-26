@@ -81,9 +81,9 @@ kubectl exec -n <namespace> <kind> -it -- <cmd>
 
 ```sh
 # create buffer job
-curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/job/buffer?buffer-distance=5&quadrant-segment-count=50"
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/jobs/buffer?buffer-distance=5&quadrant-segment-count=50"
 # get job result
-curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://geocloud.logsquaredn.io/api/v1/job/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
+curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://geocloud.logsquaredn.io/api/v1/jobs/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
 # create storage
 curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/storage?name=<name>"
 ```

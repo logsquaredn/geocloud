@@ -72,7 +72,7 @@ func (c *Client) GetTasks() ([]*Task, error) {
 		tasks = []*Task{}
 	)
 
-	url.Path = EndpointTask
+	url.Path = EndpointTasks
 
 	return tasks, c.get(url, &tasks)
 }
@@ -87,7 +87,7 @@ func (c *Client) GetTask(rawTaskType string) (*Task, error) {
 		return nil, err
 	}
 
-	url.Path = path.Join(EndpointTask, taskType.String())
+	url.Path = path.Join(EndpointTasks, taskType.String())
 
 	return task, c.get(url, task)
 }
@@ -98,7 +98,7 @@ func (c *Client) GetJobTask(id string) (*Task, error) {
 		task = &Task{}
 	)
 
-	url.Path = path.Join(EndpointJob, id, "task")
+	url.Path = path.Join(EndpointJobs, id, "task")
 
 	return task, c.get(url, task)
 }

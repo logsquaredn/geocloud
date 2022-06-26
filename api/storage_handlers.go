@@ -26,7 +26,7 @@ import (
 // @Success      200        {object}  []geocloud.Storage
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /api/v1/storage [get]
+// @Router       /api/v1/storages [get]
 func (a *API) listStorageHandler(ctx *gin.Context) {
 	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomerFromContext(ctx))
 	switch {
@@ -55,12 +55,12 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /api/v1/storage/{id} [get]
+// @Router       /api/v1/storages/{id} [get]
 func (a *API) getStorageHandler(ctx *gin.Context) {
 	var (
 		storage, err = a.getStorageForCustomer(
 			geocloud.Msg(
-				ctx.Param("id"),
+				ctx.Param("storage"),
 			),
 			a.getAssumedCustomerFromContext(ctx),
 		)
@@ -89,11 +89,11 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 // @Failure      403  {object}  errv1.Error
 // @Failure      404  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
-// @Router       /api/v1/storage/{id}/content [get]
+// @Router       /api/v1/storages/{id}/content [get]
 func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	storage, err := a.getStorageForCustomer(
 		geocloud.Msg(
-			ctx.Param("id"),
+			ctx.Param("storage"),
 		),
 		a.getAssumedCustomerFromContext(ctx),
 	)
@@ -134,7 +134,7 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Failure      400        {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
-// @Router       /api/v1/storage [post]
+// @Router       /api/v1/storages [post]
 func (a *API) createStorageHandler(ctx *gin.Context) {
 	defer ctx.Request.Body.Close()
 	volume, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), ctx.Request.Body)
