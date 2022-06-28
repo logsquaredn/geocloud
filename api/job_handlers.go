@@ -397,8 +397,9 @@ func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 }
 
 type vectorLookupQuery struct {
-	Longitude float64 `form:"longitude" binding:"required"`
-	Latitude  float64 `form:"latitude" binding:"required"`
+	Attributes string  `form:"attributes" binding:"required"`
+	Longitude  float64 `form:"longitude" binding:"required"`
+	Latitude   float64 `form:"latitude" binding:"required"`
 }
 
 // @Summary      Create a vector lookup job
@@ -419,6 +420,7 @@ type vectorLookupQuery struct {
 // @Param        input         query     string  false  "ID of existing dataset to use"
 // @Param        input-of      query     string  false  "ID of existing job whose input dataset to use"
 // @Param        output-of     query     string  false  "ID of existing job whose output dataset to use"
+// @Param        attributes    query     string  true   "Comma separated list of attributes"
 // @Param        longitude     query     number  true   "Longitude"
 // @Param        latitude      query     number  true   "Latitude"
 // @Success      200           {object}  geocloud.Job

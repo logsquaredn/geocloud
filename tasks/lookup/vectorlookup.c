@@ -25,6 +25,27 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
+	char *attributes = getenv("GEOCLOUD_ATTRIBUTES");
+	if(attributes == NULL) {
+		fatalErrorWithCode("env var: GEOCLOUD_ATTRIBUTES must be set", __FILE__, __LINE__, EX_CONFIG);
+	}
+	const char delim[2] = ",";
+	char *tok = strtok(attributes, delim);
+	const char *attNames[ONE_KB];
+	int aCt = 0;
+	while(tok != NULL) {
+		attNames[aCt] = tok;
+
+		sprintf(iMsg, "attribute: %s", tok);
+		info(iMsg);
+
+		++aCt;
+		tok = strtok(NULL, delim);
+	}
+	if(aCt < 1) {
+		fatalErrorWithCode("at least one attribute required as input", __FILE__, __LINE__, EX_CONFIG);
+	}
+
     const char *lonArg = getenv("GEOCLOUD_LONGITUDE");
 	if(lonArg == NULL) {
 		fatalErrorWithCode("env var: GEOCLOUD_LONGITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
@@ -51,10 +72,8 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "lat: %f", lat);
 	info(iMsg);
 
-	int isInputShp = 0;
 	char *vFp = NULL;
 	if(isZip(iFp)) {
-		isInputShp = 1;
 		char **fl = unzip(iFp);
 		if(fl == NULL) {
 			char eMsg[ONE_KB];
@@ -109,30 +128,66 @@ int main(int argc, char *argv[]) {
 	}
 	OGR_G_AddPoint_2D(point, lon, lat);
 
+	char ofp[ONE_KB];
+	sprintf(ofp, "%s%s", oDir, "/output.json");
+		sprintf(iMsg, "output filepath: %s", ofp);
+	info(iMsg); 
+	FILE *fptr = fopen(ofp, "w");
+	if(fptr == NULL) {
+		char eMsg[ONE_KB];
+		sprintf(eMsg, "failed to open output file: %s", ofp);
+		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CANTCREAT);
+	}
+	if(fputs("{\"results\":[", fptr) == EOF) {
+		fatalError("failed to write beginning results to output file", __FILE__, __LINE__);
+	}
+
+	int hits = 0;
 	OGRFeatureH iFeat;
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
 		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
-		if(!OGR_G_Intersects(iGeom, point)) {
-			if(OGR_L_DeleteFeature(iLay, OGR_F_GetFID(iFeat)) != OGRERR_NONE) {
-				fatalError("failed to delete feature from input", __FILE__, __LINE__);			
+
+		if(OGR_G_Intersects(iGeom, point)) {
+			++hits;
+			if(hits > 1) {
+				if(fputs(",", fptr) == EOF) {
+					fatalError("failed to write results to output file", __FILE__, __LINE__);
+				}
+			}
+			if(fputs("{", fptr) == EOF) {
+				fatalError("failed to write results to output file", __FILE__, __LINE__);
+			}
+
+			for(int i = 0; i < aCt; ++i) {
+				int fIdx = OGR_F_GetFieldIndex(iFeat, attNames[i]);
+				const char *aVal = OGR_F_GetFieldAsString(iFeat, fIdx);
+
+				char result[ONE_KB];
+				if(i + 1 == aCt) {
+					sprintf(result, "\"%s\":\"%s\"", attNames[i], aVal);
+				} else {
+					sprintf(result, "\"%s\":\"%s\",", attNames[i], aVal);
+				}
+
+				if(fputs(result, fptr) == EOF) {
+					fatalError("failed to write results to output file", __FILE__, __LINE__);
+				}
+			}
+
+			if(fputs("}", fptr) == EOF) {
+				fatalError("failed to write results to output file", __FILE__, __LINE__);
 			}
 		}
 
 		OGR_G_DestroyGeometry(iGeom);
 	}
 
-	GDALClose(iDs);
-
-	if(isInputShp) {
-	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
-			 fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		 }
-	} else {
-		if(produceJsonOutput(iFp, oDir) != 0) {
-			fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		}
+	if(fputs("]}", fptr) == EOF) {
+		fatalError("failed to write end results to output file", __FILE__, __LINE__);
 	}
 
+	fclose(fptr);
+	GDALClose(iDs);
 	free(vFp);
 
 	info("vector lookup complete successfully");
