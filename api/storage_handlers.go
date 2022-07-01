@@ -40,6 +40,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 		storage = []*geocloud.Storage{}
 	case err != nil:
 		a.err(ctx, err)
+		return
 	case storage == nil:
 		storage = []*geocloud.Storage{}
 	}
