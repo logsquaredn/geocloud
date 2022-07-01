@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
