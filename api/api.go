@@ -17,6 +17,8 @@ type API struct {
 	mq  *messagequeue.AMQP
 	os  *objectstore.S3
 	mux *http.ServeMux
+
+	storagev1connect.UnimplementedStorageServiceHandler
 }
 
 func NewServer(opts *Opts) (*API, error) {
@@ -52,48 +54,70 @@ func NewServer(opts *Opts) (*API, error) {
 			})
 		}
 	}
+
 	api := router.Group("/api")
 	{
 		v1 := api.Group("/v1")
 		{
-			task := v1.Group("/task")
+			tasks := v1.Group("/tasks")
 			{
-				task.GET("", a.listTasksHandler)
-				task.GET("/:type", a.getTaskHandler)
+				tasks.GET("", a.listTasksHandler)
+				tasks.GET("/:task", a.getTaskHandler)
 			}
-			authenticated := v1.Group("/")
+			storages := v1.Group("/storages")
 			{
-				authenticated.Use(a.customerMiddleware)
-				storage := authenticated.Group("/storage")
+				storages.Use(a.customerMiddleware)
+				storages.POST("", a.createStorageHandler)
+				storages.GET("", a.listStorageHandler)
+				storage := storages.Group("/:storage")
 				{
-					storage.POST("", a.createStorageHandler)
-					storage.GET("", a.listStorageHandler)
-					storage.GET("/:id", a.getStorageHandler)
-					storage.GET("/:id/content", a.getStorageContentHandler)
+					storage.GET("", a.getStorageHandler)
+					storage.GET("/content", a.getStorageContentHandler)
 				}
-				job := authenticated.Group("/job")
+			}
+			jobs := v1.Group("/jobs")
+			{
+				jobs.Use(a.customerMiddleware)
+				jobs.GET("", a.listJobHandler)
+				jobs.POST("/buffer", a.createBufferJobHandler)
+				jobs.POST("/filter", a.createFilterJobHandler)
+				jobs.POST("/reproject", a.createReprojectJobHandler)
+				jobs.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
+				jobs.POST("/vectorlookup", a.createVectorLookupJobHandler)
+				jobs.POST("/rasterlookup", a.createRasterLookupJobHandler)
+				job := jobs.Group("/:job")
 				{
-					job.POST("/buffer", a.createBufferJobHandler)
-					job.POST("/filter", a.createFilterJobHandler)
-					job.POST("/reproject", a.createReprojectJobHandler)
-					job.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
-					job.POST("/vectorlookup", a.createVectorLookupJobHandler)
-					job.POST("/rasterlookup", a.createRasterLookupJobHandler)
-					job.GET("", a.listJobHandler)
-					job.GET("/:id", a.getJobHandler)
-					job.GET("/:id/input", a.getJobInputHandler)
-					job.GET("/:id/output", a.getJobOutputHandler)
-					job.GET("/:id/input/content", a.getJobInputContentHandler)
-					job.GET("/:id/output/content", a.getJobOutputContentHandler)
-					job.GET("/:id/task", a.getJobTaskHandler)
+					job.GET("", a.getJobHandler)
+					job.GET("/task", a.getJobTaskHandler)
+					jobStorages := job.Group("storages")
+					{
+						jobStorageInput := jobStorages.Group("input")
+						{
+							jobStorageInput.GET("", a.getJobInputHandler)
+							jobStorageInput.GET("/content", a.getJobInputContentHandler)
+						}
+						jobStorageOutput := jobStorages.Group("output")
+						{
+							jobStorageOutput.GET("", a.getJobOutputHandler)
+							jobStorageOutput.GET("/content", a.getJobOutputContentHandler)
+						}
+					}
 				}
 			}
 		}
 	}
 
-	path, handler := storagev1connect.NewStorageServiceHandler(a)
-	a.mux.Handle(path, handler)
-	a.mux.Handle("/", router)
+	for _, f := range []func(*API) (string, http.Handler){
+		func(a *API) (string, http.Handler) {
+			return storagev1connect.NewStorageServiceHandler(a)
+		},
+		func(a *API) (string, http.Handler) {
+			return "/", router
+		},
+	} {
+		path, handler := f(a)
+		a.mux.Handle(path, handler)
+	}
 
 	return a, nil
 }

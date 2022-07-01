@@ -24,16 +24,8 @@ var (
 	}
 )
 
-func (t TaskType) Type() string {
-	return string(t)
-}
-
-func (t TaskType) Name() string {
-	return t.Type()
-}
-
 func (t TaskType) String() string {
-	return t.Type()
+	return string(t)
 }
 
 func ParseTaskType(taskType string) (TaskType, error) {
@@ -42,11 +34,34 @@ func ParseTaskType(taskType string) (TaskType, error) {
 			return t, nil
 		}
 	}
+
 	return "", fmt.Errorf("unknown task type '%s'", taskType)
+}
+
+type TaskKind string
+
+const (
+	TaskKindLookup         TaskKind = "lookup"
+	TaskKindTransformation TaskKind = "transformation"
+)
+
+func (k TaskKind) String() string {
+	return string(k)
+}
+
+func ParseTaskKind(taskKind string) (TaskKind, error) {
+	for _, k := range []TaskKind{TaskKindLookup, TaskKindTransformation} {
+		if strings.EqualFold(taskKind, k.String()) {
+			return k, nil
+		}
+	}
+
+	return "", fmt.Errorf("unknown task kind '%s'", taskKind)
 }
 
 type Task struct {
 	Type    TaskType `json:"type,omitempty"`
+	Kind    TaskKind `json:"kind,omitempty"`
 	Params  []string `json:"params,omitempty"`
 	QueueID string   `json:"-"`
 }
@@ -57,7 +72,7 @@ func (c *Client) GetTasks() ([]*Task, error) {
 		tasks = []*Task{}
 	)
 
-	url.Path = EndpointTask
+	url.Path = EndpointTasks
 
 	return tasks, c.get(url, &tasks)
 }
@@ -72,7 +87,7 @@ func (c *Client) GetTask(rawTaskType string) (*Task, error) {
 		return nil, err
 	}
 
-	url.Path = path.Join(EndpointTask, taskType.String())
+	url.Path = path.Join(EndpointTasks, taskType.String())
 
 	return task, c.get(url, task)
 }
@@ -83,7 +98,7 @@ func (c *Client) GetJobTask(id string) (*Task, error) {
 		task = &Task{}
 	)
 
-	url.Path = path.Join(EndpointJob, id, "task")
+	url.Path = path.Join(EndpointJobs, id, "task")
 
 	return task, c.get(url, task)
 }

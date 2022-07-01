@@ -5,12 +5,8 @@ type Message interface {
 	GetID() string
 }
 
-func NewMessage(id string) Message {
-	return message(id)
-}
+type Msg string
 
-type message string
-
-func (m message) GetID() string {
+func (m Msg) GetID() string {
 	return string(m)
 }

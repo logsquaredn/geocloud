@@ -35,48 +35,63 @@ var (
 )
 
 func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
+	var (
+		storageStatus string
+		err           error
+	)
 	if err := p.stmt.updateStorage.QueryRow(
-		s.ID, time.Now(),
+		s.ID, s.Status, time.Now(),
 	).Scan(
-		&s.ID, &s.CustomerID,
+		&s.ID, &storageStatus, &s.CustomerID,
 		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
-		return s, err
+		return nil, err
 	}
 
-	return s, nil
+	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	return s, err
 }
 
 func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
 	var (
-		id = uuid.NewString()
+		id            = uuid.NewString()
+		storageStatus string
+		err           error
 	)
 
-	if err := p.stmt.createStorage.QueryRow(
-		id, s.CustomerID, s.Name,
-	).Scan(
-		&s.ID, &s.CustomerID,
-		&s.Name, &s.LastUsed, &s.CreateTime,
-	); err != nil {
-		return s, err
+	if s.Status == "" {
+		s.Status = geocloud.StorageStatusUnknown
 	}
 
-	return s, nil
+	if err = p.stmt.createStorage.QueryRow(
+		id, s.Status, s.CustomerID, s.Name,
+	).Scan(
+		&s.ID, &storageStatus, &s.CustomerID,
+		&s.Name, &s.LastUsed, &s.CreateTime,
+	); err != nil {
+		return nil, err
+	}
+
+	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	return s, err
 }
 
 func (p *Postgres) GetStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s = &geocloud.Storage{}
+		s             = &geocloud.Storage{}
+		storageStatus string
+		err           error
 	)
 
 	if err := p.stmt.getStorage.QueryRow(m.GetID()).Scan(
-		&s.ID, &s.CustomerID,
+		&s.ID, &storageStatus, &s.CustomerID,
 		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
-		return s, err
+		return nil, err
 	}
 
-	return s, nil
+	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	return s, err
 }
 
 func (p *Postgres) DeleteStorage(m geocloud.Message) error {
@@ -84,8 +99,8 @@ func (p *Postgres) DeleteStorage(m geocloud.Message) error {
 	return err
 }
 
-func (p *Postgres) GetCustomerStorage(m geocloud.Message, pageSize, page int) ([]*geocloud.Storage, error) {
-	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID(), (page-1)*pageSize, pageSize)
+func (p *Postgres) GetCustomerStorage(m geocloud.Message, offset, limit int) ([]*geocloud.Storage, error) {
+	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -95,13 +110,18 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message, pageSize, page int) ([
 
 	for rows.Next() {
 		var (
-			s = &geocloud.Storage{}
+			s             = &geocloud.Storage{}
+			storageStatus string
 		)
 
 		if err = rows.Scan(
-			&s.ID, &s.CustomerID,
+			&s.ID, &storageStatus, &s.CustomerID,
 			&s.Name, &s.LastUsed, &s.CreateTime,
 		); err != nil {
+			return nil, err
+		}
+
+		if s.Status, err = geocloud.ParseStorageStatus(storageStatus); err != nil {
 			return nil, err
 		}
 
@@ -113,32 +133,38 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message, pageSize, page int) ([
 
 func (p *Postgres) GetJobInputStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s = &geocloud.Storage{}
+		s             = &geocloud.Storage{}
+		storageStatus string
+		err           error
 	)
 
 	if err := p.stmt.getInputStorageByJobID.QueryRow(m.GetID()).Scan(
-		&s.ID, &s.CustomerID,
+		&s.ID, &storageStatus, &s.CustomerID,
 		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
-		return s, err
+		return nil, err
 	}
 
-	return s, nil
+	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	return s, err
 }
 
 func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, error) {
 	var (
-		s = &geocloud.Storage{}
+		s             = &geocloud.Storage{}
+		storageStatus string
+		err           error
 	)
 
 	if err := p.stmt.getOutputStorageByJobID.QueryRow(m.GetID()).Scan(
-		&s.ID, &s.CustomerID,
+		&s.ID, &storageStatus, &s.CustomerID,
 		&s.Name, &s.LastUsed, &s.CreateTime,
 	); err != nil {
-		return s, err
+		return nil, err
 	}
 
-	return s, nil
+	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	return s, err
 }
 
 func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error) {
@@ -153,13 +179,18 @@ func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error
 
 	for rows.Next() {
 		var (
-			s = &geocloud.Storage{}
+			s             = &geocloud.Storage{}
+			storageStatus string
 		)
 
 		if err = rows.Scan(
-			&s.ID, &s.CustomerID,
+			&s.ID, &storageStatus, &s.CustomerID,
 			&s.Name, &s.LastUsed, &s.CreateTime,
 		); err != nil {
+			return nil, err
+		}
+
+		if s.Status, err = geocloud.ParseStorageStatus(storageStatus); err != nil {
 			return nil, err
 		}
 

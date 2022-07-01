@@ -16,11 +16,12 @@ else
 	endif
 endif
 
--include Makefile.$(GOOS)
+-include $(GOOS).mk
 
 PKGS ?= $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
 SWAG ?= swag
 GOLANGCI ?= golangci-lint
+BUF ?= buf
 
 DOCKER ?= docker
 DOCKER-COMPOSE ?= docker-compose
@@ -42,12 +43,17 @@ WHOAMI ?= $(shell whoami)
 .DEFAULT_GOAL := fallthrough
 
 .PHONY: fallthrough
-fallthrough: fmt install infra detach
+fallthrough: generate fmt install infra detach
 
-.PHONY: fmt vet
-fmt vet:
+.PHONY: fmt
+fmt:
 	@$(GO) $@ ./...
 	@$(SWAG) fmt -d ./api/
+	@$(BUF) format -w
+
+.PHONY: vet generate
+vet generate:
+	@$(GO) $@ ./...
 
 .PHONY: lint
 lint:
@@ -94,10 +100,13 @@ secretary:
 .PHONY: migrate migrations
 migrate migrations:
 	@$(DOCKER-COMPOSE) up --build migrate
-	@$(DOCKER-COMPOSE) exec -T datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: infra infrastructure
-infra infrastructure: services sleep migrate secretary
+infra infrastructure: services sleep migrate secretary local
+
+.PHONY: local
+local:
+	@$(DOCKER-COMPOSE) exec -T datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: up
 up:

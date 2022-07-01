@@ -2,13 +2,12 @@
 //
 // Source: api/storage/v1/storage.proto
 
-package storagev1connect
+package storagev1
 
 import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	v1 "github.com/logsquaredn/geocloud/api/storage/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -27,9 +26,9 @@ const (
 
 // StorageServiceClient is a client for the api.storage.v1.StorageService service.
 type StorageServiceClient interface {
-	GetStorageContent(context.Context, *connect_go.Request[v1.GetStorageContentRequest]) (*connect_go.ServerStreamForClient[v1.GetStorageContentResponse], error)
-	GetStorage(context.Context, *connect_go.Request[v1.GetStorageRequest]) (*connect_go.Response[v1.GetStorageResponse], error)
-	CreateStorage(context.Context) *connect_go.ClientStreamForClient[v1.CreateStorageRequest, v1.CreateStorageResponse]
+	GetStorageContent(context.Context, *connect_go.Request[GetStorageContentRequest]) (*connect_go.ServerStreamForClient[GetStorageContentResponse], error)
+	GetStorage(context.Context, *connect_go.Request[GetStorageRequest]) (*connect_go.Response[GetStorageResponse], error)
+	CreateStorage(context.Context) *connect_go.ClientStreamForClient[CreateStorageRequest, CreateStorageResponse]
 }
 
 // NewStorageServiceClient constructs a client for the api.storage.v1.StorageService service. By
@@ -42,17 +41,17 @@ type StorageServiceClient interface {
 func NewStorageServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) StorageServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &storageServiceClient{
-		getStorageContent: connect_go.NewClient[v1.GetStorageContentRequest, v1.GetStorageContentResponse](
+		getStorageContent: connect_go.NewClient[GetStorageContentRequest, GetStorageContentResponse](
 			httpClient,
 			baseURL+"/api.storage.v1.StorageService/GetStorageContent",
 			opts...,
 		),
-		getStorage: connect_go.NewClient[v1.GetStorageRequest, v1.GetStorageResponse](
+		getStorage: connect_go.NewClient[GetStorageRequest, GetStorageResponse](
 			httpClient,
 			baseURL+"/api.storage.v1.StorageService/GetStorage",
 			opts...,
 		),
-		createStorage: connect_go.NewClient[v1.CreateStorageRequest, v1.CreateStorageResponse](
+		createStorage: connect_go.NewClient[CreateStorageRequest, CreateStorageResponse](
 			httpClient,
 			baseURL+"/api.storage.v1.StorageService/CreateStorage",
 			opts...,
@@ -62,31 +61,31 @@ func NewStorageServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 
 // storageServiceClient implements StorageServiceClient.
 type storageServiceClient struct {
-	getStorageContent *connect_go.Client[v1.GetStorageContentRequest, v1.GetStorageContentResponse]
-	getStorage        *connect_go.Client[v1.GetStorageRequest, v1.GetStorageResponse]
-	createStorage     *connect_go.Client[v1.CreateStorageRequest, v1.CreateStorageResponse]
+	getStorageContent *connect_go.Client[GetStorageContentRequest, GetStorageContentResponse]
+	getStorage        *connect_go.Client[GetStorageRequest, GetStorageResponse]
+	createStorage     *connect_go.Client[CreateStorageRequest, CreateStorageResponse]
 }
 
 // GetStorageContent calls api.storage.v1.StorageService.GetStorageContent.
-func (c *storageServiceClient) GetStorageContent(ctx context.Context, req *connect_go.Request[v1.GetStorageContentRequest]) (*connect_go.ServerStreamForClient[v1.GetStorageContentResponse], error) {
+func (c *storageServiceClient) GetStorageContent(ctx context.Context, req *connect_go.Request[GetStorageContentRequest]) (*connect_go.ServerStreamForClient[GetStorageContentResponse], error) {
 	return c.getStorageContent.CallServerStream(ctx, req)
 }
 
 // GetStorage calls api.storage.v1.StorageService.GetStorage.
-func (c *storageServiceClient) GetStorage(ctx context.Context, req *connect_go.Request[v1.GetStorageRequest]) (*connect_go.Response[v1.GetStorageResponse], error) {
+func (c *storageServiceClient) GetStorage(ctx context.Context, req *connect_go.Request[GetStorageRequest]) (*connect_go.Response[GetStorageResponse], error) {
 	return c.getStorage.CallUnary(ctx, req)
 }
 
 // CreateStorage calls api.storage.v1.StorageService.CreateStorage.
-func (c *storageServiceClient) CreateStorage(ctx context.Context) *connect_go.ClientStreamForClient[v1.CreateStorageRequest, v1.CreateStorageResponse] {
+func (c *storageServiceClient) CreateStorage(ctx context.Context) *connect_go.ClientStreamForClient[CreateStorageRequest, CreateStorageResponse] {
 	return c.createStorage.CallClientStream(ctx)
 }
 
 // StorageServiceHandler is an implementation of the api.storage.v1.StorageService service.
 type StorageServiceHandler interface {
-	GetStorageContent(context.Context, *connect_go.Request[v1.GetStorageContentRequest], *connect_go.ServerStream[v1.GetStorageContentResponse]) error
-	GetStorage(context.Context, *connect_go.Request[v1.GetStorageRequest]) (*connect_go.Response[v1.GetStorageResponse], error)
-	CreateStorage(context.Context, *connect_go.ClientStream[v1.CreateStorageRequest]) (*connect_go.Response[v1.CreateStorageResponse], error)
+	GetStorageContent(context.Context, *connect_go.Request[GetStorageContentRequest], *connect_go.ServerStream[GetStorageContentResponse]) error
+	GetStorage(context.Context, *connect_go.Request[GetStorageRequest]) (*connect_go.Response[GetStorageResponse], error)
+	CreateStorage(context.Context, *connect_go.ClientStream[CreateStorageRequest]) (*connect_go.Response[CreateStorageResponse], error)
 }
 
 // NewStorageServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -117,14 +116,14 @@ func NewStorageServiceHandler(svc StorageServiceHandler, opts ...connect_go.Hand
 // UnimplementedStorageServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedStorageServiceHandler struct{}
 
-func (UnimplementedStorageServiceHandler) GetStorageContent(context.Context, *connect_go.Request[v1.GetStorageContentRequest], *connect_go.ServerStream[v1.GetStorageContentResponse]) error {
+func (UnimplementedStorageServiceHandler) GetStorageContent(context.Context, *connect_go.Request[GetStorageContentRequest], *connect_go.ServerStream[GetStorageContentResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("api.storage.v1.StorageService.GetStorageContent is not implemented"))
 }
 
-func (UnimplementedStorageServiceHandler) GetStorage(context.Context, *connect_go.Request[v1.GetStorageRequest]) (*connect_go.Response[v1.GetStorageResponse], error) {
+func (UnimplementedStorageServiceHandler) GetStorage(context.Context, *connect_go.Request[GetStorageRequest]) (*connect_go.Response[GetStorageResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("api.storage.v1.StorageService.GetStorage is not implemented"))
 }
 
-func (UnimplementedStorageServiceHandler) CreateStorage(context.Context, *connect_go.ClientStream[v1.CreateStorageRequest]) (*connect_go.Response[v1.CreateStorageResponse], error) {
+func (UnimplementedStorageServiceHandler) CreateStorage(context.Context, *connect_go.ClientStream[CreateStorageRequest]) (*connect_go.Response[CreateStorageResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("api.storage.v1.StorageService.CreateStorage is not implemented"))
 }

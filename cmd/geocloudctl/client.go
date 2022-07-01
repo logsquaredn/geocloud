@@ -30,7 +30,15 @@ func getClient() (*geocloud.Client, error) {
 		}
 	}
 
-	client, err := geocloud.NewClient(baseURL, apiKey)
+	var (
+		rpc  = viper.GetBool("rpc")
+		opts = []geocloud.ClientOpt{}
+	)
+	if rpc {
+		opts = append(opts, geocloud.WithRPC)
+	}
+
+	client, err := geocloud.NewClient(baseURL, apiKey, opts...)
 	if err != nil {
 		return nil, err
 	}

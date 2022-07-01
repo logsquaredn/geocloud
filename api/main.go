@@ -13,6 +13,6 @@ func init() {
 	docs.SwaggerInfo.Description = "Geocloud"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
-	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.BasePath = ""
 	docs.SwaggerInfo.Schemes = []string{"https"}
 }

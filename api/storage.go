@@ -6,78 +6,72 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/geocloud"
+	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
 )
 
-func (a *API) checkStorageOwnershipForCustomer(ctx *gin.Context, storage *geocloud.Storage, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
+func (a *API) checkStorageOwnershipForCustomer(storage *geocloud.Storage, customer *geocloud.Customer) (*geocloud.Storage, error) {
 	if storage.CustomerID != customer.ID {
-		return nil, http.StatusForbidden, fmt.Errorf("customer does not own storage '%s'", storage.ID)
+		return nil, errv1.New(fmt.Errorf("customer does not own storage '%s'", storage.ID), http.StatusForbidden)
 	}
 
-	return storage, 0, nil
+	return storage, nil
 }
 
-func (a *API) getStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storage, int, error) {
-	return a.getStorageForCustomer(ctx, m, a.getAssumedCustomer(ctx))
-}
-
-func (a *API) getStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
+func (a *API) getStorageForCustomer(m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, error) {
 	storage, err := a.ds.GetStorage(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+		return nil, errv1.New(fmt.Errorf("storage '%s' not found", m.GetID()), http.StatusNotFound, int(connect.CodeNotFound))
 	case err != nil:
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
+	return a.checkStorageOwnershipForCustomer(storage, customer)
 }
 
-func (a *API) createStorage(ctx *gin.Context) (*geocloud.Storage, int, error) {
-	return a.createStorageForCustomer(ctx, a.getAssumedCustomer(ctx))
-}
-
-func (a *API) createStorageForCustomer(ctx *gin.Context, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
+func (a *API) createStorageForCustomer(name string, customer *geocloud.Customer) (*geocloud.Storage, error) {
 	storage, err := a.ds.CreateStorage(&geocloud.Storage{
 		CustomerID: customer.ID,
-		Name:       ctx.Query("name"),
+		Name:       name,
 	})
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return storage, 0, nil
+	return storage, nil
 }
 
-func (a *API) getJobOutputStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storage, int, error) {
-	return a.getJobOutputStorageForCustomer(ctx, m, a.getAssumedCustomer(ctx))
+func (a *API) getJobOutputStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storage, error) {
+	return a.getJobOutputStorageForCustomer(ctx, m, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
+func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, error) {
 	storage, err := a.ds.GetJobOutputStorage(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+		return nil, errv1.New(fmt.Errorf("storage '%s' not found", m.GetID()), http.StatusNotFound)
 	case err != nil:
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
+	return a.checkStorageOwnershipForCustomer(storage, customer)
 }
 
-func (a *API) getJobInputStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storage, int, error) {
-	return a.getJobInputStorageForCustomer(ctx, m, a.getAssumedCustomer(ctx))
+func (a *API) getJobInputStorage(ctx *gin.Context, m geocloud.Message) (*geocloud.Storage, error) {
+	return a.getJobInputStorageForCustomer(ctx, m, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobInputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, int, error) {
+func (a *API) getJobInputStorageForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Storage, error) {
 	storage, err := a.ds.GetJobInputStorage(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, http.StatusNotFound, fmt.Errorf("storage '%s' not found", m.GetID())
+		return nil, errv1.New(fmt.Errorf("storage '%s' not found", m.GetID()), http.StatusNotFound)
 	case err != nil:
-		return nil, http.StatusInternalServerError, err
+		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(ctx, storage, customer)
+	return a.checkStorageOwnershipForCustomer(storage, customer)
 }

@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ type s3File struct {
 	bucket string
 	prefix string
 	dwnldr *s3manager.Downloader
+	body   io.ReadCloser
 }
 
 var _ geocloud.File = (*s3File)(nil)
@@ -26,15 +28,27 @@ func (f *s3File) Name() string {
 	return name
 }
 
-// TODO this doesn't actually implement io.Reader properly
-// as it only works if len(p) >= size of object
 func (f *s3File) Read(p []byte) (int, error) {
-	w := aws.NewWriteAtBuffer(p)
-	n, err := f.dwnldr.Download(w, &s3.GetObjectInput{
-		Bucket: &f.bucket,
-		Key:    f.obj.Key,
-	})
-	return int(n), err
+	if f.body == nil {
+		obj, err := f.dwnldr.S3.GetObject(&s3.GetObjectInput{
+			Bucket: &f.bucket,
+			Key:    f.obj.Key,
+		})
+		if err != nil {
+			return 0, err
+		}
+		f.body = obj.Body
+	}
+
+	return f.body.Read(p)
+}
+
+func (f *s3File) Close() error {
+	if f.body != nil {
+		return f.body.Close()
+	}
+
+	return nil
 }
 
 func (f *s3File) Size() int {
@@ -58,10 +72,12 @@ func (v *s3Volume) Walk(fn geocloud.WalkVolFunc) (err error) {
 			prefix: v.prefix,
 			dwnldr: v.dwnldr,
 		}
-		err = fn(v.prefix, file, err)
+		if err = fn(v.prefix, file, err); err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 func (v *s3Volume) Download(path string) error {

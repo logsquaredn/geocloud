@@ -15,6 +15,7 @@ import (
 	"github.com/logsquaredn/geocloud/internal/conf"
 	"github.com/logsquaredn/geocloud/objectstore"
 	"github.com/rs/zerolog/log"
+	"mellium.im/sysexit"
 )
 
 type Worker struct {
@@ -77,15 +78,20 @@ func (o *Worker) Send(m geocloud.Message) error {
 		}
 	}()
 
-	go func() {
-		ist, err := o.ds.GetStorage(geocloud.NewMessage(j.InputID))
-		if err == nil {
-			_, err = o.ds.UpdateStorage(ist)
-			if err != nil {
-				log.Err(err).Msg("updating input storage")
-			}
-		} else {
-			log.Err(err).Msg("getting input storage")
+	inputStorage, err := o.ds.GetStorage(geocloud.Msg(j.InputID))
+	if err != nil {
+		return err
+	}
+
+	switch inputStorage.Status {
+	case geocloud.StorageStatusFinal, geocloud.StorageStatusUnusable:
+		return fmt.Errorf("input storage status '%s'", inputStorage.Status)
+	}
+
+	defer func() {
+		_, err = o.ds.UpdateStorage(inputStorage)
+		if err != nil {
+			log.Err(err).Msg("updating input storage")
 		}
 	}()
 
@@ -110,7 +116,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	defer os.RemoveAll(o.jobDir(m))
 
 	log.Trace().Str(k, v).Msg("getting input")
-	input, err := o.os.GetObject(geocloud.NewMessage(j.InputID))
+	input, err := o.os.GetObject(geocloud.Msg(j.InputID))
 	if err != nil {
 		return err
 	}
@@ -142,7 +148,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return fmt.Errorf("no input found")
 	}
 
-	task := exec.Command(t.Type.Name()) //nolint:gosec
+	task := exec.Command(t.Type.String()) //nolint:gosec
 	// start with current env minus configuration that might contain secrets
 	// e.g. GEOCLOUD_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
@@ -184,9 +190,29 @@ func (o *Worker) Send(m geocloud.Message) error {
 		return err
 	}
 
+	switch task.ProcessState.ExitCode() {
+	case int(sysexit.Ok):
+		inputStorage.Status = geocloud.StorageStatusTransformable
+	case int(sysexit.ErrData), int(sysexit.ErrNoInput):
+		inputStorage.Status = geocloud.StorageStatusUnusable
+		err = fmt.Errorf("unusable input")
+		return err
+	case int(sysexit.ErrCantCreat):
+		err = fmt.Errorf("can't create output file")
+		return err
+	case int(sysexit.ErrConfig):
+		err = fmt.Errorf("configuration error")
+		return err
+	default:
+		inputStorage.Status = geocloud.StorageStatusUnknown
+		err = fmt.Errorf("unknown error")
+		return err
+	}
+
 	log.Trace().Str(k, v).Msg("creating output storage")
 	ost, err := o.ds.CreateStorage(&geocloud.Storage{
 		CustomerID: j.CustomerID,
+		Status:     js.Ternary(t.Kind == geocloud.TaskKindLookup, geocloud.StorageStatusFinal, geocloud.StorageStatusTransformable),
 	})
 	if err != nil {
 		return err
@@ -194,7 +220,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	j.OutputID = ost.ID
 
 	log.Debug().Str(k, v).Msg("uploading output")
-	return o.os.PutObject(geocloud.NewMessage(j.OutputID), outvol)
+	return o.os.PutObject(geocloud.Msg(j.OutputID), outvol)
 }
 
 func (o *Worker) inputVolumePath(m geocloud.Message) string {

@@ -225,8 +225,8 @@ func (p *Postgres) DeleteJob(m geocloud.Message) error {
 	return err
 }
 
-func (p *Postgres) GetCustomerJobs(m geocloud.Message, pageSize, page int) ([]*geocloud.Job, error) {
-	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID(), (page-1)*pageSize, pageSize)
+func (p *Postgres) GetCustomerJobs(m geocloud.Message, offset, limit int) ([]*geocloud.Job, error) {
+	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
