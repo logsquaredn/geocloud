@@ -225,15 +225,14 @@ func (p *Postgres) DeleteJob(m geocloud.Message) error {
 	return err
 }
 
-func (p *Postgres) GetCustomerJobs(m geocloud.Message) ([]*geocloud.Job, error) {
-	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID())
+func (p *Postgres) GetCustomerJobs(m geocloud.Message, offset, limit int) ([]*geocloud.Job, error) {
+	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var jobs []*geocloud.Job
-
+	jobs := []*geocloud.Job{}
 	for rows.Next() {
 		var (
 			j         = &geocloud.Job{}

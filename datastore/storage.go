@@ -99,14 +99,14 @@ func (p *Postgres) DeleteStorage(m geocloud.Message) error {
 	return err
 }
 
-func (p *Postgres) GetCustomerStorage(m geocloud.Message) ([]*geocloud.Storage, error) {
-	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID())
+func (p *Postgres) GetCustomerStorage(m geocloud.Message, offset, limit int) ([]*geocloud.Storage, error) {
+	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var storage []*geocloud.Storage
+	storage := []*geocloud.Storage{}
 
 	for rows.Next() {
 		var (

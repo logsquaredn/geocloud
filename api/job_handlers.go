@@ -17,20 +17,28 @@ import (
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Job
 // @Produce      application/json
-// @Param        api-key       query     string  false  "API Key query parameter"
 // @Param        X-API-Key     header    string  false  "API Key header"
+// @Param        api-key       query     string  false  "API Key query parameter"
+// @Param        offset     query     int     false  "Offset of jobs to return"
+// @Param        limit      query     int     false  "Limit of jobs to return"
 // @Success      200        {object}  []geocloud.Job
 // @Failure      401           {object}  errv1.Error
 // @Failure      500           {object}  errv1.Error
 // @Router       /api/v1/jobs [get]
 func (a *API) listJobHandler(ctx *gin.Context) {
-	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx))
+	q := &listQuery{}
+	if err := ctx.BindQuery(q); err != nil {
+		a.err(ctx, err)
+		return
+	}
+
+	jobs, err := a.ds.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx), q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		jobs = []*geocloud.Job{}
 	case err != nil:
-		// a.err(ctx, err)
-		// return
+		a.err(ctx, err)
+		return
 	case jobs == nil:
 		jobs = []*geocloud.Job{}
 	}
