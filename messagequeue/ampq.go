@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/rs/zerolog/log"
 	"github.com/streadway/amqp"
 )
@@ -43,14 +43,14 @@ func NewAMQP(opts *AMQPOpts) (*AMQP, error) {
 	return q, nil
 }
 
-func (a *AMQP) Send(m geocloud.Message) error {
+func (a *AMQP) Send(m rototiller.Message) error {
 	return a.ch.Publish("", a.queueName, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte(m.GetID()),
 	})
 }
 
-func (a *AMQP) Poll(f func(geocloud.Message) error) error {
+func (a *AMQP) Poll(f func(rototiller.Message) error) error {
 	queue, _ := a.ch.QueueDeclare(
 		a.queueName,
 		false,
@@ -76,7 +76,7 @@ func (a *AMQP) Poll(f func(geocloud.Message) error) error {
 	for m := range msgs {
 		go func(m amqp.Delivery) {
 			id := string(m.Body)
-			if err := f(geocloud.Msg(id)); err == nil {
+			if err := f(rototiller.Msg(id)); err == nil {
 				if err = m.Ack(false); err != nil {
 					log.Err(err).Msgf("unable to acknowledge message '%s'", id)
 				}

@@ -25,16 +25,16 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
-	const char *fc = getenv("GEOCLOUD_FILTER_COLUMN");
+	const char *fc = getenv("ROTOTILLER_FILTER_COLUMN");
 	if(fc == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_FILTER_COLUMN must be set", __FILE__, __LINE__, EX_CONFIG);		
+		fatalErrorWithCode("env var: ROTOTILLER_FILTER_COLUMN must be set", __FILE__, __LINE__, EX_CONFIG);		
 	}
 	sprintf(iMsg, "filter column: %s", fc);
 	info(iMsg);
 
-	const char *fv = getenv("GEOCLOUD_FILTER_VALUE");
+	const char *fv = getenv("ROTOTILLER_FILTER_VALUE");
 	if(fv == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_FILTER_VALUE must be set", __FILE__, __LINE__, EX_CONFIG);		
+		fatalErrorWithCode("env var: ROTOTILLER_FILTER_VALUE must be set", __FILE__, __LINE__, EX_CONFIG);		
 	}
 	sprintf(iMsg, "filter value: %s", fv);
 	info(iMsg);

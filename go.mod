@@ -1,4 +1,4 @@
-module github.com/logsquaredn/geocloud
+module github.com/logsquaredn/rototiller
 
 go 1.18
 

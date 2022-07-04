@@ -6,14 +6,14 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:               "geocloud",
-	Version:           geocloud.Semver(),
+	Use:               "rototiller",
+	Version:           rototiller.Semver(),
 	PersistentPreRunE: persistentPreRun,
 }
 

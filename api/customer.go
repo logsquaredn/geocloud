@@ -6,27 +6,27 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud"
-	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/logsquaredn/rototiller"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 )
 
 // getCustomerFromAPIKey given an API key, actually checks the database for the customer
-func (a *API) getCustomerFromAPIKey(apiKey string) (*geocloud.Customer, error) {
+func (a *API) getCustomerFromAPIKey(apiKey string) (*rototiller.Customer, error) {
 	c, err := a.ds.GetCustomer(
-		geocloud.Msg(apiKey),
+		rototiller.Msg(apiKey),
 	)
 
 	return c, err
 }
 
 // getCustomerFromGinContext given an Gin context, actually checks the database for the customer
-func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*geocloud.Customer, error) {
+func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*rototiller.Customer, error) {
 	c, err := a.getCustomerFromAPIKey(a.getCustomerIDFromContext(ctx))
 	if err != nil {
 		return nil, errv1.New(
 			fmt.Errorf(
 				"query parameter '%s', header '%s' or cookie '%s' must be a valid API Key",
-				geocloud.APIKeyQueryParam, geocloud.APIKeyHeader, geocloud.APIKeyCookie,
+				rototiller.APIKeyQueryParam, rototiller.APIKeyHeader, rototiller.APIKeyCookie,
 			),
 			http.StatusUnauthorized, int(connect.CodeUnauthenticated),
 		)
@@ -36,11 +36,11 @@ func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*geocloud.Customer, e
 }
 
 // getCustomerFromConnectHeader given a Connect header, actually checks the database for the customer
-func (a *API) getCustomerFromConnectHeader(header http.Header) (*geocloud.Customer, error) {
-	c, err := a.getCustomerFromAPIKey(header.Get(geocloud.APIKeyHeader))
+func (a *API) getCustomerFromConnectHeader(header http.Header) (*rototiller.Customer, error) {
+	c, err := a.getCustomerFromAPIKey(header.Get(rototiller.APIKeyHeader))
 	if err != nil {
 		return nil, errv1.New(
-			fmt.Errorf("header '%s' must be a valid API Key", geocloud.APIKeyHeader),
+			fmt.Errorf("header '%s' must be a valid API Key", rototiller.APIKeyHeader),
 			http.StatusUnauthorized, int(connect.CodeUnauthenticated),
 		)
 	}
@@ -51,13 +51,13 @@ func (a *API) getCustomerFromConnectHeader(header http.Header) (*geocloud.Custom
 // getAssumedCustomer returns a customer not hydrated from the database,
 // making the assumption that previous middleware has already confirmed
 // the customer's existence
-func (a *API) getAssumedCustomer(id string) *geocloud.Customer {
-	return &geocloud.Customer{ID: id}
+func (a *API) getAssumedCustomer(id string) *rototiller.Customer {
+	return &rototiller.Customer{ID: id}
 }
 
 // getAssumedCustomerFromContext returns a customer not hydrated from the database
 // by extracting the customer ID from gin's context
-func (a *API) getAssumedCustomerFromContext(ctx *gin.Context) *geocloud.Customer {
+func (a *API) getAssumedCustomerFromContext(ctx *gin.Context) *rototiller.Customer {
 	return a.getAssumedCustomer(a.getCustomerIDFromContext(ctx))
 }
 
@@ -82,11 +82,11 @@ func (a *API) getCustomerIDFromContext(ctx *gin.Context) string {
 
 // getAPIKeyFromContext gets a customer's API key from gin's context
 func (a *API) getAPIKeyFromContext(ctx *gin.Context) string {
-	apiKey := ctx.Query(geocloud.APIKeyQueryParam)
+	apiKey := ctx.Query(rototiller.APIKeyQueryParam)
 	if apiKey == "" {
-		apiKey = ctx.GetHeader(geocloud.APIKeyHeader)
+		apiKey = ctx.GetHeader(rototiller.APIKeyHeader)
 		if apiKey == "" {
-			apiKey, _ = ctx.Cookie(geocloud.APIKeyCookie)
+			apiKey, _ = ctx.Cookie(rototiller.APIKeyCookie)
 		}
 	}
 

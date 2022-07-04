@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
-	const char *tpArg = getenv("GEOCLOUD_TARGET_PROJECTION");	
+	const char *tpArg = getenv("ROTOTILLER_TARGET_PROJECTION");	
 	long tp = strtol(tpArg, NULL, 10);
 	if(tp <= 0) {
 		char eMsg[ONE_KB];

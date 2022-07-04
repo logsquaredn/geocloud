@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/logsquaredn/geocloud/datastore"
+	"github.com/logsquaredn/rototiller/datastore"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

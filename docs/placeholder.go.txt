@@ -1,7 +1,7 @@
 // placeholder for swagger
 // which is generated at build-time in Dockerfile
 // but this much needs to be here because
-// github.com/logsquaredn/geocloud/api references it
+// github.com/logsquaredn/rototiller/api references it
 
 package docs
 

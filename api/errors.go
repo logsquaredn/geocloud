@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud/api/err/v1"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 	"github.com/rs/zerolog/log"
 )
 

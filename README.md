@@ -1,4 +1,4 @@
-# geocloud
+# rototiller
 
 ## Developing
 
@@ -15,9 +15,9 @@
 ```sh
 # setup services
 make infra
-# run geocloud
+# run rototiller
 make up
-# restart geocloud
+# restart rototiller
 make restart
 ```
 
@@ -37,23 +37,23 @@ see [Postgres migration tutorial](https://github.com/golang-migrate/migrate/blob
 
 ```sh
 # run migrations
-geocloud migrate
+rototiller migrate
 ```
 
 #### Deploy to cluster
 ```sh
 # We use semantic versioning
-# Repo: [geocloud]
+# Repo: [rototiller]
 git tag -a 0.7.0 -m 0.7.0 
 git push --follow-tags
 
-# (Only need to do this once) Repo: [geocloud-chart]
+# (Only need to do this once) Repo: [rototiller-chart]
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dependency build
 
-# Repo: [geocloud-gitops]
+# Repo: [rototiller-gitops]
 # update tag in values.yaml
-make geocloud
+make rototiller
 git add/commit/push
 ```
 
@@ -71,8 +71,8 @@ kubectl get secret -n <namespace>
 kubectl get secret -n <namespace> <kind> -o yaml
 # decode a password
 echo <password> | base64 -d
-# get postgres password (default namespace geocloud-gitops must be set)
-kubectl get secret -o json geocloud-postgresql | jq -r '.data["postgresql-password"]' | base64 -d
+# get postgres password (default namespace rototiller-gitops must be set)
+kubectl get secret -o json rototiller-postgresql | jq -r '.data["postgresql-password"]' | base64 -d
 # execute into a container
 kubectl exec -n <namespace> <kind> -it -- <cmd> 
 ```
@@ -81,11 +81,11 @@ kubectl exec -n <namespace> <kind> -it -- <cmd>
 
 ```sh
 # create buffer job
-curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/jobs/buffer?buffer-distance=5&quadrant-segment-count=50"
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://rototiller.logsquaredn.io/api/v1/jobs/buffer?buffer-distance=5&quadrant-segment-count=50"
 # get job result
-curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://geocloud.logsquaredn.io/api/v1/jobs/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
+curl -X GET -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" -o "/path/to/a.zip" "https://rototiller.logsquaredn.io/api/v1/jobs/9b45f141-a137-4f52-a36f-2640129d92e8/output/content"
 # create storage
-curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://geocloud.logsquaredn.io/api/v1/storages?name=<name>"
+curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://rototiller.logsquaredn.io/api/v1/storages?name=<name>"
 # create vector lookup job
 curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "http://localhost:8080/api/v1/jobs/vectorlookup?attributes=RADII,ADVNUM&latitude=20.33&longitude=-64.23"
 ```

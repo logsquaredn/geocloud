@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 type S3 struct {
@@ -72,7 +72,7 @@ func NewS3(opts *S3Opts) (*S3, error) {
 	return s, nil
 }
 
-func (s *S3) GetObject(m geocloud.Message) (geocloud.Volume, error) {
+func (s *S3) GetObject(m rototiller.Message) (rototiller.Volume, error) {
 	prefix := filepath.Join(s.prefix, m.GetID())
 	o, err := s.svc.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: &s.bucket,
@@ -92,9 +92,9 @@ func (s *S3) GetObject(m geocloud.Message) (geocloud.Volume, error) {
 	}, nil
 }
 
-func (s *S3) PutObject(m geocloud.Message, v geocloud.Volume) error {
+func (s *S3) PutObject(m rototiller.Message, v rototiller.Volume) error {
 	var objs []s3manager.BatchUploadObject
-	if err := v.Walk(func(_ string, f geocloud.File, err error) error {
+	if err := v.Walk(func(_ string, f rototiller.File, err error) error {
 		key := filepath.Join(s.prefix, m.GetID(), f.Name())
 		objs = append(objs, s3manager.BatchUploadObject{
 			Object: &s3manager.UploadInput{

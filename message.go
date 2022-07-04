@@ -1,6 +1,6 @@
-package geocloud
+package rototiller
 
-// Message is the primary object that is passed between geocloud components
+// Message is the primary object that is passed between rototiller components
 type Message interface {
 	GetID() string
 }

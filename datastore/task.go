@@ -5,7 +5,7 @@ import (
 	_ "embed"
 
 	"github.com/lib/pq"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 var (
@@ -16,9 +16,9 @@ var (
 	getTasksByTypesSQL string
 )
 
-func (p *Postgres) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
+func (p *Postgres) GetTaskByJobID(m rototiller.Message) (*rototiller.Task, error) {
 	var (
-		t        = &geocloud.Task{}
+		t        = &rototiller.Task{}
 		queueID  sql.NullString
 		taskType string
 		taskKind string
@@ -30,21 +30,21 @@ func (p *Postgres) GetTaskByJobID(m geocloud.Message) (*geocloud.Task, error) {
 	}
 
 	t.QueueID = queueID.String
-	t.Type, err = geocloud.ParseTaskType(taskType)
+	t.Type, err = rototiller.ParseTaskType(taskType)
 	if err != nil {
 		return nil, err
 	}
 
-	t.Kind, err = geocloud.ParseTaskKind(taskKind)
+	t.Kind, err = rototiller.ParseTaskKind(taskKind)
 	return t, err
 }
 
 //go:embed psql/queries/get_task_by_type.sql
 var getTaskByTypeSQL string
 
-func (p *Postgres) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
+func (p *Postgres) GetTask(tt rototiller.TaskType) (*rototiller.Task, error) {
 	var (
-		t        = &geocloud.Task{}
+		t        = &rototiller.Task{}
 		queueID  sql.NullString
 		taskType string
 		taskKind string
@@ -55,16 +55,16 @@ func (p *Postgres) GetTask(tt geocloud.TaskType) (*geocloud.Task, error) {
 	}
 
 	t.QueueID = queueID.String
-	t.Type, err = geocloud.ParseTaskType(taskType)
+	t.Type, err = rototiller.ParseTaskType(taskType)
 	if err != nil {
 		return nil, err
 	}
 
-	t.Kind, err = geocloud.ParseTaskKind(taskKind)
+	t.Kind, err = rototiller.ParseTaskKind(taskKind)
 	return t, err
 }
 
-func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, error) {
+func (p *Postgres) GetTasks(taskTypes ...rototiller.TaskType) ([]*rototiller.Task, error) {
 	rawTaskTypes := make([]string, len(taskTypes))
 	for i, tt := range taskTypes {
 		rawTaskTypes[i] = tt.String()
@@ -76,11 +76,11 @@ func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, e
 	}
 	defer rows.Close()
 
-	var tasks []*geocloud.Task
+	var tasks []*rototiller.Task
 
 	for rows.Next() {
 		var (
-			task     = &geocloud.Task{}
+			task     = &rototiller.Task{}
 			queueID  sql.NullString
 			taskType string
 			taskKind string
@@ -91,12 +91,12 @@ func (p *Postgres) GetTasks(taskTypes ...geocloud.TaskType) ([]*geocloud.Task, e
 		}
 
 		task.QueueID = queueID.String
-		task.Type, err = geocloud.ParseTaskType(taskType)
+		task.Type, err = rototiller.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}
 
-		task.Kind, err = geocloud.ParseTaskKind(taskKind)
+		task.Kind, err = rototiller.ParseTaskKind(taskKind)
 		if err != nil {
 			return nil, err
 		}

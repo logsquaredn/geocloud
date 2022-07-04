@@ -11,7 +11,7 @@ const (
 	defaultPostgresPort = 5432
 	defaultAMQPHost     = localhost
 	defaultAMQPPort     = 5672
-	defaultUser         = "geocloud"
+	defaultUser         = "rototiller"
 	defaultAMQPUser     = defaultUser
 	defaultPostgresUser = defaultUser
 )
@@ -21,7 +21,7 @@ var (
 	defaultAMQPAddress     = fmt.Sprintf("%s:%d", defaultAMQPHost, defaultAMQPPort)
 )
 
-var defaultAMQPQueueName = "geocloud"
+var defaultAMQPQueueName = "rototiller"
 
 var (
 	s5  time.Duration

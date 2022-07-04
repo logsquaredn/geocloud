@@ -1,4 +1,4 @@
-package geocloud
+package rototiller
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	storagev1 "github.com/logsquaredn/geocloud/api/storage/v1"
-	"github.com/logsquaredn/geocloud/internal/rpcio"
+	storagev1 "github.com/logsquaredn/rototiller/api/storage/v1"
+	"github.com/logsquaredn/rototiller/internal/rpcio"
 )
 
 type StorageStatus string

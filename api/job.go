@@ -8,8 +8,8 @@ import (
 
 	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud"
-	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/logsquaredn/rototiller"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType, customer *geocloud.Customer) (*geocloud.Job, error) {
+func (a *API) createJobForCustomer(ctx *gin.Context, taskType rototiller.TaskType, customer *rototiller.Customer) (*rototiller.Job, error) {
 	task, err := a.getTaskType(taskType)
 	if err != nil {
 		return nil, err
@@ -34,23 +34,23 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 				return s != ""
 			},
 		)
-		storage *geocloud.Storage
+		storage *rototiller.Storage
 	)
 	switch {
 	case len(inputIDs) > 1:
 		return nil, errv1.New(fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf), http.StatusBadRequest)
 	case input != "":
-		storage, err = a.getStorageForCustomer(geocloud.Msg(input), customer)
+		storage, err = a.getStorageForCustomer(rototiller.Msg(input), customer)
 		if err != nil {
 			return nil, err
 		}
 	case inputOf != "":
-		storage, err = a.getJobInputStorageForCustomer(ctx, geocloud.Msg(inputOf), customer)
+		storage, err = a.getJobInputStorageForCustomer(ctx, rototiller.Msg(inputOf), customer)
 		if err != nil {
 			return nil, err
 		}
 	case outputOf != "":
-		storage, err = a.getJobOutputStorageForCustomer(ctx, geocloud.Msg(outputOf), customer)
+		storage, err = a.getJobOutputStorageForCustomer(ctx, rototiller.Msg(outputOf), customer)
 		if err != nil {
 			return nil, err
 		}
@@ -64,13 +64,13 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 	}
 
 	switch storage.Status {
-	case geocloud.StorageStatusFinal:
+	case rototiller.StorageStatusFinal:
 		return nil, errv1.New(fmt.Errorf("cannot create job, storage id %s is final", storage.ID), http.StatusBadRequest)
-	case geocloud.StorageStatusUnusable:
+	case rototiller.StorageStatusUnusable:
 		return nil, errv1.New(fmt.Errorf("cannot create job, storage id %s is unsusable", storage.ID), http.StatusBadRequest)
 	}
 
-	job, err := a.ds.CreateJob(&geocloud.Job{
+	job, err := a.ds.CreateJob(&rototiller.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
 		CustomerID: customer.ID,
@@ -87,15 +87,15 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType geocloud.TaskType,
 	return job, nil
 }
 
-func (a *API) createJob(ctx *gin.Context, taskType geocloud.TaskType) (*geocloud.Job, error) {
+func (a *API) createJob(ctx *gin.Context, taskType rototiller.TaskType) (*rototiller.Job, error) {
 	return a.createJobForCustomer(ctx, taskType, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJob(ctx *gin.Context, m geocloud.Message) (*geocloud.Job, error) {
+func (a *API) getJob(ctx *gin.Context, m rototiller.Message) (*rototiller.Job, error) {
 	return a.getJobForCustomer(ctx, m, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *geocloud.Customer) (*geocloud.Job, error) {
+func (a *API) getJobForCustomer(ctx *gin.Context, m rototiller.Message, customer *rototiller.Customer) (*rototiller.Job, error) {
 	job, err := a.ds.GetJob(m)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -107,7 +107,7 @@ func (a *API) getJobForCustomer(ctx *gin.Context, m geocloud.Message, customer *
 	return a.checkJobOwnershipForCustomer(job, customer)
 }
 
-func (a *API) checkJobOwnershipForCustomer(job *geocloud.Job, customer *geocloud.Customer) (*geocloud.Job, error) {
+func (a *API) checkJobOwnershipForCustomer(job *rototiller.Job, customer *rototiller.Customer) (*rototiller.Job, error) {
 	if job.CustomerID != customer.ID {
 		return nil, errv1.New(fmt.Errorf("customer does not own job '%s'", job.ID), http.StatusForbidden)
 	}

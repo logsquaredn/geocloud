@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os/user"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/spf13/viper"
 )
 
-func getClient() (*geocloud.Client, error) {
+func getClient() (*rototiller.Client, error) {
 	port := viper.GetInt64("port")
 	if port == 0 {
 		port = 8080
@@ -32,13 +32,13 @@ func getClient() (*geocloud.Client, error) {
 
 	var (
 		rpc  = viper.GetBool("rpc")
-		opts = []geocloud.ClientOpt{}
+		opts = []rototiller.ClientOpt{}
 	)
 	if rpc {
-		opts = append(opts, geocloud.WithRPC)
+		opts = append(opts, rototiller.WithRPC)
 	}
 
-	client, err := geocloud.NewClient(baseURL, apiKey, opts...)
+	client, err := rototiller.NewClient(baseURL, apiKey, opts...)
 	if err != nil {
 		return nil, err
 	}

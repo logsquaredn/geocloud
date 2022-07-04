@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/messagequeue"
-	"github.com/logsquaredn/geocloud/objectstore"
-	"github.com/logsquaredn/geocloud/worker"
+	"github.com/logsquaredn/rototiller/datastore"
+	"github.com/logsquaredn/rototiller/messagequeue"
+	"github.com/logsquaredn/rototiller/objectstore"
+	"github.com/logsquaredn/rototiller/worker"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	workerCmd.Flags().StringVar(&workDir, "workdir", "/var/lib/geocloud", "Working directory")
+	workerCmd.Flags().StringVar(&workDir, "workdir", "/var/lib/rototiller", "Working directory")
 }
 
 func runWorker(cmd *cobra.Command, args []string) error {

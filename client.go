@@ -1,4 +1,4 @@
-package geocloud
+package rototiller
 
 import (
 	"encoding/json"
@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/logsquaredn/geocloud/api/err/v1"
-	"github.com/logsquaredn/geocloud/api/storage/v1/storagev1connect"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
+	"github.com/logsquaredn/rototiller/api/storage/v1/storagev1connect"
 )
 
 func NewClient(rawBaseURL, apiKey string, opts ...ClientOpt) (*Client, error) {

@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/frantjc/go-js"
-	"github.com/logsquaredn/geocloud"
-	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/logsquaredn/rototiller"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 )
 
-func (a *API) putRequestVolumeForCustomer(contentType, name string, r io.Reader, customer *geocloud.Customer) (*geocloud.Storage, error) {
+func (a *API) putRequestVolumeForCustomer(contentType, name string, r io.Reader, customer *rototiller.Customer) (*rototiller.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (a *API) putRequestVolumeForCustomer(contentType, name string, r io.Reader,
 	return storage, nil
 }
 
-func (a *API) getRequestVolume(contentType string, r io.Reader) (geocloud.Volume, error) {
+func (a *API) getRequestVolume(contentType string, r io.Reader) (rototiller.Volume, error) {
 	var (
 		applicationJSON = strings.Contains(contentType, "application/json")
 		applicationZip  = strings.Contains(contentType, "application/zip")
@@ -45,10 +45,10 @@ func (a *API) getRequestVolume(contentType string, r io.Reader) (geocloud.Volume
 		return nil, errv1.New(fmt.Errorf("must specify one Content-Type among 'application/json' and 'application/zip'"), http.StatusBadRequest)
 	}
 
-	return geocloud.NewSingleFileVolume(inputName, r), nil
+	return rototiller.NewSingleFileVolume(inputName, r), nil
 }
 
-func (a *API) getVolumeContent(accept string, volume geocloud.Volume) (io.ReadCloser, string, error) {
+func (a *API) getVolumeContent(accept string, volume rototiller.Volume) (io.ReadCloser, string, error) {
 	var (
 		applicationJSON = strings.Contains(accept, "application/json")
 		applicationZip  = strings.Contains(accept, "application/zip")
@@ -61,7 +61,7 @@ func (a *API) getVolumeContent(accept string, volume geocloud.Volume) (io.ReadCl
 		return nil, "", errv1.New(fmt.Errorf("only one Accept among 'application/json' and 'application/zip' may be specified"), http.StatusBadRequest)
 	}
 
-	err := volume.Walk(func(_ string, f geocloud.File, e error) error {
+	err := volume.Walk(func(_ string, f rototiller.File, e error) error {
 		switch {
 		// pass errors through
 		case e != nil:

@@ -1,6 +1,6 @@
 package api
 
-import "github.com/logsquaredn/geocloud/docs"
+import "github.com/logsquaredn/rototiller/docs"
 
 // @contact.name   logsquaredn
 // @contact.url    https://logsquaredn.io
@@ -9,10 +9,10 @@ import "github.com/logsquaredn/geocloud/docs"
 // @license.name  logsquaredn
 
 func init() {
-	docs.SwaggerInfo.Title = "Geocloud"
-	docs.SwaggerInfo.Description = "Geocloud"
+	docs.SwaggerInfo.Title = "Rototiller"
+	docs.SwaggerInfo.Description = "Rototiller"
 	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "geocloud.logsquaredn.io"
+	docs.SwaggerInfo.Host = "rototiller.logsquaredn.io"
 	docs.SwaggerInfo.BasePath = ""
 	docs.SwaggerInfo.Schemes = []string{"https"}
 }

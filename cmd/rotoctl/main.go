@@ -6,15 +6,15 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
 	rootCmd = &cobra.Command{
-		Use:     "geocloudctl",
-		Version: geocloud.Semver(),
+		Use:     "rotoctl",
+		Version: rototiller.Semver(),
 	}
 	getCmd = &cobra.Command{
 		Use: "get",
@@ -29,11 +29,11 @@ var (
 
 func init() {
 	flags := rootCmd.PersistentFlags()
-	flags.String("api-key", "", "Geocloud API key")
+	flags.String("api-key", "", "Rototiller API key")
 	_ = viper.BindPFlag("api-key", flags.Lookup("api-key"))
-	flags.String("base-url", "", "Geocloud base URL")
+	flags.String("base-url", "", "Rototiller base URL")
 	_ = viper.BindPFlag("base-url", flags.Lookup("base-url"))
-	flags.String("port", "", "Geocloud port")
+	flags.String("port", "", "Rototiller port")
 	_ = viper.BindPFlag("port", flags.Lookup("port"))
 	flags.BoolP("rpc", "r", false, "use RPC")
 	_ = viper.BindPFlag("rpc", flags.Lookup("rpc"))

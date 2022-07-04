@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.storage.v1;
 
-option go_package = "github.com/logsquaredn/geocloud/api/storage/v1;storagev1";
+option go_package = "github.com/logsquaredn/rototiller/api/storage/v1;storagev1";
 
 message Storage {
   string id = 1;

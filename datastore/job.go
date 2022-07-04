@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 	getJobsByCustomerIDSQL string
 )
 
-func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
+func (p *Postgres) CreateJob(j *rototiller.Job) (*rototiller.Job, error) {
 	var (
 		id        = uuid.New().String()
 		jobErr    sql.NullString
@@ -61,12 +61,12 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	j.TaskType, err = geocloud.ParseTaskType(taskType)
+	j.TaskType, err = rototiller.ParseTaskType(taskType)
 	if err != nil {
 		return j, err
 	}
 
-	j.Status, err = geocloud.ParseJobStatus(jobStatus)
+	j.Status, err = rototiller.ParseJobStatus(jobStatus)
 	if err != nil {
 		return j, err
 	}
@@ -74,7 +74,7 @@ func (p *Postgres) CreateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	return j, nil
 }
 
-func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
+func (p *Postgres) UpdateJob(j *rototiller.Job) (*rototiller.Job, error) {
 	var (
 		jobErr    sql.NullString
 		jobStatus string
@@ -120,20 +120,20 @@ func (p *Postgres) UpdateJob(j *geocloud.Job) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	if j.TaskType, err = geocloud.ParseTaskType(taskType); err != nil {
+	if j.TaskType, err = rototiller.ParseTaskType(taskType); err != nil {
 		return j, err
 	}
 
-	if j.Status, err = geocloud.ParseJobStatus(jobStatus); err != nil {
+	if j.Status, err = rototiller.ParseJobStatus(jobStatus); err != nil {
 		return j, err
 	}
 
 	return j, nil
 }
 
-func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
+func (p *Postgres) GetJob(m rototiller.Message) (*rototiller.Job, error) {
 	var (
-		j         = &geocloud.Job{}
+		j         = &rototiller.Job{}
 		jobErr    sql.NullString
 		jobStatus string
 		endTime   sql.NullTime
@@ -157,18 +157,18 @@ func (p *Postgres) GetJob(m geocloud.Message) (*geocloud.Job, error) {
 	j.EndTime = endTime.Time
 	j.OutputID = outputID.String
 
-	if j.TaskType, err = geocloud.ParseTaskType(taskType); err != nil {
+	if j.TaskType, err = rototiller.ParseTaskType(taskType); err != nil {
 		return j, err
 	}
 
-	if j.Status, err = geocloud.ParseJobStatus(jobStatus); err != nil {
+	if j.Status, err = rototiller.ParseJobStatus(jobStatus); err != nil {
 		return j, err
 	}
 
 	return j, nil
 }
 
-func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
+func (p *Postgres) GetJobsBefore(d time.Duration) ([]*rototiller.Job, error) {
 	beforeTimestamp := time.Now().Add(-d)
 	rows, err := p.stmt.getJobsBefore.Query(beforeTimestamp)
 	if err != nil {
@@ -176,11 +176,11 @@ func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
 	}
 	defer rows.Close()
 
-	var jobs []*geocloud.Job
+	var jobs []*rototiller.Job
 
 	for rows.Next() {
 		var (
-			j         = &geocloud.Job{}
+			j         = &rototiller.Job{}
 			jobErr    sql.NullString
 			jobStatus string
 			endTime   sql.NullTime
@@ -204,12 +204,12 @@ func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 
-		j.TaskType, err = geocloud.ParseTaskType(taskType)
+		j.TaskType, err = rototiller.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}
 
-		j.Status, err = geocloud.ParseJobStatus(jobStatus)
+		j.Status, err = rototiller.ParseJobStatus(jobStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -220,22 +220,22 @@ func (p *Postgres) GetJobsBefore(d time.Duration) ([]*geocloud.Job, error) {
 	return jobs, nil
 }
 
-func (p *Postgres) DeleteJob(m geocloud.Message) error {
+func (p *Postgres) DeleteJob(m rototiller.Message) error {
 	_, err := p.stmt.deleteJob.Exec(m.GetID())
 	return err
 }
 
-func (p *Postgres) GetCustomerJobs(m geocloud.Message, offset, limit int) ([]*geocloud.Job, error) {
+func (p *Postgres) GetCustomerJobs(m rototiller.Message, offset, limit int) ([]*rototiller.Job, error) {
 	rows, err := p.stmt.getJobsByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	jobs := []*geocloud.Job{}
+	jobs := []*rototiller.Job{}
 	for rows.Next() {
 		var (
-			j         = &geocloud.Job{}
+			j         = &rototiller.Job{}
 			jobErr    sql.NullString
 			jobStatus string
 			endTime   sql.NullTime
@@ -259,12 +259,12 @@ func (p *Postgres) GetCustomerJobs(m geocloud.Message, offset, limit int) ([]*ge
 		j.EndTime = endTime.Time
 		j.OutputID = outputID.String
 
-		j.TaskType, err = geocloud.ParseTaskType(taskType)
+		j.TaskType, err = rototiller.ParseTaskType(taskType)
 		if err != nil {
 			return nil, err
 		}
 
-		j.Status, err = geocloud.ParseJobStatus(jobStatus)
+		j.Status, err = rototiller.ParseJobStatus(jobStatus)
 		if err != nil {
 			return nil, err
 		}

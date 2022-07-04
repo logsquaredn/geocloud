@@ -5,12 +5,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/logsquaredn/geocloud"
-	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
+	"github.com/logsquaredn/rototiller"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 )
 
-func (a *API) getTask(rawTaskType string) (*geocloud.Task, error) {
-	taskType, err := geocloud.ParseTaskType(rawTaskType)
+func (a *API) getTask(rawTaskType string) (*rototiller.Task, error) {
+	taskType, err := rototiller.ParseTaskType(rawTaskType)
 	if err != nil {
 		return nil, errv1.New(err, http.StatusBadRequest)
 	}
@@ -18,7 +18,7 @@ func (a *API) getTask(rawTaskType string) (*geocloud.Task, error) {
 	return a.getTaskType(taskType)
 }
 
-func (a *API) getTaskType(taskType geocloud.TaskType) (*geocloud.Task, error) {
+func (a *API) getTaskType(taskType rototiller.TaskType) (*rototiller.Task, error) {
 	task, err := a.ds.GetTask(taskType)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

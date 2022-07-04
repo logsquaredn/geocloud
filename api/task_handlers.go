@@ -6,29 +6,29 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 // @Summary      Get a list of task types
 // @Description  &emsp; - API Key is required either as a query parameter or a header
 // @Tags         Task
 // @Produce      application/json
-// @Success      200  {object}  []geocloud.Task
+// @Success      200  {object}  []rototiller.Task
 // @Failure      401  {object}  errv1.Error
 // @Failure      500  {object}  errv1.Error
 // @Router       /api/v1/tasks [get]
 func (a *API) listTasksHandler(ctx *gin.Context) {
 	tasks, err := a.ds.GetTasks(
-		geocloud.AllTaskTypes...,
+		rototiller.AllTaskTypes...,
 	)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		tasks = []*geocloud.Task{}
+		tasks = []*rototiller.Task{}
 	case err != nil:
 		a.err(ctx, err)
 		return
 	case tasks == nil:
-		tasks = []*geocloud.Task{}
+		tasks = []*rototiller.Task{}
 	}
 
 	ctx.JSON(http.StatusOK, tasks)
@@ -39,7 +39,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 // @Tags         Task
 // @Produce      application/json
 // @Param        type  path      string  true  "Task type"
-// @Success      200   {object}  geocloud.Task
+// @Success      200   {object}  rototiller.Task
 // @Failure      400   {object}  errv1.Error
 // @Failure      401   {object}  errv1.Error
 // @Failure      404   {object}  errv1.Error

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/logsquaredn/geocloud/internal/conf"
+	"github.com/logsquaredn/rototiller/internal/conf"
 )
 
 var (

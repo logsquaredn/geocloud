@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	ViperEnvPrefix = "geocloud"
-	EnvPrefix      = "GEOCLOUD_"
+	ViperEnvPrefix = "rototiller"
+	EnvPrefix      = "ROTOTILLER_"
 )
 
 type Coilable interface {

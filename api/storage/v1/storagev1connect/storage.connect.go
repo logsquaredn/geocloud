@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	v1 "github.com/logsquaredn/geocloud/api/storage/v1"
+	v1 "github.com/logsquaredn/rototiller/api/storage/v1"
 	http "net/http"
 	strings "strings"
 )
