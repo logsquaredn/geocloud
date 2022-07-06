@@ -13,6 +13,9 @@ hack/minio/*
 !hack/minio/rototiller/
 hack/minio/rototiller/*
 !hack/minio/rototiller/.gitkeep
+!hack/minio/rototiller-archive/
+hack/minio/rototiller-archive/*
+!hack/minio/rototiller-archive/.gitkeep
 hack/postgresql/*
 !hack/postgresql/.gitkeep
 hack/rabbitmq/*
