@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/messagequeue"
-	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/logsquaredn/rototiller/datastore"
+	"github.com/logsquaredn/rototiller/messagequeue"
+	"github.com/logsquaredn/rototiller/objectstore"
 )
 
 type Opts struct {

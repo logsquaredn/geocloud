@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/frantjc/go-js"
-	"github.com/logsquaredn/geocloud"
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/internal/conf"
-	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/logsquaredn/rototiller"
+	"github.com/logsquaredn/rototiller/datastore"
+	"github.com/logsquaredn/rototiller/internal/conf"
+	"github.com/logsquaredn/rototiller/objectstore"
 	"github.com/rs/zerolog/log"
 	"mellium.im/sysexit"
 )
@@ -37,7 +37,7 @@ func New(opts *Opts) (*Worker, error) {
 	}, nil
 }
 
-func (o *Worker) Send(m geocloud.Message) error {
+func (o *Worker) Send(m rototiller.Message) error {
 	k, v := "id", m.GetID()
 	log.Info().Str(k, v).Msg("processing message")
 
@@ -48,7 +48,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	}
 
 	switch j.Status {
-	case geocloud.JobStatusComplete, geocloud.JobStatusInProgress:
+	case rototiller.JobStatusComplete, rototiller.JobStatusInProgress:
 		return nil
 	}
 
@@ -59,12 +59,12 @@ func (o *Worker) Send(m geocloud.Message) error {
 		switch {
 		case len(jobErr) > 0:
 			j.Error = string(jobErr)
-			j.Status = geocloud.JobStatusError
+			j.Status = rototiller.JobStatusError
 		case err != nil:
 			j.Error = err.Error()
-			j.Status = geocloud.JobStatusError
+			j.Status = rototiller.JobStatusError
 		default:
-			j.Status = geocloud.JobStatusComplete
+			j.Status = rototiller.JobStatusComplete
 		}
 		log.Err(
 			js.Ternary(
@@ -78,13 +78,13 @@ func (o *Worker) Send(m geocloud.Message) error {
 		}
 	}()
 
-	inputStorage, err := o.ds.GetStorage(geocloud.Msg(j.InputID))
+	inputStorage, err := o.ds.GetStorage(rototiller.Msg(j.InputID))
 	if err != nil {
 		return err
 	}
 
 	switch inputStorage.Status {
-	case geocloud.StorageStatusFinal, geocloud.StorageStatusUnusable:
+	case rototiller.StorageStatusFinal, rototiller.StorageStatusUnusable:
 		return fmt.Errorf("input storage status '%s'", inputStorage.Status)
 	}
 
@@ -95,7 +95,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 		}
 	}()
 
-	j.Status = geocloud.JobStatusInProgress
+	j.Status = rototiller.JobStatusInProgress
 	log.Trace().Str(k, v).Msgf("setting job to %s", j.Status.Status())
 	j, err = o.ds.UpdateJob(j)
 	if err != nil {
@@ -116,7 +116,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	defer os.RemoveAll(o.jobDir(m))
 
 	log.Trace().Str(k, v).Msg("getting input")
-	input, err := o.os.GetObject(geocloud.Msg(j.InputID))
+	input, err := o.os.GetObject(rototiller.Msg(j.InputID))
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 
 	var (
 		filename string
-		_        = invol.Walk(func(_ string, f geocloud.File, e error) error {
+		_        = invol.Walk(func(_ string, f rototiller.File, e error) error {
 			if e != nil {
 				return e
 			}
@@ -150,7 +150,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 
 	task := exec.Command(t.Type.String()) //nolint:gosec
 	// start with current env minus configuration that might contain secrets
-	// e.g. GEOCLOUD_POSTGRES_PASSWORD
+	// e.g. ROTOTILLER_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
 		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_"))
 	})
@@ -170,7 +170,7 @@ func (o *Worker) Send(m geocloud.Message) error {
 	// add arbitrary args defined by the task entry in the datastore
 	// e.g. task.type = 'reproject'
 	//		=> task.params = ['target-projection'],
-	//      => GEOCLOUD_TARGET_PROJECTION=${?target-projection}
+	//      => ROTOTILLER_TARGET_PROJECTION=${?target-projection}
 	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
 		return fmt.Sprintf(
 			"%s%s=%s",
@@ -192,9 +192,9 @@ func (o *Worker) Send(m geocloud.Message) error {
 
 	switch task.ProcessState.ExitCode() {
 	case int(sysexit.Ok):
-		inputStorage.Status = geocloud.StorageStatusTransformable
+		inputStorage.Status = rototiller.StorageStatusTransformable
 	case int(sysexit.ErrData), int(sysexit.ErrNoInput):
-		inputStorage.Status = geocloud.StorageStatusUnusable
+		inputStorage.Status = rototiller.StorageStatusUnusable
 		err = fmt.Errorf("unusable input")
 		return err
 	case int(sysexit.ErrCantCreat):
@@ -204,15 +204,15 @@ func (o *Worker) Send(m geocloud.Message) error {
 		err = fmt.Errorf("configuration error")
 		return err
 	default:
-		inputStorage.Status = geocloud.StorageStatusUnknown
+		inputStorage.Status = rototiller.StorageStatusUnknown
 		err = fmt.Errorf("unknown error")
 		return err
 	}
 
 	log.Trace().Str(k, v).Msg("creating output storage")
-	ost, err := o.ds.CreateStorage(&geocloud.Storage{
+	ost, err := o.ds.CreateStorage(&rototiller.Storage{
 		CustomerID: j.CustomerID,
-		Status:     js.Ternary(t.Kind == geocloud.TaskKindLookup, geocloud.StorageStatusFinal, geocloud.StorageStatusTransformable),
+		Status:     js.Ternary(t.Kind == rototiller.TaskKindLookup, rototiller.StorageStatusFinal, rototiller.StorageStatusTransformable),
 	})
 	if err != nil {
 		return err
@@ -220,26 +220,26 @@ func (o *Worker) Send(m geocloud.Message) error {
 	j.OutputID = ost.ID
 
 	log.Debug().Str(k, v).Msg("uploading output")
-	return o.os.PutObject(geocloud.Msg(j.OutputID), outvol)
+	return o.os.PutObject(rototiller.Msg(j.OutputID), outvol)
 }
 
-func (o *Worker) inputVolumePath(m geocloud.Message) string {
+func (o *Worker) inputVolumePath(m rototiller.Message) string {
 	return filepath.Join(o.jobDir(m), "input")
 }
 
-func (o *Worker) outputVolumePath(m geocloud.Message) string {
+func (o *Worker) outputVolumePath(m rototiller.Message) string {
 	return filepath.Join(o.jobDir(m), "output")
 }
 
-func (o *Worker) inputVolume(m geocloud.Message) (geocloud.Volume, error) {
-	return geocloud.NewDirVolume(o.inputVolumePath(m))
+func (o *Worker) inputVolume(m rototiller.Message) (rototiller.Volume, error) {
+	return rototiller.NewDirVolume(o.inputVolumePath(m))
 }
 
-func (o *Worker) outputVolume(m geocloud.Message) (geocloud.Volume, error) {
-	return geocloud.NewDirVolume(o.outputVolumePath(m))
+func (o *Worker) outputVolume(m rototiller.Message) (rototiller.Volume, error) {
+	return rototiller.NewDirVolume(o.outputVolumePath(m))
 }
 
-func (o *Worker) jobDir(m geocloud.Message) string {
+func (o *Worker) jobDir(m rototiller.Message) string {
 	return filepath.Join(o.jobsDir(), m.GetID())
 }
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/spf13/cobra"
 )
 
@@ -75,7 +75,7 @@ func runCreateStorage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	s, err := client.CreateStorage(ctx, geocloud.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
+	s, err := client.CreateStorage(ctx, rototiller.NewStorageWithName(i, contentType, cmd.Flag("name").Value.String()))
 	if err != nil {
 		return err
 	}

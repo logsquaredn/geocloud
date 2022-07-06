@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/logsquaredn/geocloud/internal/conf"
-	"github.com/logsquaredn/geocloud/messagequeue"
+	"github.com/logsquaredn/rototiller/internal/conf"
+	"github.com/logsquaredn/rototiller/messagequeue"
 	"github.com/spf13/viper"
 )
 

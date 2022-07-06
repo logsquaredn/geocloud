@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 	"github.com/spf13/cobra"
 )
 
-func getRequest(cmd *cobra.Command) (geocloud.Request, error) {
+func getRequest(cmd *cobra.Command) (rototiller.Request, error) {
 	var (
-		req geocloud.Request
+		req rototiller.Request
 		i   = cmd.Flag("input").Value.String()
 		io  = cmd.Flag("input-of").Value.String()
 		oo  = cmd.Flag("output-of").Value.String()
@@ -18,35 +18,35 @@ func getRequest(cmd *cobra.Command) (geocloud.Request, error) {
 	)
 	switch {
 	case i == fromStdin:
-		storage := &geocloud.Storage{}
+		storage := &rototiller.Storage{}
 		if err := dec.Decode(storage); err != nil {
 			return nil, nil
 		}
-		req = geocloud.NewJobWithInput(storage.ID, jobQuery)
+		req = rototiller.NewJobWithInput(storage.ID, jobQuery)
 	case i != "":
-		req = geocloud.NewJobWithInput(i, jobQuery)
+		req = rototiller.NewJobWithInput(i, jobQuery)
 	case io == fromStdin:
-		job := &geocloud.Job{}
+		job := &rototiller.Job{}
 		if err := dec.Decode(job); err != nil {
 			return nil, err
 		}
-		req = geocloud.NewJobWithInputOfJob(job.ID, jobQuery)
+		req = rototiller.NewJobWithInputOfJob(job.ID, jobQuery)
 	case io != "":
-		req = geocloud.NewJobWithInputOfJob(io, jobQuery)
+		req = rototiller.NewJobWithInputOfJob(io, jobQuery)
 	case oo == fromStdin:
-		job := &geocloud.Job{}
+		job := &rototiller.Job{}
 		if err := dec.Decode(job); err != nil {
 			return nil, err
 		}
-		req = geocloud.NewJobWithOutputOfJob(job.ID, jobQuery)
+		req = rototiller.NewJobWithOutputOfJob(job.ID, jobQuery)
 	case oo != "":
-		req = geocloud.NewJobWithOutputOfJob(oo, jobQuery)
+		req = rototiller.NewJobWithOutputOfJob(oo, jobQuery)
 	default:
 		f, contentType, err := getInput(cmd)
 		if err != nil {
 			return nil, err
 		}
-		req = geocloud.NewJobFromInput(f, contentType, jobQuery)
+		req = rototiller.NewJobFromInput(f, contentType, jobQuery)
 	}
 
 	return req, nil

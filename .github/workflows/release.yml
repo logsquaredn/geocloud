@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: get-version
         id: get-version
-        run: echo "::set-output name=version::$(geocloud -v)"
+        run: echo "::set-output name=version::$(rototiller -v)"
       - name: create-release
         id: create-release
         uses: actions/create-release@v1

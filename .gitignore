@@ -7,12 +7,12 @@ docs/swagger.json
 docs/swagger.yaml
 
 # hack
-hack/geocloud/*
-!hack/geocloud/.gitkeep
+hack/rototiller/*
+!hack/rototiller/.gitkeep
 hack/minio/*
-!hack/minio/geocloud/
-hack/minio/geocloud/*
-!hack/minio/geocloud/.gitkeep
+!hack/minio/rototiller/
+hack/minio/rototiller/*
+!hack/minio/rototiller/.gitkeep
 hack/postgresql/*
 !hack/postgresql/.gitkeep
 hack/rabbitmq/*

@@ -1,4 +1,4 @@
-package geocloud
+package rototiller
 
 const (
 	EndpointJobs     = "/api/v1/jobs/"

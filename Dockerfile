@@ -12,7 +12,7 @@ ADD ${zip} /assets
 
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
-WORKDIR $GOPATH/src/github.com/logsquaredn/geocloud
+WORKDIR $GOPATH/src/github.com/logsquaredn/rototiller
 RUN apk add --no-cache git
 RUN go install github.com/swaggo/swag/cmd/swag@v1.7.8
 COPY go.mod go.sum ./
@@ -21,7 +21,7 @@ COPY . .
 RUN swag init -d ./api --parseDependency true
 
 FROM ${build_tasks_image} AS build_tasks_image
-WORKDIR /src/github.com/logsquaredn/geocloud/tasks
+WORKDIR /src/github.com/logsquaredn/rototiller/tasks
 RUN apk add --no-cache gcc libc-dev
 COPY tasks/ .
 
@@ -37,14 +37,14 @@ RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterloo
 FROM build_image AS build
 ARG version=0.0.0
 ARG prerelease=
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${version} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloud ./cmd/geocloud
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/geocloud.Version=${version} -X github.com/logsquaredn/geocloud.Prerelease=${prerelease}" -o /assets/geocloudctl ./cmd/geocloudctl
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rototiller ./cmd/rototiller
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoctl ./cmd/rotoctl
 
-FROM base_image AS geocloud
+FROM base_image AS rototiller
 RUN apk add --no-cache ca-certificates
 RUN apk del ca-certificates
-VOLUME /var/lib/geocloud
-ENTRYPOINT ["geocloud"]
+VOLUME /var/lib/rototiller
+ENTRYPOINT ["rototiller"]
 CMD ["--help"]
 COPY --from=zip /assets /usr/local/bin
 COPY --from=build_tasks /assets /usr/local/bin

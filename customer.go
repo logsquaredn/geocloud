@@ -1,4 +1,4 @@
-package geocloud
+package rototiller
 
 type Customer struct {
 	ID string `json:"id,omitempty"`

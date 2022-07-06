@@ -2,8 +2,8 @@
 package main
 
 import (
-	"github.com/logsquaredn/geocloud/internal/conf"
-	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/logsquaredn/rototiller/internal/conf"
+	"github.com/logsquaredn/rototiller/objectstore"
 	"github.com/spf13/viper"
 )
 

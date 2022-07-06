@@ -1,11 +1,11 @@
-package geocloud
+package rototiller
 
 import (
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/logsquaredn/geocloud/api/storage/v1/storagev1connect"
+	"github.com/logsquaredn/rototiller/api/storage/v1/storagev1connect"
 )
 
 type Client struct {

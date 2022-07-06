@@ -1,3 +1,3 @@
-package geocloud
+package rototiller
 
 //go:generate buf generate .

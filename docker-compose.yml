@@ -9,24 +9,24 @@ networks:
 services:
   api:
     build: .
-    image: &image ghcr.io/logsquaredn/geocloud:${GEOCLOUD_TAG:-latest}
+    image: &image ghcr.io/logsquaredn/rototiller:${ROTOTILLER_TAG:-latest}
     command: a
     volumes: [~/.aws/:/root/.aws/:ro]
     networks: [api]
     ports: [8080:8080]
     depends_on: &depends_on [datastore, messagequeue, migrate, objectstore]
     environment: &environment
-      GEOCLOUD_POSTGRES_ADDRESS: datastore
-      GEOCLOUD_POSTGRES_PASSWORD: geocloud
-      GEOCLOUD_S3_BUCKET: geocloud
-      GEOCLOUD_S3_ENDPOINT: http://objectstore:9000
-      GEOCLOUD_S3_DISABLE_SSL: t
-      GEOCLOUD_S3_FORCE_PATH_STYLE: t
-      GEOCLOUD_AMQP_ADDRESS: messagequeue
-      GEOCLOUD_AMQP_PASSWORD: geocloud
-      GEOCLOUD_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-geocloud}
-      GEOCLOUD_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-geocloud}
-      GEOCLOUD_STRIPE_API_KEY: ${GEOCLOUD_STRIPE_API_KEY}
+      ROTOTILLER_POSTGRES_ADDRESS: datastore
+      ROTOTILLER_POSTGRES_PASSWORD: rototiller
+      ROTOTILLER_S3_BUCKET: rototiller
+      ROTOTILLER_S3_ENDPOINT: http://objectstore:9000
+      ROTOTILLER_S3_DISABLE_SSL: t
+      ROTOTILLER_S3_FORCE_PATH_STYLE: t
+      ROTOTILLER_AMQP_ADDRESS: messagequeue
+      ROTOTILLER_AMQP_PASSWORD: rototiller
+      ROTOTILLER_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-rototiller}
+      ROTOTILLER_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-rototiller}
+      ROTOTILLER_STRIPE_API_KEY: ${ROTOTILLER_STRIPE_API_KEY}
   migrate:
     build: .
     image: *image
@@ -43,10 +43,10 @@ services:
     depends_on: [datastore, objectstore]
     environment:
       <<: *environment
-      GEOCLOUD_S3_ARCHIVE_BUCKET: geocloud-archive
-      GEOCLOUD_S3_ARCHIVE_ENDPOINT: http://objectstore:9000
-      GEOCLOUD_S3_ARCHIVE_DISABLE_SSL: t
-      GEOCLOUD_S3_ARCHIVE_FORCE_PATH_STYLE: t
+      ROTOTILLER_S3_ARCHIVE_BUCKET: rototiller-archive
+      ROTOTILLER_S3_ARCHIVE_ENDPOINT: http://objectstore:9000
+      ROTOTILLER_S3_ARCHIVE_DISABLE_SSL: t
+      ROTOTILLER_S3_ARCHIVE_FORCE_PATH_STYLE: t
   objectstore:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
@@ -54,17 +54,17 @@ services:
     networks: [api, worker, secretary]
     ports: [9000:9000, 9001:9001]
     environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-geocloud}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-geocloud}
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-rototiller}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-rototiller}
   datastore:
     image: postgres:${POSTGRES_TAG:-alpine}
     networks: [api, migrate, worker, secretary]
     ports: [5432:5432]
     volumes: [./hack/postgresql:/var/lib/postgresql]
     environment:
-      POSTGRES_DB: geocloud
-      POSTGRES_USER: geocloud
-      POSTGRES_PASSWORD: geocloud
+      POSTGRES_DB: rototiller
+      POSTGRES_USER: rototiller
+      POSTGRES_PASSWORD: rototiller
   messagequeue:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     networks: [api, worker]
@@ -75,7 +75,7 @@ services:
     build: .
     image: *image
     command: w
-    volumes: [~/.aws:/root/.aws:ro, ./hack/geocloud:/var/lib/geocloud:z]
+    volumes: [~/.aws:/root/.aws:ro, ./hack/rototiller:/var/lib/rototiller:z]
     networks: [worker]
     depends_on: *depends_on
     environment: *environment

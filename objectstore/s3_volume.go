@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 type s3File struct {
@@ -20,7 +20,7 @@ type s3File struct {
 	body   io.ReadCloser
 }
 
-var _ geocloud.File = (*s3File)(nil)
+var _ rototiller.File = (*s3File)(nil)
 
 func (f *s3File) Name() string {
 	// prefix/s3/key -> s3/key
@@ -62,9 +62,9 @@ type s3Volume struct {
 	dwnldr *s3manager.Downloader
 }
 
-var _ geocloud.Volume = (*s3Volume)(nil)
+var _ rototiller.Volume = (*s3Volume)(nil)
 
-func (v *s3Volume) Walk(fn geocloud.WalkVolFunc) (err error) {
+func (v *s3Volume) Walk(fn rototiller.WalkVolFunc) (err error) {
 	for _, obj := range v.objs {
 		file := &s3File{
 			obj:    obj,

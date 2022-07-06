@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud/api/storage/v1/storagev1connect"
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/messagequeue"
-	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/logsquaredn/rototiller/api/storage/v1/storagev1connect"
+	"github.com/logsquaredn/rototiller/datastore"
+	"github.com/logsquaredn/rototiller/messagequeue"
+	"github.com/logsquaredn/rototiller/objectstore"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )

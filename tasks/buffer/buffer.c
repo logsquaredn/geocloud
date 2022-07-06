@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
-	const char *bdArg = getenv("GEOCLOUD_BUFFER_DISTANCE");
+	const char *bdArg = getenv("ROTOTILLER_BUFFER_DISTANCE");
 	if(bdArg == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_BUFFER_DISTANCE must be set", __FILE__, __LINE__, EX_CONFIG);		
+		fatalErrorWithCode("env var: ROTOTILLER_BUFFER_DISTANCE must be set", __FILE__, __LINE__, EX_CONFIG);		
 	}
 	double bd = strtod(bdArg, NULL);
 	if(bd == 0) {
@@ -38,9 +38,9 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "buffer distance: %f", bd);
 	info(iMsg);
 
-	const char *qscArg = getenv("GEOCLOUD_QUADRANT_SEGMENT_COUNT");
+	const char *qscArg = getenv("ROTOTILLER_QUADRANT_SEGMENT_COUNT");
 	if(qscArg == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_QUADRANT_SEGMENT_COUNT must be set", __FILE__, __LINE__, EX_CONFIG);		
+		fatalErrorWithCode("env var: ROTOTILLER_QUADRANT_SEGMENT_COUNT must be set", __FILE__, __LINE__, EX_CONFIG);		
 	}
 	int qsc = atoi(qscArg);
 	if(qsc <= 0) {

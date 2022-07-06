@@ -3,7 +3,7 @@ package datastore
 import (
 	_ "embed"
 
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 var (
@@ -14,8 +14,8 @@ var (
 	createCustomerSQL string
 )
 
-func (p *Postgres) GetCustomer(m geocloud.Message) (*geocloud.Customer, error) {
-	c := &geocloud.Customer{}
+func (p *Postgres) GetCustomer(m rototiller.Message) (*rototiller.Customer, error) {
+	c := &rototiller.Customer{}
 	if err := p.stmt.getCustomerByID.QueryRow(m.GetID()).Scan(&c.ID); err != nil {
 		return c, err
 	}
@@ -23,12 +23,12 @@ func (p *Postgres) GetCustomer(m geocloud.Message) (*geocloud.Customer, error) {
 	return c, nil
 }
 
-func (p *Postgres) CreateCustomer(m geocloud.Message) (*geocloud.Customer, error) {
+func (p *Postgres) CreateCustomer(m rototiller.Message) (*rototiller.Customer, error) {
 	if _, err := p.stmt.createCustomer.Exec(m.GetID()); err != nil {
 		return nil, err
 	}
 
-	return &geocloud.Customer{
+	return &rototiller.Customer{
 		ID: m.GetID(),
 	}, nil
 }

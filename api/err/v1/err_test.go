@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/logsquaredn/geocloud/api/err/v1"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
 	"github.com/stretchr/testify/assert"
 )
 

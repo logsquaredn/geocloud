@@ -9,10 +9,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/geocloud"
-	errv1 "github.com/logsquaredn/geocloud/api/err/v1"
-	storagev1 "github.com/logsquaredn/geocloud/api/storage/v1"
-	"github.com/logsquaredn/geocloud/internal/rpcio"
+	"github.com/logsquaredn/rototiller"
+	errv1 "github.com/logsquaredn/rototiller/api/err/v1"
+	storagev1 "github.com/logsquaredn/rototiller/api/storage/v1"
+	"github.com/logsquaredn/rototiller/internal/rpcio"
 )
 
 // @Summary      Get a list of storage
@@ -25,7 +25,7 @@ import (
 // @Param        api-key    query     string  false  "API Key query parameter"
 // @Param        offset     query     int     false  "Offset of storages to return"
 // @Param        limit      query     int     false  "Limit of storages to return"
-// @Success      200        {object}  []geocloud.Storage
+// @Success      200        {object}  []rototiller.Storage
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
 // @Router       /api/v1/storages [get]
@@ -39,12 +39,12 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 	storage, err := a.ds.GetCustomerStorage(a.getAssumedCustomerFromContext(ctx), q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		storage = []*geocloud.Storage{}
+		storage = []*rototiller.Storage{}
 	case err != nil:
 		a.err(ctx, err)
 		return
 	case storage == nil:
-		storage = []*geocloud.Storage{}
+		storage = []*rototiller.Storage{}
 	}
 
 	ctx.JSON(http.StatusOK, storage)
@@ -59,7 +59,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 // @Param        api-key    query     string  false  "API Key query parameter"
 // @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        id         path      string  true   "Storage ID"
-// @Success      200        {object}  geocloud.Storage
+// @Success      200        {object}  rototiller.Storage
 // @Failure      401        {object}  errv1.Error
 // @Failure      403        {object}  errv1.Error
 // @Failure      404        {object}  errv1.Error
@@ -68,7 +68,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 func (a *API) getStorageHandler(ctx *gin.Context) {
 	var (
 		storage, err = a.getStorageForCustomer(
-			geocloud.Msg(
+			rototiller.Msg(
 				ctx.Param("storage"),
 			),
 			a.getAssumedCustomerFromContext(ctx),
@@ -101,7 +101,7 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 // @Router       /api/v1/storages/{id}/content [get]
 func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	storage, err := a.getStorageForCustomer(
-		geocloud.Msg(
+		rototiller.Msg(
 			ctx.Param("storage"),
 		),
 		a.getAssumedCustomerFromContext(ctx),
@@ -139,7 +139,7 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Param        api-key    query     string  false  "API Key query parameter"
 // @Param        X-API-Key  header    string  false  "API Key header"
 // @Param        name       query     string  false  "Storage name"
-// @Success      200        {object}  geocloud.Storage
+// @Success      200        {object}  rototiller.Storage
 // @Failure      400        {object}  errv1.Error
 // @Failure      401        {object}  errv1.Error
 // @Failure      500        {object}  errv1.Error
@@ -183,7 +183,7 @@ func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[storag
 	}
 
 	storage, err := a.getStorageForCustomer(
-		geocloud.Msg(
+		rototiller.Msg(
 			req.Msg.Id,
 		),
 		a.getAssumedCustomer(req.Header().Get("X-API-Key")),
@@ -238,7 +238,7 @@ func (a *API) GetStorage(ctx context.Context, req *connect.Request[storagev1.Get
 	}
 
 	storage, err := a.getStorageForCustomer(
-		geocloud.Msg(
+		rototiller.Msg(
 			req.Msg.GetId(),
 		),
 		a.getAssumedCustomer(req.Header().Get("X-API-Key")),

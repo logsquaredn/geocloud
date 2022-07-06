@@ -31,12 +31,12 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: up
         run: |
-          make services sleep migrate local detach geocloudctl
-      - name: geocloudctl
+          make services sleep migrate local detach rotoctl
+      - name: rotoctl
         run: |
-          ./bin/geocloudctl run job removebadgeometry -f testdata/geojson/featurecollection.json
-          ./bin/geocloudctl get jobs
-          ./bin/geocloudctl get storage
+          ./bin/rotoctl run job removebadgeometry -f testdata/geojson/featurecollection.json
+          ./bin/rotoctl get jobs
+          ./bin/rotoctl get storage
       - name: test
         run: |
           make test
@@ -84,4 +84,4 @@ jobs:
     steps:
       - name: version
         run: |
-          geocloud -v
+          rototiller -v

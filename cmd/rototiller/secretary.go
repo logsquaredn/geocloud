@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logsquaredn/geocloud"
-	"github.com/logsquaredn/geocloud/datastore"
-	"github.com/logsquaredn/geocloud/internal/conf"
-	"github.com/logsquaredn/geocloud/objectstore"
+	"github.com/logsquaredn/rototiller"
+	"github.com/logsquaredn/rototiller/datastore"
+	"github.com/logsquaredn/rototiller/internal/conf"
+	"github.com/logsquaredn/rototiller/objectstore"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -70,7 +70,7 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	i := customer.List(&stripe.CustomerListParams{})
 	for i.Next() {
 		c := i.Customer()
-		if _, err := ds.CreateCustomer(&geocloud.Customer{
+		if _, err := ds.CreateCustomer(&rototiller.Customer{
 			ID: c.ID,
 		}); err != nil {
 			log.Err(err).Msgf("creating customer '%s' '%s'", c.ID, c.Name)
@@ -123,8 +123,8 @@ func runSecretary(cmd *cobra.Command, args []string) error {
 	if len(archive.String()) > 0 {
 		log.Info().Msg("putting archive to storage")
 		err = osa.PutObject(
-			geocloud.Msg(fmt.Sprint(time.Now().Unix())),
-			geocloud.NewSingleFileVolume("archive.csv", strings.NewReader(archive.String())),
+			rototiller.Msg(fmt.Sprint(time.Now().Unix())),
+			rototiller.NewSingleFileVolume("archive.csv", strings.NewReader(archive.String())),
 		)
 		if err != nil {
 			log.Err(err).Msg("putting archive to s3")

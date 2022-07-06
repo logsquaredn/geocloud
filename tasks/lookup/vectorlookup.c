@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "output directory: %s", oDir);
 	info(iMsg);
 
-	char *attributes = getenv("GEOCLOUD_ATTRIBUTES");
+	char *attributes = getenv("ROTOTILLER_ATTRIBUTES");
 	if(attributes == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_ATTRIBUTES must be set", __FILE__, __LINE__, EX_CONFIG);
+		fatalErrorWithCode("env var: ROTOTILLER_ATTRIBUTES must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
 	const char delim[2] = ",";
 	char *tok = strtok(attributes, delim);
@@ -46,9 +46,9 @@ int main(int argc, char *argv[]) {
 		fatalErrorWithCode("at least one attribute required as input", __FILE__, __LINE__, EX_CONFIG);
 	}
 
-    const char *lonArg = getenv("GEOCLOUD_LONGITUDE");
+    const char *lonArg = getenv("ROTOTILLER_LONGITUDE");
 	if(lonArg == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_LONGITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
+		fatalErrorWithCode("env var: ROTOTILLER_LONGITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
     double lon = strtod(lonArg, NULL);
     if(lon == 0 || lon > 180 || lon < -180) {
@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "lon: %f", lon);
 	info(iMsg);
 
-    const char *latArg = getenv("GEOCLOUD_LATITUDE");
+    const char *latArg = getenv("ROTOTILLER_LATITUDE");
 	if(latArg == NULL) {
-		fatalErrorWithCode("env var: GEOCLOUD_LATITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
+		fatalErrorWithCode("env var: ROTOTILLER_LATITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
     double lat = strtod(latArg, NULL);
     if(lat == 0 || lat > 90 || lat < -90) {

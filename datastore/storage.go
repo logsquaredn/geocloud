@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/logsquaredn/geocloud"
+	"github.com/logsquaredn/rototiller"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 	getInputStorageByJobIDSQL string
 )
 
-func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
+func (p *Postgres) UpdateStorage(s *rototiller.Storage) (*rototiller.Storage, error) {
 	var (
 		storageStatus string
 		err           error
@@ -48,11 +48,11 @@ func (p *Postgres) UpdateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		return nil, err
 	}
 
-	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	s.Status, err = rototiller.ParseStorageStatus(storageStatus)
 	return s, err
 }
 
-func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error) {
+func (p *Postgres) CreateStorage(s *rototiller.Storage) (*rototiller.Storage, error) {
 	var (
 		id            = uuid.NewString()
 		storageStatus string
@@ -60,7 +60,7 @@ func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 	)
 
 	if s.Status == "" {
-		s.Status = geocloud.StorageStatusUnknown
+		s.Status = rototiller.StorageStatusUnknown
 	}
 
 	if err = p.stmt.createStorage.QueryRow(
@@ -72,13 +72,13 @@ func (p *Postgres) CreateStorage(s *geocloud.Storage) (*geocloud.Storage, error)
 		return nil, err
 	}
 
-	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	s.Status, err = rototiller.ParseStorageStatus(storageStatus)
 	return s, err
 }
 
-func (p *Postgres) GetStorage(m geocloud.Message) (*geocloud.Storage, error) {
+func (p *Postgres) GetStorage(m rototiller.Message) (*rototiller.Storage, error) {
 	var (
-		s             = &geocloud.Storage{}
+		s             = &rototiller.Storage{}
 		storageStatus string
 		err           error
 	)
@@ -90,27 +90,27 @@ func (p *Postgres) GetStorage(m geocloud.Message) (*geocloud.Storage, error) {
 		return nil, err
 	}
 
-	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	s.Status, err = rototiller.ParseStorageStatus(storageStatus)
 	return s, err
 }
 
-func (p *Postgres) DeleteStorage(m geocloud.Message) error {
+func (p *Postgres) DeleteStorage(m rototiller.Message) error {
 	_, err := p.stmt.deleteStorage.Exec(m.GetID())
 	return err
 }
 
-func (p *Postgres) GetCustomerStorage(m geocloud.Message, offset, limit int) ([]*geocloud.Storage, error) {
+func (p *Postgres) GetCustomerStorage(m rototiller.Message, offset, limit int) ([]*rototiller.Storage, error) {
 	rows, err := p.stmt.getStorageByCustomerID.Query(m.GetID(), offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	storage := []*geocloud.Storage{}
+	storage := []*rototiller.Storage{}
 
 	for rows.Next() {
 		var (
-			s             = &geocloud.Storage{}
+			s             = &rototiller.Storage{}
 			storageStatus string
 		)
 
@@ -121,7 +121,7 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message, offset, limit int) ([]
 			return nil, err
 		}
 
-		if s.Status, err = geocloud.ParseStorageStatus(storageStatus); err != nil {
+		if s.Status, err = rototiller.ParseStorageStatus(storageStatus); err != nil {
 			return nil, err
 		}
 
@@ -131,9 +131,9 @@ func (p *Postgres) GetCustomerStorage(m geocloud.Message, offset, limit int) ([]
 	return storage, nil
 }
 
-func (p *Postgres) GetJobInputStorage(m geocloud.Message) (*geocloud.Storage, error) {
+func (p *Postgres) GetJobInputStorage(m rototiller.Message) (*rototiller.Storage, error) {
 	var (
-		s             = &geocloud.Storage{}
+		s             = &rototiller.Storage{}
 		storageStatus string
 		err           error
 	)
@@ -145,13 +145,13 @@ func (p *Postgres) GetJobInputStorage(m geocloud.Message) (*geocloud.Storage, er
 		return nil, err
 	}
 
-	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	s.Status, err = rototiller.ParseStorageStatus(storageStatus)
 	return s, err
 }
 
-func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, error) {
+func (p *Postgres) GetJobOutputStorage(m rototiller.Message) (*rototiller.Storage, error) {
 	var (
-		s             = &geocloud.Storage{}
+		s             = &rototiller.Storage{}
 		storageStatus string
 		err           error
 	)
@@ -163,11 +163,11 @@ func (p *Postgres) GetJobOutputStorage(m geocloud.Message) (*geocloud.Storage, e
 		return nil, err
 	}
 
-	s.Status, err = geocloud.ParseStorageStatus(storageStatus)
+	s.Status, err = rototiller.ParseStorageStatus(storageStatus)
 	return s, err
 }
 
-func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error) {
+func (p *Postgres) GetStorageBefore(d time.Duration) ([]*rototiller.Storage, error) {
 	beforeTimestamp := time.Now().Add(-d)
 	rows, err := p.stmt.getStorageBefore.Query(beforeTimestamp)
 	if err != nil {
@@ -175,11 +175,11 @@ func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error
 	}
 	defer rows.Close()
 
-	var storages []*geocloud.Storage
+	var storages []*rototiller.Storage
 
 	for rows.Next() {
 		var (
-			s             = &geocloud.Storage{}
+			s             = &rototiller.Storage{}
 			storageStatus string
 		)
 
@@ -190,7 +190,7 @@ func (p *Postgres) GetStorageBefore(d time.Duration) ([]*geocloud.Storage, error
 			return nil, err
 		}
 
-		if s.Status, err = geocloud.ParseStorageStatus(storageStatus); err != nil {
+		if s.Status, err = rototiller.ParseStorageStatus(storageStatus); err != nil {
 			return nil, err
 		}
 

@@ -31,7 +31,7 @@ INSTALL ?= sudo install
 BIN ?= /usr/local/bin
 
 REGISTRY ?= ghcr.io
-REPOSITORY ?= logsquaredn/geocloud
+REPOSITORY ?= logsquaredn/rototiller
 MODULE ?= github.com/$(REPOSITORY)
 TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
@@ -71,19 +71,19 @@ test: tests
 		$$test; \
 	done
 
-.PHONY: geocloud geocloudctl
-geocloud geocloudctl:
+.PHONY: rototiller rotoctl
+rototiller rotoctl:
 	@$(GO) build -ldflags "-s -w -X $(MODULE).Version=$(VERSION) -X $(MODULE).Prerelease=$(PRERELEASE)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
 
-.PHONY: install-geocloud
-install-geocloud: geocloud
-	@$(INSTALL) $(CURDIR)/bin/geocloud $(BIN)
+.PHONY: install-rototiller
+install-rototiller: rototiller
+	@$(INSTALL) $(CURDIR)/bin/rototiller $(BIN)
 
-.PHONY: install-geocloudctl
-install-geocloudctl: geocloudctl
-	@$(INSTALL) $(CURDIR)/bin/geocloudctl $(BIN)
+.PHONY: install-rotoctl
+install-rotoctl: rotoctl
+	@$(INSTALL) $(CURDIR)/bin/rotoctl $(BIN)
 
-install: install-geocloud install-geocloudctl
+install: install-rototiller install-rotoctl
 
 .PHONY: services
 services:
@@ -106,7 +106,7 @@ infra infrastructure: services sleep migrate secretary local
 
 .PHONY: local
 local:
-	@$(DOCKER-COMPOSE) exec -T datastore psql -U geocloud -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
+	@$(DOCKER-COMPOSE) exec -T datastore psql -U rototiller -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: up
 up:
@@ -125,7 +125,7 @@ restart:
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= bin/* hack/geocloud/* hack/minio/.minio.sys hack/minio/geocloud/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
+CLEAN ?= bin/* hack/rototiller/* hack/minio/.minio.sys hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down
