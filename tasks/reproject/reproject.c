@@ -138,7 +138,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	// OGRFeatureDefnH oLayDefn =  OGR_L_GetLayerDefn(oLay);
 	OGRFeatureH iFeat;
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
 		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
