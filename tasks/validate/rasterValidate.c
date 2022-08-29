@@ -49,6 +49,6 @@ int main(int argc, char *argv[]) {
 	free(fl);
 	GDALClose(gd);
 
-	info("raster lookup completed successfully");
+	info("raster validate completed successfully");
 	return 0;
 }
