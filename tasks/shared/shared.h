@@ -24,8 +24,6 @@ int isShp(const char*);
 // result of unzip() must be free()'d
 char **unzip(const char*);
 
-GDALDatasetH createVectorDataset(const char*);
-
 int splitGeometries(OGRGeometryH[], OGRGeometryH, int);
 
 int zipDir(const char*, const char*);

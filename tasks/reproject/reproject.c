@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
@@ -35,10 +33,8 @@ int main(int argc, char *argv[]) {
 	sprintf(iMsg, "target projection: %ld", tp);
 	info(iMsg);
 
-	int isInputShp = 0;
 	char *vFp = NULL;
 	if(isZip(iFp)) {
-		isInputShp = 1;
 		char **fl = unzip(iFp);
 		if(fl == NULL) {
 			char eMsg[ONE_KB];
@@ -87,6 +83,7 @@ int main(int argc, char *argv[]) {
 	}
 	OGR_L_ResetReading(iLay);
 
+	// Create coordinate transformer
 	OGRSpatialReferenceH iSr = OGR_L_GetSpatialRef(iLay);
 	if(iSr == NULL) {
 		fatalErrorWithCode("failed to get input spatial reference", __FILE__, __LINE__, EX_DATAERR);
@@ -97,6 +94,50 @@ int main(int argc, char *argv[]) {
 	}
 	OGRCoordinateTransformationH tf = OCTNewCoordinateTransformation(iSr, oSr);
 
+	// Create output dataset
+	OGRSFDriverH driver = OGRGetDriverByName("ESRI Shapefile");
+	if(driver == NULL) {
+		fatalError("failed to get shapefile driver", __FILE__, __LINE__);
+	}
+
+	char *dupIFp = strdup(iFp);
+	char *iDir = dirname(dupIFp);
+	char wDir[ONE_KB];
+	sprintf(wDir, "%s/work", iDir);
+	if(mkdir(wDir, 0755) != 0) {
+		fatalError("failed to create work directory", __FILE__, __LINE__);
+	}
+
+	const char *lName = OGR_L_GetName(iLay);
+	char oDsPath[ONE_KB];
+	sprintf(oDsPath, "%s/%s.shp", wDir, lName);
+	sprintf(iMsg, "work filepath: %s", oDsPath);
+	info(iMsg); 
+
+	OGRwkbGeometryType iGeomType = OGR_L_GetGeomType(iLay);
+	GDALDatasetH oDs = GDALCreate(driver, oDsPath, 0, 0, 0, iGeomType, NULL);
+	if(oDs == NULL) {
+		fatalError("failed to create output dataset", __FILE__, __LINE__);
+	}
+
+	OGRLayerH oLay = GDALDatasetCreateLayer(oDs, lName, oSr, iGeomType, NULL);
+	if(oLay == NULL) {
+		fatalError("failed to create output layer", __FILE__, __LINE__);
+	}
+
+	OGRFeatureDefnH iLayDefn = OGR_L_GetLayerDefn(iLay);
+	int iFieldCount = OGR_FD_GetFieldCount(iLayDefn);
+	for(int i = 0; i < iFieldCount; ++i) {
+		OGRFieldDefnH fDef = OGR_FD_GetFieldDefn(iLayDefn, i);
+		if(fDef == NULL) {
+			fatalError("failed to get input field definition", __FILE__, __LINE__);
+		}
+
+		if(OGR_L_CreateField(oLay, fDef, i) != OGRERR_NONE) {
+			fatalError("failed to create output field definition", __FILE__, __LINE__);
+		}
+	}
+
 	OGRFeatureH iFeat;
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
 		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
@@ -105,12 +146,13 @@ int main(int argc, char *argv[]) {
 			fatalError("failed to transform geometry", __FILE__, __LINE__);
 		}
 
+		
 		if(OGR_F_SetGeometry(iFeat, iGeom) != OGRERR_NONE) {
 			fatalError("failed set updated geometry on input feature", __FILE__, __LINE__);
 		}	
 
-		if(OGR_L_SetFeature(iLay, iFeat) != OGRERR_NONE) {
-			fatalError("failed to set updated feature on input layer", __FILE__, __LINE__);
+		if(OGR_L_CreateFeature(oLay, iFeat) != OGRERR_NONE) {
+			fatalError("failed create feature in output layer", __FILE__, __LINE__);			
 		}
 	}
 	
@@ -118,18 +160,14 @@ int main(int argc, char *argv[]) {
 	OSRDestroySpatialReference(iSr);
 	OCTDestroyCoordinateTransformation(tf);
 	GDALClose(iDs);
+	GDALClose(oDs);
 
-	if(isInputShp) {
-	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
-			 fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		 }
-	} else {
-		if(produceJsonOutput(iFp, oDir) != 0) {
-			fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		}
+	if(produceShpOutput(iFp, oDir, oDsPath) != 0) {
+		fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
 	}
-
+	
 	free(vFp);
+	free(dupIFp);
 
 	info("reproject complete successfully");
 	return 0;

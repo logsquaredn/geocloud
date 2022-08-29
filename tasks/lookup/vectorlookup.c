@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
