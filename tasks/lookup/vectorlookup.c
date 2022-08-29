@@ -186,6 +186,7 @@ int main(int argc, char *argv[]) {
 
 	fclose(fptr);
 	GDALClose(iDs);
+	OGR_G_DestroyGeometry(point);
 	free(vFp);
 
 	info("vector lookup complete successfully");

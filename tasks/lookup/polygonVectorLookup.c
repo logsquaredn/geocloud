@@ -106,6 +106,13 @@ int main(int argc, char *argv[]) {
 	// 	fatalErrorWithCode("failed to create point geometry", __FILE__, __LINE__, EX_CONFIG);
 	// }
 	// OGR_G_AddPoint_2D(point, lon, lat);
+	OGRGeometryH polygon = OGR_G_CreateGeometry(wkbPolygon);
+	if(polygon == NULL) {
+		fatalErrorWithCode("failed to create polygon geometry", __FILE__, __LINE__, EX_CONFIG);	
+	}
+	if(OGR_G_ImportFromWkt(polygon, &polygonArg) != OGRERR_NONE) {
+		fatalErrorWithCode("failed to import polygon from WKT", __FILE__, __LINE__, EX_CONFIG);
+	}
 
 	char ofp[ONE_KB];
 	sprintf(ofp, "%s%s", oDir, "/output.json");
@@ -126,7 +133,7 @@ int main(int argc, char *argv[]) {
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
 		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
 
-		if(OGR_G_Intersects(iGeom, point)) {
+		if(OGR_G_Intersects(iGeom, polygon)) {
 			++hits;
 			if(hits > 1) {
 				if(fputs(",", fptr) == EOF) {
@@ -167,6 +174,7 @@ int main(int argc, char *argv[]) {
 
 	fclose(fptr);
 	GDALClose(iDs);
+	OGR_G_DestroyGeometry(polygon);
 	free(vFp);
 
 	info("vector lookup complete successfully");
