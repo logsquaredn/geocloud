@@ -158,17 +158,22 @@ int main(int argc, char *argv[]) {
 
 			for(int i = 0; i < aCt; ++i) {
 				int fIdx = OGR_F_GetFieldIndex(iFeat, attNames[i]);
-				const char *aVal = OGR_F_GetFieldAsString(iFeat, fIdx);
-
-				char result[ONE_KB];
-				if(i + 1 == aCt) {
-					sprintf(result, "\"%s\":\"%s\"", attNames[i], aVal);
+				if(fIdx < 0) {
+					sprintf(iMsg, "couldn't find attribute: %s", attNames[i]);
+					info(iMsg); 
 				} else {
-					sprintf(result, "\"%s\":\"%s\",", attNames[i], aVal);
-				}
+					const char *aVal = OGR_F_GetFieldAsString(iFeat, fIdx);
 
-				if(fputs(result, fptr) == EOF) {
-					fatalError("failed to write results to output file", __FILE__, __LINE__);
+					char result[ONE_KB];
+					if(i + 1 == aCt) {
+						sprintf(result, "\"%s\":\"%s\"", attNames[i], aVal);
+					} else {
+						sprintf(result, "\"%s\":\"%s\",", attNames[i], aVal);
+					}
+
+					if(fputs(result, fptr) == EOF) {
+						fatalError("failed to write results to output file", __FILE__, __LINE__);
+					}
 				}
 			}
 
