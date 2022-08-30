@@ -44,11 +44,11 @@ int main(int argc, char *argv[]) {
 		fatalErrorWithCode("at least one attribute required as input", __FILE__, __LINE__, EX_CONFIG);
 	}
 
-    const char *polygonArg = getenv("ROTOTILLER_POLYGON");
+    char *polygonArg = getenv("ROTOTILLER_POLYGON");
 	if(polygonArg == NULL) {
 		fatalErrorWithCode("env var: ROTOTILLER_POLYGON must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
-	sprintf(iMsg, "polygon: %f", polygonArg);
+	sprintf(iMsg, "polygon: %s", polygonArg);
 	info(iMsg);
 
 	char *vFp = NULL;
@@ -101,11 +101,6 @@ int main(int argc, char *argv[]) {
 	}
 	OGR_L_ResetReading(iLay);
 
-	// OGRGeometryH point = OGR_G_CreateGeometry(wkbPoint);
-	// if(point == NULL) {
-	// 	fatalErrorWithCode("failed to create point geometry", __FILE__, __LINE__, EX_CONFIG);
-	// }
-	// OGR_G_AddPoint_2D(point, lon, lat);
 	OGRGeometryH polygon = OGR_G_CreateGeometry(wkbPolygon);
 	if(polygon == NULL) {
 		fatalErrorWithCode("failed to create polygon geometry", __FILE__, __LINE__, EX_CONFIG);	
@@ -146,17 +141,22 @@ int main(int argc, char *argv[]) {
 
 			for(int i = 0; i < aCt; ++i) {
 				int fIdx = OGR_F_GetFieldIndex(iFeat, attNames[i]);
-				const char *aVal = OGR_F_GetFieldAsString(iFeat, fIdx);
-
-				char result[ONE_KB];
-				if(i + 1 == aCt) {
-					sprintf(result, "\"%s\":\"%s\"", attNames[i], aVal);
+				if(fIdx < 0) {
+					sprintf(iMsg, "couldn't find attribute: %s", attNames[i]);
+					info(iMsg); 
 				} else {
-					sprintf(result, "\"%s\":\"%s\",", attNames[i], aVal);
-				}
+					const char *aVal = OGR_F_GetFieldAsString(iFeat, fIdx);
 
-				if(fputs(result, fptr) == EOF) {
-					fatalError("failed to write results to output file", __FILE__, __LINE__);
+					char result[ONE_KB];
+					if(i + 1 == aCt) {
+						sprintf(result, "\"%s\":\"%s\"", attNames[i], aVal);
+					} else {
+						sprintf(result, "\"%s\":\"%s\",", attNames[i], aVal);
+					}
+
+					if(fputs(result, fptr) == EOF) {
+						fatalError("failed to write results to output file", __FILE__, __LINE__);
+					}
 				}
 			}
 
