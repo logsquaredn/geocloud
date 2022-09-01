@@ -9,6 +9,10 @@
 // @schemes  https
 // @host     rototiller.logsquaredn.io
 
+// @securityDefinitions.apikey  ApiKeyAuth
+// @in                          header
+// @name                        Authorization
+
 package main
 
 import (
