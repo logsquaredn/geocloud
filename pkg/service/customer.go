@@ -9,12 +9,12 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
-// getCustomerFromAPIKey given an API key, actually checks the database for the customer
+// getCustomerFromAPIKey given an API key, actually checks the database for the customer.
 func (a *API) getCustomerFromAPIKey(apiKey string) (*api.Customer, error) {
 	return a.Datastore.GetCustomer(apiKey)
 }
 
-// getCustomerFromGinContext given an Gin context, actually checks the database for the customer
+// getCustomerFromGinContext given an Gin context, actually checks the database for the customer.
 func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*api.Customer, error) {
 	c, err := a.getCustomerFromAPIKey(a.getCustomerIDFromContext(ctx))
 	if err != nil {
@@ -30,7 +30,7 @@ func (a *API) getCustomerFromGinContext(ctx *gin.Context) (*api.Customer, error)
 	return c, nil
 }
 
-// getCustomerFromConnectHeader given a Connect header, actually checks the database for the customer
+// getCustomerFromConnectHeader given a Connect header, actually checks the database for the customer.
 func (a *API) getCustomerFromConnectHeader(header http.Header) (*api.Customer, error) {
 	c, err := a.getCustomerFromAPIKey(header.Get(api.APIKeyHeader))
 	if err != nil {
@@ -45,19 +45,19 @@ func (a *API) getCustomerFromConnectHeader(header http.Header) (*api.Customer, e
 
 // getAssumedCustomer returns a customer not hydrated from the database,
 // making the assumption that previous middleware has already confirmed
-// the customer's existence
+// the customer's existence.
 func (a *API) getAssumedCustomer(id string) *api.Customer {
 	return &api.Customer{Id: id}
 }
 
 // getAssumedCustomerFromContext returns a customer not hydrated from the database
-// by extracting the customer ID from gin's context
+// by extracting the customer ID from gin's context.
 func (a *API) getAssumedCustomerFromContext(ctx *gin.Context) *api.Customer {
 	return a.getAssumedCustomer(a.getCustomerIDFromContext(ctx))
 }
 
 // customerMiddleare checks for the customer's existence in the database
-// and returns a 401 if not found
+// and returns a 401 if not found.
 func (a *API) customerMiddleware(ctx *gin.Context) {
 	if _, err := a.getCustomerFromGinContext(ctx); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusUnauthorized, int(connect.CodeUnauthenticated)))
@@ -70,12 +70,12 @@ func (a *API) customerMiddleware(ctx *gin.Context) {
 
 // getCustomerIDFromContext is a duplicate method that
 // returns the customer's API key which is also the customer ID.
-// The duplication is meant to illustrate this point
+// The duplication is meant to illustrate this point.
 func (a *API) getCustomerIDFromContext(ctx *gin.Context) string {
 	return a.getAPIKeyFromContext(ctx)
 }
 
-// getAPIKeyFromContext gets a customer's API key from gin's context
+// getAPIKeyFromContext gets a customer's API key from gin's context.
 func (a *API) getAPIKeyFromContext(ctx *gin.Context) string {
 	apiKey := ctx.Query(api.APIKeyQueryParam)
 	if apiKey == "" {

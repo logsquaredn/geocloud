@@ -21,7 +21,7 @@ services:
     depends_on: *rototiller_depends_on
   worker-alt: *worker_service
   secretary:
-    image: &rototiller_image ghcr.io/logsquaredn/rototiller:${ROTOTILLER_TAG:-latest}
+    image: *rototiller_image
     build: .
     command: secretary --postgres-addr=postgres://rototiller:rototiller@postgres:5432?sslmode=disable
     depends_on: *rototiller_depends_on

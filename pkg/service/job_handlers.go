@@ -23,7 +23,7 @@ import (
 // @Success      200        {object}  []api.Job
 // @Failure      401           {object}  api.Error
 // @Failure      500           {object}  api.Error
-// @Router       /api/v1/jobs [get]
+// @Router       /api/v1/jobs [get].
 func (a *API) listJobHandler(ctx *gin.Context) {
 	q := &listQuery{}
 	if err := ctx.BindQuery(q); err != nil {
@@ -59,7 +59,7 @@ func (a *API) listJobHandler(ctx *gin.Context) {
 // @Failure      403           {object}  api.Error
 // @Failure      404        {object}  api.Error
 // @Failure      500           {object}  api.Error
-// @Router       /api/v1/jobs/{id} [get]
+// @Router       /api/v1/jobs/{id} [get].
 func (a *API) getJobHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, ctx.Param("job"))
 	if err != nil {
@@ -84,7 +84,7 @@ func (a *API) getJobHandler(ctx *gin.Context) {
 // @Failure      403           {object}  api.Error
 // @Failure      404        {object}  api.Error
 // @Failure      500           {object}  api.Error
-// @Router       /api/v1/jobs/{id}/task [get]
+// @Router       /api/v1/jobs/{id}/task [get].
 func (a *API) getJobTaskHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, ctx.Param("job"))
 	if err != nil {
@@ -115,7 +115,7 @@ func (a *API) getJobTaskHandler(ctx *gin.Context) {
 // @Failure      403           {object}  api.Error
 // @Failure      404        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/jobs/{id}/storages/input [get]
+// @Router       /api/v1/jobs/{id}/storages/input [get].
 func (a *API) getJobInputHandler(ctx *gin.Context) {
 	storage, err := a.getJobInputStorage(ctx, ctx.Param("job"))
 	if err != nil {
@@ -141,7 +141,7 @@ func (a *API) getJobInputHandler(ctx *gin.Context) {
 // @Failure      403  {object}  api.Error
 // @Failure      404  {object}  api.Error
 // @Failure      500  {object}  api.Error
-// @Router       /api/v1/jobs/{id}/storages/input/content [get]
+// @Router       /api/v1/jobs/{id}/storages/input/content [get].
 func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 	storage, err := a.getJobInputStorage(ctx, ctx.Param("job"))
 	if err != nil {
@@ -180,7 +180,7 @@ func (a *API) getJobInputContentHandler(ctx *gin.Context) {
 // @Failure      403        {object}  api.Error
 // @Failure      404        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/jobs/{id}/storages/output [get]
+// @Router       /api/v1/jobs/{id}/storages/output [get].
 func (a *API) getJobOutputHandler(ctx *gin.Context) {
 	storage, err := a.getJobOutputStorage(ctx, ctx.Param("job"))
 	if err != nil {
@@ -206,7 +206,7 @@ func (a *API) getJobOutputHandler(ctx *gin.Context) {
 // @Failure      403  {object}  api.Error
 // @Failure      404  {object}  api.Error
 // @Failure      500  {object}  api.Error
-// @Router       /api/v1/jobs/{id}/storages/output/content [get]
+// @Router       /api/v1/jobs/{id}/storages/output/content [get].
 func (a *API) getJobOutputContentHandler(ctx *gin.Context) {
 	storage, err := a.getJobOutputStorage(ctx, ctx.Param("job"))
 	if err != nil {
@@ -262,7 +262,7 @@ type bufferQuery struct {
 // @Failure      401                     {object}  api.Error
 // @Failure      403                     {object}  api.Error
 // @Failure      500                     {object}  api.Error
-// @Router       /api/v1/jobs/buffer [post]
+// @Router       /api/v1/jobs/buffer [post].
 func (a *API) createBufferJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&bufferQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
@@ -308,7 +308,7 @@ type filterQuery struct {
 // @Failure      401            {object}  api.Error
 // @Failure      403            {object}  api.Error
 // @Failure      500            {object}  api.Error
-// @Router       /api/v1/jobs/filter [post]
+// @Router       /api/v1/jobs/filter [post].
 func (a *API) createFilterJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&filterQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
@@ -352,7 +352,7 @@ type reprojectQuery struct {
 // @Failure      401                {object}  api.Error
 // @Failure      403                {object}  api.Error
 // @Failure      500                {object}  api.Error
-// @Router       /api/v1/jobs/reproject [post]
+// @Router       /api/v1/jobs/reproject [post].
 func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&reprojectQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
@@ -392,7 +392,7 @@ func (a *API) createReprojectJobHandler(ctx *gin.Context) {
 // @Failure      401        {object}  api.Error
 // @Failure      403        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/jobs/removebadgeometry [post]
+// @Router       /api/v1/jobs/removebadgeometry [post].
 func (a *API) createRemoveBadGeometryJobHandler(ctx *gin.Context) {
 	job, err := a.createJob(ctx, api.TaskTypeRemoveBadGeometry)
 	if err != nil {
@@ -435,7 +435,7 @@ type vectorLookupQuery struct {
 // @Failure      401        {object}  api.Error
 // @Failure      403        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/jobs/vectorlookup [post]
+// @Router       /api/v1/jobs/vectorlookup [post].
 func (a *API) createVectorLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&vectorLookupQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
@@ -483,7 +483,7 @@ type rasterLookupQuery struct {
 // @Failure      401        {object}  api.Error
 // @Failure      403        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/jobs/rasterlookup [post]
+// @Router       /api/v1/jobs/rasterlookup [post].
 func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&rasterLookupQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))

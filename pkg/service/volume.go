@@ -13,6 +13,11 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/volume"
 )
 
+const (
+	zipExt  = ".zip"
+	jsonExt = ".json"
+)
+
 func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, contentType, name string, r io.Reader, customer *api.Customer) (*api.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
@@ -70,9 +75,9 @@ func (a *API) getVolumeContent(accept string, vol volume.Volume) (io.ReadCloser,
 		// 2. if the request was for application/json and we found some json, give it
 		// 3. if the request was for no specific Content-Type, give whatever we found. May be overridden later in the Walk by a zip
 		// 4. if the request was for no specific Content-Type and we found a zip, give it
-		case applicationZip && filepath.Ext(f.GetName()) == ".zip", applicationJSON && filepath.Ext(f.GetName()) == ".json", !applicationJSON && !applicationZip && r == nil, !applicationJSON && !applicationZip && filepath.Ext(f.GetName()) == ".zip":
+		case applicationZip && filepath.Ext(f.GetName()) == zipExt, applicationJSON && filepath.Ext(f.GetName()) == jsonExt, !applicationJSON && !applicationZip && r == nil, !applicationJSON && !applicationZip && filepath.Ext(f.GetName()) == zipExt:
 			r = f
-			contentType = js.Ternary(filepath.Ext(f.GetName()) == ".zip", "application/zip", "application/json")
+			contentType = js.Ternary(filepath.Ext(f.GetName()) == zipExt, "application/zip", "application/json")
 		}
 		return e
 	})

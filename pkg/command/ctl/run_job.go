@@ -120,7 +120,7 @@ func NewRunJobCommand() *cobra.Command {
 	runJobCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
 	runJobCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
 	runJobCmd.Flags().StringVarP(&file, "file", "f", "", "path to input file")
-	runJobCmd.MarkFlagFilename("file", "json", "yaml", "yml", "zip")
+	_ = runJobCmd.MarkFlagFilename("file", "json", "yaml", "yml", "zip")
 	runJobCmd.Flags().StringVar(&input, "input", "", "storage ID to use")
 	runJobCmd.Flags().StringVar(&inputOf, "input-of", "", "job ID to use the input of")
 	runJobCmd.Flags().StringVar(&outputOf, "output-of", "", "job ID to use the output of")

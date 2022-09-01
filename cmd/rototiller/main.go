@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/rototiller/pkg/command/d"
+	command "github.com/logsquaredn/rototiller/pkg/command/d"
 
 	_ "github.com/logsquaredn/rototiller/docs"
 	_ "gocloud.dev/blob/fileblob"

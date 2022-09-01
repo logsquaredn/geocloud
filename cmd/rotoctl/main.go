@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/logsquaredn/rototiller/pkg/command/ctl"
+	command "github.com/logsquaredn/rototiller/pkg/command/ctl"
 )
 
 func main() {

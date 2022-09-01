@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	// postgres must be imported to inject the postgres driver
-	// into the database/sql package
+	// into the database/sql package.
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 )
 

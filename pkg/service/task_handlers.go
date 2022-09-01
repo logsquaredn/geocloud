@@ -16,7 +16,7 @@ import (
 // @Success      200  {object}  []rototiller.Task
 // @Failure      401  {object}  api.Error
 // @Failure      500  {object}  api.Error
-// @Router       /api/v1/tasks [get]
+// @Router       /api/v1/tasks [get].
 func (a *API) listTasksHandler(ctx *gin.Context) {
 	tasks, err := a.Datastore.GetTasks(
 		api.AllTaskTypes...,
@@ -44,7 +44,7 @@ func (a *API) listTasksHandler(ctx *gin.Context) {
 // @Failure      401   {object}  api.Error
 // @Failure      404   {object}  api.Error
 // @Failure      500   {object}  api.Error
-// @Router       /api/v1/tasks/{type} [get]
+// @Router       /api/v1/tasks/{type} [get].
 func (a *API) getTaskHandler(ctx *gin.Context) {
 	task, err := a.getTask(ctx.Param("task"))
 	if err != nil {

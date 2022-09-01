@@ -26,7 +26,7 @@ import (
 // @Success      200        {object}  []rototiller.Storage
 // @Failure      401        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/storages [get]
+// @Router       /api/v1/storages [get].
 func (a *API) listStorageHandler(ctx *gin.Context) {
 	q := &listQuery{}
 	if err := ctx.BindQuery(q); err != nil {
@@ -62,7 +62,7 @@ func (a *API) listStorageHandler(ctx *gin.Context) {
 // @Failure      403        {object}  api.Error
 // @Failure      404        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/storages/{id} [get]
+// @Router       /api/v1/storages/{id} [get].
 func (a *API) getStorageHandler(ctx *gin.Context) {
 	var (
 		storage, err = a.getStorageForCustomer(ctx.Param("storage"), a.getAssumedCustomerFromContext(ctx))
@@ -91,7 +91,7 @@ func (a *API) getStorageHandler(ctx *gin.Context) {
 // @Failure      403  {object}  api.Error
 // @Failure      404  {object}  api.Error
 // @Failure      500  {object}  api.Error
-// @Router       /api/v1/storages/{id}/content [get]
+// @Router       /api/v1/storages/{id}/content [get].
 func (a *API) getStorageContentHandler(ctx *gin.Context) {
 	storage, err := a.getStorageForCustomer(ctx.Param("storage"), a.getAssumedCustomerFromContext(ctx))
 	if err != nil {
@@ -131,7 +131,7 @@ func (a *API) getStorageContentHandler(ctx *gin.Context) {
 // @Failure      400        {object}  api.Error
 // @Failure      401        {object}  api.Error
 // @Failure      500        {object}  api.Error
-// @Router       /api/v1/storages [post]
+// @Router       /api/v1/storages [post].
 func (a *API) createStorageHandler(ctx *gin.Context) {
 	defer ctx.Request.Body.Close()
 	volume, err := a.getRequestVolume(ctx.Request.Header.Get("Content-Type"), ctx.Request.Body)
@@ -162,7 +162,7 @@ func (a *API) createStorageHandler(ctx *gin.Context) {
 // @Param        X-API-Key  header    string  false  "API Key header"
 // @Failure      2               {object}  api.Error
 // @Failure      16              {object}  api.Error
-// @Router       /api.storage.v1.StorageService/GetStorageContent [post]
+// @Router       /api.storage.v1.StorageService/GetStorageContent [post].
 func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[api.GetStorageContentRequest], stream *connect.ServerStream[api.GetStorageContentResponse]) error {
 	// TODO refactor into interceptor https://connect.build/docs/go/streaming#interceptors
 	_, err := a.getCustomerFromConnectHeader(req.Header())
@@ -213,7 +213,7 @@ func (a *API) GetStorageContent(ctx context.Context, req *connect.Request[api.Ge
 // @Failure      2          {object}  api.Error
 // @Failure      5               {object}  api.Error
 // @Failure      16         {object}  api.Error
-// @Router       /api.storage.v1.StorageService/GetStorage [post]
+// @Router       /api.storage.v1.StorageService/GetStorage [post].
 func (a *API) GetStorage(ctx context.Context, req *connect.Request[api.GetStorageRequest]) (*connect.Response[api.GetStorageResponse], error) {
 	_, err := a.getCustomerFromConnectHeader(req.Header())
 	if err != nil {
@@ -243,7 +243,7 @@ func (a *API) GetStorage(ctx context.Context, req *connect.Request[api.GetStorag
 // @Failure      2          {object}  api.Error
 // @Failure      5          {object}  api.Error
 // @Failure      16         {object}  api.Error
-// @Router       /api.storage.v1.StorageService/CreateStorage [post]
+// @Router       /api.storage.v1.StorageService/CreateStorage [post].
 func (a *API) CreateStorage(ctx context.Context, stream *connect.ClientStream[api.CreateStorageRequest]) (*connect.Response[api.CreateStorageResponse], error) {
 	_, err := a.getCustomerFromConnectHeader(stream.RequestHeader())
 	if err != nil {
