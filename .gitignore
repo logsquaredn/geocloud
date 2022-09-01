@@ -2,20 +2,19 @@
 assets/*
 !assets/zip_3.0_x86_64.tgz
 
-# docs
-docs/swagger.json
-docs/swagger.yaml
-
 # hack
-hack/rototiller/*
-!hack/rototiller/.gitkeep
+hack/rototiller/blobstore/*
+!hack/rototiller/blobstore/.gitkeep
+hack/rototiller/workingdir/*
+!hack/rototiller/workingdir/.gitkeep
 hack/minio/*
-!hack/minio/rototiller/
-hack/minio/rototiller/*
-!hack/minio/rototiller/.gitkeep
-!hack/minio/rototiller-archive/
-hack/minio/rototiller-archive/*
-!hack/minio/rototiller-archive/.gitkeep
+!hack/minio/.aws
+!hack/minio/store/
+hack/minio/store/*
+!hack/minio/store/.gitkeep
+!hack/minio/archive/
+hack/minio/archive/*
+!hack/minio/archive/.gitkeep
 hack/postgresql/*
 !hack/postgresql/.gitkeep
 hack/rabbitmq/*
@@ -33,10 +32,17 @@ hack/rabbitmq/log/*
 # macOS
 .DS_Store
 
-# vscode
+# IDE
 .vscode/
 .idea/
 
 # bin
 bin/*
 !bin/.gitkeep
+
+# go
+vendor/
+
+# dev
+__debug_bin
+.env

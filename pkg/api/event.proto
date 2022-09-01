@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package rototiller.api;
+
+option go_package = "github.com/logsquaredn/rototiller/pkg/api";
+
+message Event {
+  string type = 1;
+  map<string, string> metadata = 2;
+}

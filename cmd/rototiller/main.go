@@ -1,47 +1,27 @@
+// @contact.name   logsquaredn
+// @contact.url    https://rototiller.logsquaredn.io/
+// @contact.email  logsquaredn@gmail.com
+
+// @license.name  logsquaredn
+
 package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"runtime"
 
-	"github.com/logsquaredn/rototiller"
-	"github.com/rs/zerolog"
-	"github.com/spf13/cobra"
+	"github.com/gin-gonic/gin"
+	"github.com/logsquaredn/rototiller/pkg/command/d"
+
+	_ "github.com/logsquaredn/rototiller/docs"
+	_ "gocloud.dev/blob/fileblob"
+	_ "gocloud.dev/blob/s3blob"
 )
-
-var rootCmd = &cobra.Command{
-	Use:               "rototiller",
-	Version:           rototiller.Semver(),
-	PersistentPreRunE: persistentPreRun,
-}
-
-var (
-	loglevel string
-)
-
-func init() {
-	rootCmd.PersistentFlags().StringVarP(&loglevel, "loglevel", "l", "info", "Loglevel")
-	rootCmd.SetVersionTemplate(fmt.Sprintf("{{ .Name }}{{ .Version }} %s\n", runtime.Version()))
-	rootCmd.AddCommand(
-		migrateCmd,
-		apiCmd,
-		workerCmd,
-		secretaryCmd,
-	)
-}
-
-func persistentPreRun(cmd *cobra.Command, args []string) error {
-	loglevel, err := zerolog.ParseLevel(loglevel)
-	if err == nil {
-		zerolog.SetGlobalLevel(loglevel)
-	}
-	return err
-}
 
 func main() {
-	if err := rootCmd.ExecuteContext(context.Background()); err != nil {
+	gin.SetMode(gin.ReleaseMode)
+
+	if err := command.NewRoot().ExecuteContext(context.Background()); err != nil {
 		os.Exit(1)
 	}
 

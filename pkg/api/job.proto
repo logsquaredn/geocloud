@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rototiller.api;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/logsquaredn/rototiller/pkg/api";
+
+message Job {
+  string id = 1;
+  string customer_id = 2;
+  string input_id = 3;
+  string output_id = 4;
+  string task_type = 5;
+  string status = 6;
+  string error = 7;
+  google.protobuf.Timestamp start_time = 8;
+  google.protobuf.Timestamp end_time = 9;
+  repeated string args = 10;
+}
