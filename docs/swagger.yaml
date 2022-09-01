@@ -71,13 +71,15 @@ definitions:
           9999-12-31T23:59:59Z inclusive.
         type: integer
     type: object
+host: rototiller.logsquaredn.io
 info:
   contact:
     email: logsquaredn@gmail.com
     name: logsquaredn
     url: https://rototiller.logsquaredn.io/
-  license:
-    name: logsquaredn
+  description: Geospatial data transformation service.
+  title: Rototiller
+  version: "1.0"
 paths:
   /api.storage.v1.StorageService/CreateStorage:
     post:
@@ -1185,4 +1187,6 @@ paths:
       summary: Get a task type
       tags:
       - Task
+schemes:
+- https
 swagger: "2.0"

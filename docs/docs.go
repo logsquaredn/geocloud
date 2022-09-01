@@ -22,9 +22,6 @@ var doc = `{
             "url": "https://rototiller.logsquaredn.io/",
             "email": "logsquaredn@gmail.com"
         },
-        "license": {
-            "name": "logsquaredn"
-        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -1678,12 +1675,12 @@ type swaggerInfo struct {
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
-	Version:     "",
-	Host:        "",
+	Version:     "1.0",
+	Host:        "rototiller.logsquaredn.io",
 	BasePath:    "",
-	Schemes:     []string{},
-	Title:       "",
-	Description: "",
+	Schemes:     []string{"https"},
+	Title:       "Rototiller",
+	Description: "Geospatial data transformation service.",
 }
 
 type s struct{}

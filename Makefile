@@ -129,7 +129,7 @@ restart:
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= bin/* hack/rototiller/* hack/minio/.minio.sys hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
+CLEAN ?= bin/* hack/rototiller/workingdir/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down

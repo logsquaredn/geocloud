@@ -1,8 +1,13 @@
+// @title        Rototiller
+// @version      1.0
+// @description  Geospatial data transformation service.
+
 // @contact.name   logsquaredn
 // @contact.url    https://rototiller.logsquaredn.io/
 // @contact.email  logsquaredn@gmail.com
 
-// @license.name  logsquaredn
+// @schemes  https
+// @host     rototiller.logsquaredn.io
 
 package main
 

@@ -1,15 +1,19 @@
 {
+    "schemes": [
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
+        "description": "Geospatial data transformation service.",
+        "title": "Rototiller",
         "contact": {
             "name": "logsquaredn",
             "url": "https://rototiller.logsquaredn.io/",
             "email": "logsquaredn@gmail.com"
         },
-        "license": {
-            "name": "logsquaredn"
-        }
+        "version": "1.0"
     },
+    "host": "rototiller.logsquaredn.io",
     "paths": {
         "/api.storage.v1.StorageService/CreateStorage": {
             "post": {
