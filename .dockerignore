@@ -1,6 +1,9 @@
 .*
 .github/
+.vscode/
+hack/
+mk/
 *.md
-Makefile
-Dockerfile
 docker-compose.yml
+Dockerfile
+Makefile

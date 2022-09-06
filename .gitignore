@@ -3,12 +3,9 @@ assets/*
 !assets/zip_3.0_x86_64.tgz
 
 # hack
-hack/rototiller/blobstore/*
-!hack/rototiller/blobstore/.gitkeep
-hack/rototiller/workingdir/*
-!hack/rototiller/workingdir/.gitkeep
+hack/rototiller/*
+!hack/rototiller/.gitkeep
 hack/minio/*
-!hack/minio/.aws
 !hack/minio/rototiller/
 hack/minio/rototiller/*
 !hack/minio/rototiller/.gitkeep

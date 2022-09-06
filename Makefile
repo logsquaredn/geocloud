@@ -91,7 +91,7 @@ install: install-rototiller install-rotoctl
 
 .PHONY: services
 services:
-	@$(DOCKER-COMPOSE) up -d postgres rabbitmq
+	@$(DOCKER-COMPOSE) up -d minio postgres rabbitmq
 
 .PHONY: build
 build:
@@ -129,7 +129,7 @@ restart:
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= bin/* hack/rototiller/workingdir/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
+CLEAN ?= bin/* hack/rototiller/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down
@@ -148,8 +148,9 @@ docs:
 	@$(SWAG) init -d ./cmd/rototiller --pd --parseDepth 4
 
 MIGRATION = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
+TITLE ?= replace_me
 
 .PHONY: migration
 migration:
-	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_replace_me.up.sql
-	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_replace_me.up.sql; replace title and add SQL"
+	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
+	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"

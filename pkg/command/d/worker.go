@@ -77,7 +77,7 @@ func NewWorker() *cobra.Command {
 	workerCmd.Flags().StringVar(&amqpAddr, "amqp-addr", "", "AMQP address")
 	workerCmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
 	workerCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
-	workerCmd.Flags().StringVar(&workingDir, "working-dir", "/var/lib/rototiller/workingdir", "working directory")
+	workerCmd.Flags().StringVar(&workingDir, "working-dir", "/var/lib/rototiller", "working directory")
 
 	return workerCmd
 }

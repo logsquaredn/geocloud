@@ -35,7 +35,7 @@ RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${vers
 FROM base_image AS rototiller
 ARG zip=assets/zip_3.0_x86_64.tgz
 ADD ${zip} /usr/local/bin
-VOLUME /var/lib/rototiller/workingdir
+VOLUME /var/lib/rototiller
 ENTRYPOINT ["rototiller"]
 CMD ["--help"]
 COPY --from=build_tasks /assets /usr/local/bin
