@@ -69,7 +69,7 @@ func NewAPI() *cobra.Command {
 				}
 
 				logr.Info("serving on " + addr)
-				return http.Serve(l, h2c.NewHandler(srv, &http2.Server{}))
+				return http.Serve(l, h2c.NewHandler(srv, &http2.Server{})) //nolint:gosec // TODO
 			},
 		}
 	)
