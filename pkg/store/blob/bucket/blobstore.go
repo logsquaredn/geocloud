@@ -7,17 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/pkg/volume"
 	"gocloud.dev/blob"
 	"golang.org/x/sync/errgroup"
 )
 
 func New(ctx context.Context, addr string) (*Blobstore, error) {
-	logr := rototiller.NewLogger()
-
-	logr.Info(addr)
-
 	bucket, err := blob.OpenBucket(ctx, addr)
 	if err != nil {
 		return nil, err
