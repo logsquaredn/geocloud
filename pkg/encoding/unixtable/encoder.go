@@ -83,7 +83,7 @@ func (e *Encoder) Encode(a any) error {
 			if f.PkgPath != "" {
 				continue
 			}
-	
+
 			key := f.Name
 			if tag := f.Tag.Get(Tag); tag != "" {
 				key = tag
