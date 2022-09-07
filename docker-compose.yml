@@ -4,24 +4,28 @@ services:
   migrate: &rototiller_service
     image: &rototiller_image ghcr.io/logsquaredn/rototiller:${ROTOTILLER_TAG:-latest}
     build: .
-    command: migrate --postgres-addr 'postgres://rototiller:rototiller@postgres:5432?sslmode=disable'
+    command: migrate --postgres-addr 'postgres://postgres:5432?sslmode=disable'
     depends_on: &rototiller_depends_on [minio, postgres, rabbitmq]
     environment:
       AWS_ACCESS_KEY_ID: rototiller
       AWS_SECRET_ACCESS_KEY: rototiller
       AWS_REGION: us-east-1
+      POSTGRES_USERNAME: rototiller
+      POSTGRES_PASSWORD: rototiller
+      AMQP_USERNAME: rototiller
+      AMQP_PASSWORD: rototiller
   api:
     <<: *rototiller_service
-    command: api --amqp-addr 'amqp://rototiller:rototiller@rabbitmq:5672' --postgres-addr 'postgres://rototiller:rototiller@postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
+    command: api --amqp-addr 'amqp://rabbitmq:5672' --postgres-addr 'postgres://postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
     ports: [8080:8080]
   worker: &worker_service
     <<: *rototiller_service
-    command: worker --amqp-addr 'amqp://rototiller:rototiller@rabbitmq:5672' --postgres-addr 'postgres://rototiller:rototiller@postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
+    command: worker --amqp-addr 'amqp://rabbitmq:5672' --postgres-addr 'postgres://postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
     volumes: [./hack/rototiller:/var/lib/rototiller]
   worker-alt: *worker_service
   secretary:
     <<: *rototiller_service
-    command: secretary --postgres-addr 'postgres://rototiller:rototiller@postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/' --archive-bucket-addr 's3://rototiller-archive?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
+    command: secretary --postgres-addr 'postgres://postgres:5432?sslmode=disable' --bucket-addr 's3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/' --archive-bucket-addr 's3://rototiller-archive?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/'
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
     ports: [5432:5432]

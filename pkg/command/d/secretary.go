@@ -136,7 +136,7 @@ func NewSecretary() *cobra.Command {
 		}
 	)
 
-	secretaryCmd.Flags().StringVar(&bucketAddr, "archive-bucket-addr", "", "archive bucket address")
+	secretaryCmd.Flags().StringVar(&archiveBucketAddr, "archive-bucket-addr", "", "archive bucket address")
 	secretaryCmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
 	secretaryCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
 	secretaryCmd.Flags().StringVar(&stripe.Key, "stripe-api-key", "", "Stripe API key")

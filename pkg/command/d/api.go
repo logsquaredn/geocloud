@@ -69,7 +69,7 @@ func NewAPI() *cobra.Command {
 				}
 
 				logr.Info("serving on " + addr)
-				return http.Serve(l, h2c.NewHandler(srv, &http2.Server{})) //nolint:gosec // TODO
+				return http.Serve(l, h2c.NewHandler(srv, &http2.Server{})) //nolint:gosec,nolintlint // lint in GitHub Actions doesn't like this
 			},
 		}
 	)

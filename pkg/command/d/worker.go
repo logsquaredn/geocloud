@@ -57,6 +57,8 @@ func NewWorker() *cobra.Command {
 				}
 
 				eventC, errC := eventStreamConsumer.Listen(ctx)
+
+				logr.Info("listening for jobs")
 				for {
 					select {
 					case err := <-errC:

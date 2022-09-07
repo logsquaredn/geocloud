@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -23,9 +25,18 @@ func NewMigrations(ctx context.Context, addr string) (*Migrations, error) {
 		return nil, fmt.Errorf("failed to read migrations: %w", err)
 	}
 
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.User.String() == "" {
+		u.User = url.UserPassword(os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"))
+	}
+
 	if p.Migrate, err = migrate.NewWithSourceInstance(
 		"migrations", src,
-		addr,
+		u.String(),
 	); err != nil {
 		return nil, err
 	}

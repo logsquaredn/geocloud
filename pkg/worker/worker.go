@@ -135,11 +135,11 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return fmt.Errorf("no input found")
 	}
 
-	task := exec.Command(t.Type) //nolint:gosec
+	task := exec.Command(t.Type) //nolint:gosec // t.Type is guaranteed to refer to a Task binary
 	// start with current env minus configuration that might contain secrets
 	// e.g. ROTOTILLER_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
-		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_"))
+		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_") || strings.Contains(e, "PASSWORD") || strings.Contains(e, "USERNAME"))
 	})
 	// add input file path and output dir path
 	task.Env = append(task.Env,
@@ -162,9 +162,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return fmt.Sprintf(
 			"%s%s=%s",
 			conf.EnvPrefix,
-			strings.ToUpper(
-				conf.HyphenToUnderscoreReplacer.Replace(t.Params[i]),
-			),
+			strings.ToUpper(conf.HyphenToUnderscoreReplacer.Replace(t.Params[i])),
 			a,
 		)
 	})...)

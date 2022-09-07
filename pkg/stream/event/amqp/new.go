@@ -2,6 +2,8 @@ package amqp
 
 import (
 	"context"
+	"net/url"
+	"os"
 
 	"github.com/logsquaredn/rototiller/pkg/api"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -22,7 +24,16 @@ type EventStreamConsumer struct {
 }
 
 func New(ctx context.Context, addr string) (*EventStream, error) {
-	connection, err := amqp.Dial(addr)
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.User.String() == "" {
+		u.User = url.UserPassword(os.Getenv("AMQP_USERNAME"), os.Getenv("AMQP_PASSWORD"))
+	}
+
+	connection, err := amqp.Dial(u.String())
 	if err != nil {
 		return nil, err
 	}
