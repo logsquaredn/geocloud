@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -29,10 +30,24 @@ func NewMigrations(ctx context.Context, addr string) (*Migrations, error) {
 		addr = os.Getenv("POSTGRES_ADDR")
 	}
 
+	addr = "postgres://" + strings.TrimPrefix(addr, "postgres://")
+
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
+
+	q := u.Query()
+
+	for queryParam, envVar := range map[string]string{
+		"sslmode": "POSTGRES_SSLMODE",
+	} {
+		if value := os.Getenv(envVar); value != "" {
+			q.Add(queryParam, value)
+		}
+	}
+
+	u.RawQuery = q.Encode()
 
 	if u.User.String() == "" {
 		u.User = url.UserPassword(os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"))

@@ -16,8 +16,10 @@ import (
 
 func New(ctx context.Context, addr string) (*Blobstore, error) {
 	if addr == "" {
-		addr = "s3://" + strings.TrimPrefix(os.Getenv("S3_BUCKET"), "s3://")
+		addr = os.Getenv("S3_BUCKET")
 	}
+
+	addr = "s3://" + strings.TrimPrefix(addr, "s3://")
 
 	u, err := url.Parse(addr)
 	if err != nil {

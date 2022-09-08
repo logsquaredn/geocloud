@@ -4,28 +4,32 @@ services:
   migrate: &rototiller_service
     image: &rototiller_image ghcr.io/logsquaredn/rototiller:${ROTOTILLER_TAG:-latest}
     build: .
-    command: migrate --postgres-addr "postgres://postgres:5432?sslmode=disable"
+    command: migrate --postgres-addr=postgres:5432
     depends_on: &rototiller_depends_on [minio, postgres, rabbitmq]
-    environment:
+    environment: &rototiller_environment
       AWS_ACCESS_KEY_ID: rototiller
       AWS_SECRET_ACCESS_KEY: rototiller
       AWS_REGION: us-east-1
+      S3_DISABLE_SSL: "true"
+      S3_FORCE_PATH_STYLE: "true"
+      S3_ENDPOINT: http://minio:9000/
       POSTGRES_USERNAME: rototiller
       POSTGRES_PASSWORD: rototiller
+      POSTGRES_SSLMODE: disable
       AMQP_USERNAME: rototiller
       AMQP_PASSWORD: rototiller
   api:
     <<: *rototiller_service
-    command: api --amqp-addr "amqp://rabbitmq:5672" --postgres-addr "postgres://postgres:5432?sslmode=disable" --bucket-addr "s3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/"
+    command: api --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
     ports: [8080:8080]
   worker: &worker_service
     <<: *rototiller_service
-    command: worker --amqp-addr "amqp://rabbitmq:5672" --postgres-addr "postgres://postgres:5432?sslmode=disable" --bucket-addr "s3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/"
+    command: worker --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
     volumes: [./hack/rototiller:/var/lib/rototiller]
   worker-alt: *worker_service
   secretary:
     <<: *rototiller_service
-    command: secretary --postgres-addr "postgres://postgres:5432?sslmode=disable" --bucket-addr "s3://rototiller?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/" --archive-bucket-addr "s3://rototiller-archive?disableSSL=true&s3ForcePathStyle=true&endpoint=http://minio:9000/"
+    command: secretary --postgres-addr=postgres:5432 --bucket-addr=rototiller --archive-bucket-addr=rototiller-archive
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
     ports: [5432:5432]

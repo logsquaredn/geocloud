@@ -68,8 +68,10 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 	}
 
 	if addr == "" {
-		addr = "postgres://" + strings.TrimPrefix(os.Getenv("POSTGRES_ADDR"), "postgres://")
+		addr = os.Getenv("POSTGRES_ADDR")
 	}
+
+	addr = "postgres://" + strings.TrimPrefix(addr, "postgres://")
 
 	u, err := url.Parse(addr)
 	if err != nil {

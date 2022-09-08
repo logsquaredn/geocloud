@@ -26,8 +26,10 @@ type EventStreamConsumer struct {
 
 func New(ctx context.Context, addr string) (*EventStream, error) {
 	if addr == "" {
-		addr = "amqp://" + strings.TrimPrefix(os.Getenv("AMQP_ADDR"), "amqp://")
+		addr = os.Getenv("AMQP_ADDR")
 	}
+
+	addr = "amqp://" + strings.TrimPrefix(addr, "amqp://")
 
 	u, err := url.Parse(addr)
 	if err != nil {
