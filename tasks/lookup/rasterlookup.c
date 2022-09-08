@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "../shared/shared.h"
 
 int main(int argc, char *argv[]) {
@@ -114,7 +112,7 @@ int main(int argc, char *argv[]) {
 
 	double *buff = (double*) calloc(6, sizeof(double));
 	if(GDALGetGeoTransform(gd, buff) != OGRERR_NONE) {
-		fatalErrorWithCode("failed to get geotransform", __FILE__, __LINE__, EX_DATAERR);
+		fatalErrorWithCode("failed to get geo transform", __FILE__, __LINE__, EX_DATAERR);
 	}
 	double xOrigin = buff[0];
 	double yOrigin = buff[3];

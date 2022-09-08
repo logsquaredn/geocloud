@@ -92,27 +92,6 @@ char **unzip(const char *fp) {
     return fl;
 }
 
-GDALDatasetH createVectorDataset(const char *fp) {
-    GDALDriverH shpD = GDALGetDriverByName("ESRI Shapefile");
-	if(shpD == NULL) {
-		error("failed to get shapefile driver", __FILE__, __LINE__);
-        return NULL;
-	}
-
-    GDALDatasetH ds = GDALCreate(shpD, 
-                          fp, 
-                          0, 0, 0, 
-                          GDT_Unknown, 
-                          NULL);
-    if(ds == NULL) {
-        char eMsg[ONE_KB];
-        sprintf(eMsg, "failed to create vector dataset at: %s", fp);
-        fatalError(eMsg, __FILE__, __LINE__);
-        return NULL;
-    }
-    
-    return ds;
-}
 
 OGRGeometryH createTopLeftPoly(OGREnvelope* envelope) {
     OGRGeometryH topLeftRing =  OGR_G_CreateGeometry(wkbLinearRing);
@@ -350,7 +329,8 @@ int produceShpOutput(char *iFp, const char *oDir, const char *vFp) {
 		return 1;			\
 	}
 	
-    const char *iDir = dirname(iFp);
+    char *tmpVFp = strdup(vFp);
+    const char *iDir = dirname(tmpVFp);
 
 	char zPath[ONE_KB];
 	sprintf(zPath, "%s/output.zip", oDir);
@@ -374,6 +354,8 @@ int produceShpOutput(char *iFp, const char *oDir, const char *vFp) {
 	sprintf(iMsg, "output json: %s", gPath);
 	info(iMsg); 
 
+    free(tmpVFp);
+    
     return 0;
 }
 

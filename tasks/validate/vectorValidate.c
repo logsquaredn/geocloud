@@ -13,21 +13,9 @@ int main(int argc, char *argv[]) {
 	}
 	sprintf(iMsg, "input filepath: %s", iFp);
 	info(iMsg);
-	
-	const char *oDir = getenv(ENV_VAR_OUTPUT_DIRECTORY);
-	if(oDir == NULL) {
-		char eMsg[ONE_KB];
-		sprintf(eMsg, "env var: %s must be set", ENV_VAR_OUTPUT_DIRECTORY);
-		fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
-	}
-	sprintf(iMsg, "output directory: %s", oDir);
-	info(iMsg);
 
-
-	int isInputShp = 0;
 	char *vFp = NULL;
 	if(isZip(iFp)) {
-		isInputShp = 1;
 		char **fl = unzip(iFp);
 		if(fl == NULL) {
 			char eMsg[ONE_KB];
@@ -70,38 +58,10 @@ int main(int argc, char *argv[]) {
 	if(lCount < 1) {
 		fatalErrorWithCode("input dataset has no layers", __FILE__, __LINE__, EX_DATAERR);
 	}
-	OGRLayerH iLay = OGR_DS_GetLayer(iDs, 0);
-	if(iLay == NULL) {
-		fatalErrorWithCode("failed to get layer from input dataset", __FILE__, __LINE__, EX_DATAERR);
-	}
-	OGR_L_ResetReading(iLay);
-
-	OGRFeatureH iFeat;
-	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
-		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
-		if(!OGR_G_IsValid(iGeom)) {	
-			if(OGR_L_DeleteFeature(iLay, OGR_F_GetFID(iFeat)) != OGRERR_NONE) {
-				fatalError("failed to delete feature from input", __FILE__, __LINE__);			
-			}	
-		}
-
-		OGR_G_DestroyGeometry(iGeom);
-	}
 
 	GDALClose(iDs);
-
-	if(isInputShp) {
-	 	if(produceShpOutput(iFp, oDir, vFp) != 0) {
-			 fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		 }
-	} else {
-		if(produceJsonOutput(iFp, oDir) != 0) {
-			fatalErrorWithCode("failed to produce output", __FILE__, __LINE__, EX_CANTCREAT);
-		}
-	}
-
 	free(vFp);
 
-	info("remove bad geometry completed successfully");
+	info("vector validate completed successfully");
 	return 0;
 }
