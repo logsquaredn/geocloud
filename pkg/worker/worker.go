@@ -12,12 +12,15 @@ import (
 
 	"github.com/frantjc/go-js"
 	"github.com/logsquaredn/rototiller"
-	"github.com/logsquaredn/rototiller/internal/conf"
 	"github.com/logsquaredn/rototiller/pkg/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/pkg/store/data/postgres"
 	"github.com/logsquaredn/rototiller/pkg/volume"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"mellium.im/sysexit"
+)
+
+var (
+	HyphenToUnderscoreReplacer = strings.NewReplacer("-", "_")
 )
 
 type Worker struct {
@@ -27,8 +30,8 @@ type Worker struct {
 }
 
 const (
-	EnvVarInputFile = conf.EnvPrefix + "INPUT_FILE"
-	EnvVarOutputDir = conf.EnvPrefix + "OUTPUT_DIR"
+	EnvVarInputFile = "ROTOTILLER_INPUT_FILE"
+	EnvVarOutputDir = "ROTOTILLER_OUTPUT_DIR"
 )
 
 func New(ctx context.Context, workingDir string, datastore *postgres.Datastore, blobstore *bucket.Blobstore) (*Worker, error) {
@@ -139,7 +142,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	// start with current env minus configuration that might contain secrets
 	// e.g. ROTOTILLER_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
-		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_") || strings.Contains(e, "PASSWORD") || strings.Contains(e, "USERNAME") || strings.Contains(e, "SECRET"))
+		return !(strings.HasPrefix(e, "ROTOTILLER_") || strings.HasPrefix(e, "AWS_") || strings.Contains(e, "PASSWORD") || strings.Contains(e, "USERNAME") || strings.Contains(e, "SECRET"))
 	})
 	// add input file path and output dir path
 	task.Env = append(task.Env,
@@ -151,12 +154,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	//		=> task.params = ['target-projection'],
 	//      => ROTOTILLER_TARGET_PROJECTION=${?target-projection}
 	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
-		return fmt.Sprintf(
-			"%s%s=%s",
-			conf.EnvPrefix,
-			strings.ToUpper(conf.HyphenToUnderscoreReplacer.Replace(t.Params[i])),
-			a,
-		)
+		return "ROTOTILLER_" + strings.ToUpper(HyphenToUnderscoreReplacer.Replace(t.Params[i])) + "=" + a
 	})...)
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
