@@ -21,14 +21,14 @@ import (
 )
 
 type Worker struct {
-	Datastore  *postgres.Datastore
-	Blobstore  *bucket.Blobstore
+	*postgres.Datastore
+	*bucket.Blobstore
 	WorkingDir string
 }
 
-var (
-	envVarInputFile = fmt.Sprintf("%sINPUT_FILE", conf.EnvPrefix)
-	envVarOutputDir = fmt.Sprintf("%sOUTPUT_DIR", conf.EnvPrefix)
+const (
+	EnvVarInputFile = conf.EnvPrefix + "INPUT_FILE"
+	EnvVarOutputDir = conf.EnvPrefix + "OUTPUT_DIR"
 )
 
 func New(ctx context.Context, workingDir string, datastore *postgres.Datastore, blobstore *bucket.Blobstore) (*Worker, error) {
@@ -139,20 +139,12 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	// start with current env minus configuration that might contain secrets
 	// e.g. ROTOTILLER_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
-		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_") || strings.Contains(e, "PASSWORD") || strings.Contains(e, "USERNAME"))
+		return !(strings.HasPrefix(e, conf.EnvPrefix) || strings.HasPrefix(e, "AWS_") || strings.Contains(e, "PASSWORD") || strings.Contains(e, "USERNAME") || strings.Contains(e, "SECRET"))
 	})
 	// add input file path and output dir path
 	task.Env = append(task.Env,
-		fmt.Sprintf(
-			"%s=%s",
-			envVarInputFile,
-			filepath.Join(w.inputVolumePath(j.GetId()), filename),
-		),
-		fmt.Sprintf(
-			"%s=%s",
-			envVarOutputDir,
-			w.outputVolumePath(j.GetId()),
-		),
+		EnvVarInputFile+"="+filepath.Join(w.inputVolumePath(j.GetId()), filename),
+		EnvVarOutputDir+"="+w.outputVolumePath(j.GetId()),
 	)
 	// add arbitrary args defined by the task entry in the datastore
 	// e.g. task.type = 'reproject'
@@ -180,16 +172,15 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	case int(sysexit.ErrData), int(sysexit.ErrNoInput):
 		inputStorage.Status = rototiller.StorageStatusUnusable.String()
 		err = fmt.Errorf("unusable input")
-		return err
 	case int(sysexit.ErrCantCreat):
 		err = fmt.Errorf("can't create output file")
-		return err
 	case int(sysexit.ErrConfig):
 		err = fmt.Errorf("configuration error")
-		return err
 	default:
 		inputStorage.Status = rototiller.StorageStatusUnknown.String()
 		err = fmt.Errorf("unknown error")
+	}
+	if err != nil {
 		return err
 	}
 
