@@ -20,8 +20,8 @@ services:
       AMQP_PASSWORD: rototiller
   api:
     <<: *rototiller_service
-    command: api --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
-    ports: [8080:8080]
+    command: api -p=8081 --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
+    ports: [8080:8081]
   worker: &worker_service
     <<: *rototiller_service
     command: worker --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
