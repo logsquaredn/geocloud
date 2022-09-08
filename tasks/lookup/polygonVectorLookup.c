@@ -44,30 +44,11 @@ int main(int argc, char *argv[]) {
 		fatalErrorWithCode("at least one attribute required as input", __FILE__, __LINE__, EX_CONFIG);
 	}
 
-    const char *lonArg = getenv("ROTOTILLER_LONGITUDE");
-	if(lonArg == NULL) {
-		fatalErrorWithCode("env var: ROTOTILLER_LONGITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
+    char *polygonArg = getenv("ROTOTILLER_POLYGON");
+	if(polygonArg == NULL) {
+		fatalErrorWithCode("env var: ROTOTILLER_POLYGON must be set", __FILE__, __LINE__, EX_CONFIG);
 	}
-    double lon = strtod(lonArg, NULL);
-    if(lon == 0 || lon > 180 || lon < -180) {
-		char eMsg[ONE_KB];
-		sprintf(eMsg, "longitude must be a double between -180 & 180. got: %s", lonArg);
-        fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
-    }
-	sprintf(iMsg, "lon: %f", lon);
-	info(iMsg);
-
-    const char *latArg = getenv("ROTOTILLER_LATITUDE");
-	if(latArg == NULL) {
-		fatalErrorWithCode("env var: ROTOTILLER_LATITUDE must be set", __FILE__, __LINE__, EX_CONFIG);
-	}
-    double lat = strtod(latArg, NULL);
-    if(lat == 0 || lat > 90 || lat < -90) {
-		char eMsg[ONE_KB];
-		sprintf(eMsg, "latitude must be a double between -90 & 90. got: %s", latArg);
-        fatalErrorWithCode(eMsg, __FILE__, __LINE__, EX_CONFIG);
-    }
-	sprintf(iMsg, "lat: %f", lat);
+	sprintf(iMsg, "polygon: %s", polygonArg);
 	info(iMsg);
 
 	char *vFp = NULL;
@@ -120,15 +101,17 @@ int main(int argc, char *argv[]) {
 	}
 	OGR_L_ResetReading(iLay);
 
-	OGRGeometryH point = OGR_G_CreateGeometry(wkbPoint);
-	if(point == NULL) {
-		fatalErrorWithCode("failed to create point geometry", __FILE__, __LINE__, EX_CONFIG);
+	OGRGeometryH polygon = OGR_G_CreateGeometry(wkbPolygon);
+	if(polygon == NULL) {
+		fatalErrorWithCode("failed to create polygon geometry", __FILE__, __LINE__, EX_CONFIG);	
 	}
-	OGR_G_AddPoint_2D(point, lon, lat);
+	if(OGR_G_ImportFromWkt(polygon, &polygonArg) != OGRERR_NONE) {
+		fatalErrorWithCode("failed to import polygon from WKT", __FILE__, __LINE__, EX_CONFIG);
+	}
 
 	char ofp[ONE_KB];
 	sprintf(ofp, "%s%s", oDir, "/output.json");
-		sprintf(iMsg, "output filepath: %s", ofp);
+	sprintf(iMsg, "output filepath: %s", ofp);
 	info(iMsg); 
 	FILE *fptr = fopen(ofp, "w");
 	if(fptr == NULL) {
@@ -145,7 +128,7 @@ int main(int argc, char *argv[]) {
 	while((iFeat = OGR_L_GetNextFeature(iLay)) != NULL) {
 		OGRGeometryH iGeom = OGR_F_GetGeometryRef(iFeat);
 
-		if(OGR_G_Intersects(iGeom, point)) {
+		if(OGR_G_Intersects(iGeom, polygon)) {
 			++hits;
 			if(hits > 1) {
 				if(fputs(",", fptr) == EOF) {
@@ -191,7 +174,7 @@ int main(int argc, char *argv[]) {
 
 	fclose(fptr);
 	GDALClose(iDs);
-	OGR_G_DestroyGeometry(point);
+	OGR_G_DestroyGeometry(polygon);
 	free(vFp);
 
 	info("vector lookup complete successfully");
