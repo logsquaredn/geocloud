@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/logsquaredn/rototiller/pkg/api"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -24,6 +25,10 @@ type EventStreamConsumer struct {
 }
 
 func New(ctx context.Context, addr string) (*EventStream, error) {
+	if addr == "" {
+		addr = "amqp://" + strings.TrimPrefix(os.Getenv("AMQP_ADDR"), "amqp://")
+	}
+
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err

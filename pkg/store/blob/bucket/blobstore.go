@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,7 +15,30 @@ import (
 )
 
 func New(ctx context.Context, addr string) (*Blobstore, error) {
-	bucket, err := blob.OpenBucket(ctx, addr)
+	if addr == "" {
+		addr = "s3://" + strings.TrimPrefix(os.Getenv("S3_BUCKET"), "s3://")
+	}
+
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	q := u.Query()
+
+	for queryParam, envVar := range map[string]string{
+		"disableSSL":       "S3_DISABLE_SSL",
+		"s3ForcePathStyle": "S3_FORCE_PATH_STYLE",
+		"endpoint":         "S3_ENDPOINT",
+	} {
+		if value := os.Getenv(envVar); value != "" {
+			q.Add(queryParam, value)
+		}
+	}
+
+	u.RawQuery = q.Encode()
+
+	bucket, err := blob.OpenBucket(ctx, u.String())
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -30,17 +31,16 @@ func NewSecretary() *cobra.Command {
 					archive strings.Builder
 				)
 
+				if stripe.Key == "" {
+					stripe.Key = os.Getenv("STRIPE_API_KEY")
+				}
+
 				datastore, err := postgres.New(ctx, postgresAddr)
 				if err != nil {
 					return err
 				}
 
 				blobstore, err := bucket.New(ctx, bucketAddr)
-				if err != nil {
-					return err
-				}
-
-				archiveBlobstore, err := bucket.New(ctx, archiveBucketAddr)
 				if err != nil {
 					return err
 				}
@@ -90,21 +90,7 @@ func NewSecretary() *cobra.Command {
 						return err
 					}
 
-					archive.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetCustomerId(), c.Name))
-				}
-
-				if len(archive.String()) > 0 {
-					logr.Info("putting archive to storage")
-					if err = archiveBlobstore.PutObject(
-						ctx,
-						fmt.Sprint(time.Now().Unix()),
-						volume.New(
-							volume.NewFile("archive.csv", strings.NewReader(archive.String()), archive.Len()),
-						),
-					); err != nil {
-						logr.Error(err, "putting archive to s3")
-						return err
-					}
+					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetCustomerId(), c.Name}, ",") + "\n")
 				}
 
 				logr.Info("getting storages")
@@ -126,6 +112,37 @@ func NewSecretary() *cobra.Command {
 					err = datastore.DeleteStorage(s.GetId())
 					if err != nil {
 						logr.Error(err, "deleting storage data: %s", s.GetId())
+					}
+				}
+
+				if len(archive.String()) > 0 {
+					// cleverly use the same bucket code with different env vars
+					// for the archive bucket as well as the regular bucket
+					for envVar, overrideEnvVar := range map[string]string{
+						"S3_BUCKET":             "S3_ARCHIVE_BUCKET",
+						"AWS_ACCESS_KEY_ID":     "AWS_ARCHIVE_ACCESS_KEY_ID",
+						"AWS_SECRET_ACCESS_KEY": "AWS_ARCHIVE_SECRET_ACCESS_KEY",
+					} {
+						if override := os.Getenv(overrideEnvVar); override != "" {
+							os.Setenv(envVar, override)
+						}
+					}
+
+					archiveBlobstore, err := bucket.New(ctx, archiveBucketAddr)
+					if err != nil {
+						return err
+					}
+
+					logr.Info("putting archive to storage")
+					if err = archiveBlobstore.PutObject(
+						ctx,
+						fmt.Sprint(time.Now().Unix()),
+						volume.New(
+							volume.NewFile("archive.csv", strings.NewReader(archive.String()), archive.Len()),
+						),
+					); err != nil {
+						logr.Error(err, "putting archive to s3")
+						return err
 					}
 				}
 

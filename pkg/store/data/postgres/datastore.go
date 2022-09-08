@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
 	// postgres must be imported to inject the postgres driver
 	// into the database/sql package.
@@ -66,10 +67,26 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		}{},
 	}
 
+	if addr == "" {
+		addr = "postgres://" + strings.TrimPrefix(os.Getenv("POSTGRES_ADDR"), "postgres://")
+	}
+
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
+
+	q := u.Query()
+
+	for queryParam, envVar := range map[string]string{
+		"sslmode": "POSTGRES_SSLMODE",
+	} {
+		if value := os.Getenv(envVar); value != "" {
+			q.Add(queryParam, value)
+		}
+	}
+
+	u.RawQuery = q.Encode()
 
 	if u.User.String() == "" {
 		u.User = url.UserPassword(os.Getenv("POSTGRES_USERNAME"), os.Getenv("POSTGRES_PASSWORD"))

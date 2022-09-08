@@ -25,6 +25,10 @@ func NewMigrations(ctx context.Context, addr string) (*Migrations, error) {
 		return nil, fmt.Errorf("failed to read migrations: %w", err)
 	}
 
+	if addr == "" {
+		addr = os.Getenv("POSTGRES_ADDR")
+	}
+
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
