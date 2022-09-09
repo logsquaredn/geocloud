@@ -490,7 +490,7 @@ func (a *API) createRasterLookupJobHandler(ctx *gin.Context) {
 		return
 	}
 
-	job, err := a.createJob(ctx, api.TaskTypeVectorLookup)
+	job, err := a.createJob(ctx, api.TaskTypeRasterLookup)
 	if err != nil {
 		a.err(ctx, err)
 		return
