@@ -65,11 +65,20 @@ func NewWorker() *cobra.Command {
 						logr.Error(err, "event stream errored")
 						return err
 					case event := <-eventC:
-						id := api.JobEventMetadata(event.Metadata).GetId()
+						go func() {
+							id := api.JobEventMetadata(event.Metadata).GetId()
 
-						if err = wrkr.DoJob(ctx, id); err != nil {
-							logr.Error(err, "job failed", "id", id)
-						}
+							if err = wrkr.DoJob(ctx, id); err != nil {
+								logr.Error(err, "job failed", "id", id)
+								if err = eventStreamConsumer.Nack(event); err != nil {
+									logr.Error(err, "failed to nack", "event", event.GetId())
+								}
+							} else {
+								if err = eventStreamConsumer.Ack(event); err != nil {
+									logr.Error(err, "failed to ack", "event", event.GetId())
+								}
+							}
+						}()
 					}
 				}
 			},

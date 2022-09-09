@@ -11,8 +11,8 @@ import (
 )
 
 type EventStream struct {
-	Connection *amqp.Connection
-	Channel    *amqp.Channel
+	*amqp.Connection
+	*amqp.Channel
 }
 
 type EventStreamProducer struct {

@@ -25,6 +25,7 @@ func (a *EventStreamConsumer) Listen(ctx context.Context) (<-chan *rototiller.Ev
 				if err = json.Unmarshal(delivery.Body, event); err != nil {
 					errC <- err
 				}
+				event.Id = int64(delivery.DeliveryTag)
 
 				eventC <- event
 			case <-ctx.Done():

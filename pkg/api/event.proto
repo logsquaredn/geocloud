@@ -5,6 +5,7 @@ package rototiller.api;
 option go_package = "github.com/logsquaredn/rototiller/pkg/api";
 
 message Event {
-  string type = 1;
-  map<string, string> metadata = 2;
+  int64 id = 1;
+  string type = 2;
+  map<string, string> metadata = 3;
 }
