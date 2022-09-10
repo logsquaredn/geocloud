@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package rototiller.api;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/logsquaredn/rototiller/pkg/api";
+
+message Storage {
+  string id = 1;
+  string customer_id = 2;
+  string name = 3;
+  string status = 4;
+  google.protobuf.Timestamp last_used = 8;
+  google.protobuf.Timestamp create_time = 9;
+}
+
+message GetStorageRequest {
+  string id = 1;
+}
+
+message GetStorageResponse {
+  Storage storage = 1;
+}
+
+message GetStorageContentRequest {
+  string id = 1;
+}
+
+message GetStorageContentResponse {
+  bytes data = 1;
+}
+
+message CreateStorageRequest {
+  bytes data = 1;
+}
+
+message CreateStorageResponse {
+  Storage storage = 1;
+}
+
+service StorageService {
+  rpc GetStorageContent(GetStorageContentRequest) returns (stream GetStorageContentResponse) {}
+  rpc GetStorage(GetStorageRequest) returns (GetStorageResponse) {}
+  rpc CreateStorage(stream CreateStorageRequest) returns (CreateStorageResponse) {}
+}

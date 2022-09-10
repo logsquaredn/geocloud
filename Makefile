@@ -1,4 +1,4 @@
-GO ?= go
+GO = go
 
 ifneq "$(strip $(shell command -v $(GO) 2>/dev/null))" ""
 	GOOS ?= $(shell $(GO) env GOOS)
@@ -16,15 +16,16 @@ else
 	endif
 endif
 
--include $(GOOS).mk
+DOCKER-COMPOSE = docker-compose
 
-PKGS ?= $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
-SWAG ?= swag
-GOLANGCI ?= golangci-lint
-BUF ?= buf
+-include mk/$(GOOS).mk
 
-DOCKER ?= docker
-DOCKER-COMPOSE ?= docker-compose
+PKGS = $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
+
+DOCKER = docker
+SWAG = swag
+LINT = golangci-lint
+BUF = buf
 GCC ?= gcc
 INSTALL ?= sudo install
 
@@ -48,16 +49,19 @@ fallthrough: generate fmt install infra detach
 .PHONY: fmt
 fmt:
 	@$(GO) $@ ./...
-	@$(SWAG) fmt -d ./api/
+	@$(SWAG) fmt -d ./cmd/rototiller
 	@$(BUF) format -w
 
 .PHONY: vet generate
 vet generate:
 	@$(GO) $@ ./...
 
+.PHONY: download tidy
+	@$(GO) mody $@
+
 .PHONY: lint
 lint:
-	@$(GOLANGCI) run
+	@$(LINT) run
 
 .PHONY: tests
 tests:
@@ -87,7 +91,7 @@ install: install-rototiller install-rotoctl
 
 .PHONY: services
 services:
-	@$(DOCKER-COMPOSE) up -d datastore objectstore messagequeue
+	@$(DOCKER-COMPOSE) up -d minio postgres rabbitmq
 
 .PHONY: build
 build:
@@ -97,8 +101,8 @@ build:
 secretary:
 	@$(DOCKER-COMPOSE) up --build secretary
 
-.PHONY: migrate migrations
-migrate migrations:
+.PHONY: migrate
+migrate:
 	@$(DOCKER-COMPOSE) up --build migrate
 
 .PHONY: infra infrastructure
@@ -106,7 +110,7 @@ infra infrastructure: services sleep migrate secretary local
 
 .PHONY: local
 local:
-	@$(DOCKER-COMPOSE) exec -T datastore psql -U rototiller -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
+	@$(DOCKER-COMPOSE) exec -T postgres psql -U rototiller -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
 
 .PHONY: up
 up:
@@ -125,7 +129,7 @@ restart:
 down:
 	@$(DOCKER-COMPOSE) down --remove-orphans
 
-CLEAN ?= bin/* hack/rototiller/* hack/minio/.minio.sys hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
+CLEAN ?= bin/* hack/rototiller/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
 .PHONY: clean
 clean: down
@@ -138,3 +142,15 @@ prune: clean
 .PHONY: sleep
 sleep:
 	@sleep 2
+
+.PHONY: docs
+docs:
+	@$(SWAG) init -d ./cmd/rototiller --pd --parseDepth 4
+
+MIGRATION = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
+TITLE ?= replace_me
+
+.PHONY: migration
+migration:
+	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
+	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"

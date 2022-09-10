@@ -2,10 +2,6 @@
 assets/*
 !assets/zip_3.0_x86_64.tgz
 
-# docs
-docs/swagger.json
-docs/swagger.yaml
-
 # hack
 hack/rototiller/*
 !hack/rototiller/.gitkeep
@@ -33,10 +29,17 @@ hack/rabbitmq/log/*
 # macOS
 .DS_Store
 
-# vscode
+# IDE
 .vscode/
 .idea/
 
 # bin
 bin/*
 !bin/.gitkeep
+
+# go
+vendor/
+
+# dev
+__debug_bin
+.env

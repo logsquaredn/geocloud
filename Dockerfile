@@ -4,29 +4,18 @@ ARG build_tasks_image=osgeo/gdal:alpine-normal-3.4.3
 
 FROM ${base_image} AS base_image
 
-FROM base_image AS install
-
-FROM install AS zip
-ARG zip=assets/zip_3.0_x86_64.tgz
-ADD ${zip} /assets
-
 FROM ${build_image} as build_image
 ENV CGO_ENABLED 0
 WORKDIR $GOPATH/src/github.com/logsquaredn/rototiller
 RUN apk add --no-cache git
-RUN go install github.com/swaggo/swag/cmd/swag@v1.7.8
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN swag init -d ./api --parseDependency true
 
 FROM ${build_tasks_image} AS build_tasks_image
 WORKDIR /src/github.com/logsquaredn/rototiller/tasks
 RUN apk add --no-cache gcc libc-dev
-COPY tasks/ .
 
 FROM build_tasks_image AS build_tasks
 RUN mkdir -p /assets
+COPY tasks/ .
 RUN gcc -Wall removebadgeometry/removebadgeometry.c shared/shared.c -l gdal -o /assets/removebadgeometry
 RUN gcc -Wall buffer/buffer.c shared/shared.c -l gdal -o /assets/buffer
 RUN gcc -Wall filter/filter.c shared/shared.c -l gdal -o /assets/filter
@@ -37,15 +26,17 @@ RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterloo
 FROM build_image AS build
 ARG version=0.0.0
 ARG prerelease=
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rototiller ./cmd/rototiller
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoctl ./cmd/rotoctl
 
 FROM base_image AS rototiller
-RUN apk add --no-cache ca-certificates
-RUN apk del ca-certificates
+ARG zip=assets/zip_3.0_x86_64.tgz
+ADD ${zip} /usr/local/bin
 VOLUME /var/lib/rototiller
 ENTRYPOINT ["rototiller"]
 CMD ["--help"]
-COPY --from=zip /assets /usr/local/bin
 COPY --from=build_tasks /assets /usr/local/bin
 COPY --from=build /assets /usr/local/bin
