@@ -61,7 +61,6 @@ func NewWorker() *cobra.Command {
 					return err
 				}
 
-				fmt.Printf("cores: %d\n", runtime.NumCPU())
 				gorolimitVar := os.Getenv("GORO_LIMIT")
 				var gorolimit int
 				if gorolimitVar != "" {
