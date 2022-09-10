@@ -70,7 +70,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 			j.Status = rototiller.JobStatusComplete.String()
 		}
 
-		if updatedJob, err := w.Datastore.UpdateJob(j); err != nil {
+		if updatedJob, err := w.Datastore.UpdateJob(j); err == nil {
 			j = updatedJob
 		} else {
 			logr.Error(err, "updating job", "id", j.GetId())

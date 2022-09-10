@@ -1,6 +1,11 @@
 package command
 
 import (
+	"fmt"
+	"os"
+	"runtime"
+	"strconv"
+
 	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/pkg/api"
 	"github.com/logsquaredn/rototiller/pkg/store/blob/bucket"
@@ -56,6 +61,18 @@ func NewWorker() *cobra.Command {
 					return err
 				}
 
+				fmt.Printf("cores: %d\n", runtime.NumCPU())
+				gorolimitVar := os.Getenv("GORO_LIMIT")
+				var gorolimit int
+				if gorolimitVar != "" {
+					gorolimit, err = strconv.Atoi(gorolimitVar)
+					if err != nil {
+						gorolimit = 16
+					}
+				} else {
+					gorolimit = 16
+				}
+				sem := make(chan struct{}, gorolimit)
 				eventC, errC := eventStreamConsumer.Listen(ctx)
 
 				logr.Info("listening for jobs")
@@ -65,6 +82,7 @@ func NewWorker() *cobra.Command {
 						logr.Error(err, "event stream errored")
 						return err
 					case event := <-eventC:
+						sem <- struct{}{}
 						go func() {
 							id := api.JobEventMetadata(event.Metadata).GetId()
 
@@ -78,6 +96,8 @@ func NewWorker() *cobra.Command {
 									logr.Error(err, "failed to ack", "event", event.GetId())
 								}
 							}
+
+							<-sem
 						}()
 					}
 				}

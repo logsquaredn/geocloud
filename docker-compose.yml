@@ -18,6 +18,7 @@ services:
       POSTGRES_SSLMODE: disable
       AMQP_USERNAME: rototiller
       AMQP_PASSWORD: rototiller
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
   api:
     <<: *rototiller_service
     command: api -p=8081 --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
@@ -25,7 +26,7 @@ services:
   worker: &worker_service
     <<: *rototiller_service
     command: worker --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
-    volumes: [./hack/rototiller:/var/lib/rototiller]
+    volumes: [./hack/rototiller:/var/lib/rototiller:z]
   worker-alt: *worker_service
   secretary:
     <<: *rototiller_service
