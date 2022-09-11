@@ -25,7 +25,7 @@ make restart
 ```sh
 # push a tag--automation handles the rest
 # please use semantic versioning
-git tag -a 0.1.0 -m 0.1.0 && git push --follow-tags
+make release VERSION=1.0.0 PRERELEASE=
 ```
 
 ### Examples

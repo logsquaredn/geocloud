@@ -28,6 +28,7 @@ LINT = golangci-lint
 BUF = buf
 GCC ?= gcc
 INSTALL ?= sudo install
+GIT ?= git
 
 BIN ?= /usr/local/bin
 
@@ -154,3 +155,13 @@ TITLE ?= replace_me
 migration:
 	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
 	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"
+
+RELEASE ?= $(VERSION)
+ifneq "$(strip $(PRERELEASE))" ""
+	RELEASE = $(VERSION)-$(PRERELEASE)
+endif
+
+.PHONY: release
+release:
+	@$(GIT) tag -a $(RELEASE) -m $(RELEASE)
+	@$(GIT) push --follow-tags
