@@ -417,7 +417,7 @@ type vectorLookupQuery struct {
 // @Description  &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
-// @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
+// @Description  &emsp; - This task will generate JSON output
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
@@ -512,7 +512,7 @@ type polygonVectorLookupQuery struct {
 // @Description  &emsp; - Pass the geospatial data to be processed in the request body OR
 // @Description  &emsp; - Pass the ID of an existing dataset with an empty request body
 // @Description  &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
-// @Description  &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
+// @Description  &emsp; - This task will generate JSON output
 // @Tags         Job
 // @Accept       application/json, application/zip
 // @Produce      application/json
