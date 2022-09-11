@@ -1,9 +1,7 @@
 package command
 
 import (
-	"fmt"
 	"os"
-	"runtime"
 	"strconv"
 
 	"github.com/logsquaredn/rototiller"
