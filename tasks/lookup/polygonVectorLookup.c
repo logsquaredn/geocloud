@@ -177,6 +177,6 @@ int main(int argc, char *argv[]) {
 	OGR_G_DestroyGeometry(polygon);
 	free(vFp);
 
-	info("vector lookup complete successfully");
+	info("polygon vector lookup complete successfully");
 	return 0;
 }

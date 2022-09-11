@@ -84,6 +84,7 @@ func NewServer(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStr
 				jobs.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
 				jobs.POST("/vectorlookup", a.createVectorLookupJobHandler)
 				jobs.POST("/rasterlookup", a.createRasterLookupJobHandler)
+				jobs.POST("/polygonVectorLookup", a.createPolygonVectorLookupJobHandler)
 				job := jobs.Group("/:job")
 				{
 					job.GET("", a.getJobHandler)

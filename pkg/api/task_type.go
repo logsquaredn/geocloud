@@ -8,18 +8,20 @@ import (
 type TaskType string
 
 const (
-	TaskTypeBuffer            TaskType = "buffer"
-	TaskTypeFilter            TaskType = "filter"
-	TaskTypeRemoveBadGeometry TaskType = "removebadgeometry"
-	TaskTypeReproject         TaskType = "reproject"
-	TaskTypeVectorLookup      TaskType = "vectorlookup"
-	TaskTypeRasterLookup      TaskType = "rasterlookup"
+	TaskTypeBuffer              TaskType = "buffer"
+	TaskTypeFilter              TaskType = "filter"
+	TaskTypeRemoveBadGeometry   TaskType = "removebadgeometry"
+	TaskTypeReproject           TaskType = "reproject"
+	TaskTypeVectorLookup        TaskType = "vectorlookup"
+	TaskTypeRasterLookup        TaskType = "rasterlookup"
+	TaskTypePolygonVectorLookup TaskType = "polygonVectorLookup"
 )
 
 var (
 	AllTaskTypes = []TaskType{
 		TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
 		TaskTypeReproject, TaskTypeVectorLookup, TaskTypeRasterLookup,
+		TaskTypePolygonVectorLookup,
 	}
 )
 
