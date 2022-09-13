@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	APIKeyHeader    = "X-API-Key"
+	APIKeyHeader    = "X-API-Key" //nolint:gosec // not an API key, just the header to check for API keys
 	errUnauthorized = api.NewErr(
 		errors.New(APIKeyHeader+" header must be a valid API key"),
 		http.StatusUnauthorized, int(connect.CodeUnauthenticated),
