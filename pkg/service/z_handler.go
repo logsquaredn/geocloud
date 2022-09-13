@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (a *API) healthzHandler(ctx *gin.Context) {
+func (a *Handler) healthzHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/text", []byte("ok\n"))
 }
 
-func (a *API) readyzHandler(ctx *gin.Context) {
+func (a *Handler) readyzHandler(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/text", []byte("ok\n"))
 }

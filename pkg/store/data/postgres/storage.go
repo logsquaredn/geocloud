@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/logsquaredn/rototiller"
+	"github.com/logsquaredn/rototiller/pkg/api"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -36,7 +36,7 @@ var (
 	getInputStorageByJobIDSQL string
 )
 
-func (d *Datastore) UpdateStorage(s *rototiller.Storage) (*rototiller.Storage, error) {
+func (d *Datastore) UpdateStorage(s *api.Storage) (*api.Storage, error) {
 	var (
 		lastUsed, createTime sql.NullTime
 	)
@@ -55,7 +55,7 @@ func (d *Datastore) UpdateStorage(s *rototiller.Storage) (*rototiller.Storage, e
 	return s, nil
 }
 
-func (d *Datastore) CreateStorage(s *rototiller.Storage) (*rototiller.Storage, error) {
+func (d *Datastore) CreateStorage(s *api.Storage) (*api.Storage, error) {
 	var (
 		id                   = uuid.NewString()
 		lastUsed, createTime sql.NullTime
@@ -63,7 +63,7 @@ func (d *Datastore) CreateStorage(s *rototiller.Storage) (*rototiller.Storage, e
 	)
 
 	if s.Status == "" {
-		s.Status = rototiller.StorageStatusUnknown.String()
+		s.Status = api.StorageStatusUnknown.String()
 	}
 
 	if err = d.stmt.createStorage.QueryRow(
@@ -81,9 +81,9 @@ func (d *Datastore) CreateStorage(s *rototiller.Storage) (*rototiller.Storage, e
 	return s, nil
 }
 
-func (d *Datastore) GetStorage(id string) (*rototiller.Storage, error) {
+func (d *Datastore) GetStorage(id string) (*api.Storage, error) {
 	var (
-		s                    = &rototiller.Storage{}
+		s                    = &api.Storage{}
 		lastUsed, createTime sql.NullTime
 	)
 
@@ -105,18 +105,18 @@ func (d *Datastore) DeleteStorage(id string) error {
 	return err
 }
 
-func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*rototiller.Storage, error) {
+func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*api.Storage, error) {
 	rows, err := d.stmt.getStorageByCustomerID.Query(id, offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	storage := []*rototiller.Storage{}
+	storage := []*api.Storage{}
 
 	for rows.Next() {
 		var (
-			s                    = &rototiller.Storage{}
+			s                    = &api.Storage{}
 			lastUsed, createTime sql.NullTime
 		)
 
@@ -136,9 +136,9 @@ func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*rototil
 	return storage, nil
 }
 
-func (d *Datastore) GetJobInputStorage(id string) (*rototiller.Storage, error) {
+func (d *Datastore) GetJobInputStorage(id string) (*api.Storage, error) {
 	var (
-		s                    = &rototiller.Storage{}
+		s                    = &api.Storage{}
 		lastUsed, createTime sql.NullTime
 	)
 
@@ -155,9 +155,9 @@ func (d *Datastore) GetJobInputStorage(id string) (*rototiller.Storage, error) {
 	return s, nil
 }
 
-func (d *Datastore) GetJobOutputStorage(id string) (*rototiller.Storage, error) {
+func (d *Datastore) GetJobOutputStorage(id string) (*api.Storage, error) {
 	var (
-		s                    = &rototiller.Storage{}
+		s                    = &api.Storage{}
 		lastUsed, createTime sql.NullTime
 	)
 
@@ -174,7 +174,7 @@ func (d *Datastore) GetJobOutputStorage(id string) (*rototiller.Storage, error) 
 	return s, nil
 }
 
-func (d *Datastore) GetStorageBefore(duration time.Duration) ([]*rototiller.Storage, error) {
+func (d *Datastore) GetStorageBefore(duration time.Duration) ([]*api.Storage, error) {
 	beforeTimestamp := time.Now().Add(-duration)
 	rows, err := d.stmt.getStorageBefore.Query(beforeTimestamp)
 	if err != nil {
@@ -182,11 +182,11 @@ func (d *Datastore) GetStorageBefore(duration time.Duration) ([]*rototiller.Stor
 	}
 	defer rows.Close()
 
-	var storages []*rototiller.Storage
+	var storages []*api.Storage
 
 	for rows.Next() {
 		var (
-			s                    = &rototiller.Storage{}
+			s                    = &api.Storage{}
 			lastUsed, createTime sql.NullTime
 		)
 

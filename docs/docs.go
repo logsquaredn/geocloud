@@ -29,6 +29,11 @@ var doc = `{
     "paths": {
         "/api.storage.v1.StorageService/CreateStorage": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "RPC Stores a dataset. The ID of this stored dataset can be used as input to jobs",
                 "consumes": [
                     "application/json",
@@ -48,31 +53,25 @@ var doc = `{
                         "name": "X-Content-Type",
                         "in": "header",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
                     }
                 ],
                 "responses": {
                     "16": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "2": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "5": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -80,6 +79,11 @@ var doc = `{
         },
         "/api.storage.v1.StorageService/GetStorage": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "RPC Get the metadata of a stored dataset",
                 "produces": [
                     "application/json"
@@ -88,31 +92,23 @@ var doc = `{
                     "Storage"
                 ],
                 "summary": "RPC Get a storage",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    }
-                ],
                 "responses": {
                     "16": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "2": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "5": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -120,6 +116,11 @@ var doc = `{
         },
         "/api.storage.v1.StorageService/GetStorageContent": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "RPC Gets the content of a stored dataset",
                 "produces": [
                     "application/json",
@@ -135,25 +136,19 @@ var doc = `{
                         "description": "Request results as a Zip or JSON. Default Zip",
                         "name": "Accept",
                         "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
                     }
                 ],
                 "responses": {
                     "16": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "2": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -161,7 +156,12 @@ var doc = `{
         },
         "/api/v1/jobs": {
             "get": {
-                "description": "Get a list of jobs based on API Key\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of jobs based on API Key",
                 "produces": [
                     "application/json"
                 ],
@@ -170,18 +170,6 @@ var doc = `{
                 ],
                 "summary": "Get a list of jobs",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "Offset of jobs to return",
@@ -201,20 +189,20 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.Job"
+                                "$ref": "#/definitions/rototiller.Job"
                             }
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -222,7 +210,12 @@ var doc = `{
         },
         "/api/v1/jobs/buffer": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a buffer job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Buffers every geometry by the given distance\n\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a buffer job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Buffers every geometry by the given distance\n\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -237,20 +230,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -290,31 +271,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -322,7 +303,12 @@ var doc = `{
         },
         "/api/v1/jobs/filter": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a filter job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Drops features and their geometries that don't match the given filter\n\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a filter job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Drops features and their geometries that don't match the given filter\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -337,20 +323,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -390,31 +364,124 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/polygonvectorlookup": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a polygon vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns a list of attribute values of which the given polygon intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will generate JSON output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a polygon vector lookup job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma separated list of attributes",
+                        "name": "attributes",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Polygon in WKT format",
+                        "name": "polygon",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -422,7 +489,12 @@ var doc = `{
         },
         "/api/v1/jobs/rasterlookup": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a raster lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns the value of each requested band of which the given point intersects\n\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff\n\u0026emsp; - This task will generate JSON output",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a raster lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns the value of each requested band of which the given point intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff\n\u0026emsp; - This task will generate JSON output",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -437,20 +509,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -497,31 +557,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -529,6 +589,11 @@ var doc = `{
         },
         "/api/v1/jobs/removebadgeometry": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "\u003cb\u003e\u003cu\u003eCreate a remove bad geometry job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Drops geometries that are invalid\n\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv413OGR_G_IsValid12OGRGeometryH\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
                 "consumes": [
                     "application/json",
@@ -544,20 +609,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -583,31 +636,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -615,7 +668,12 @@ var doc = `{
         },
         "/api/v1/jobs/reproject": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a reproject job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Reprojects all geometries to the given projection\n\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a reproject job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Reprojects all geometries to the given projection\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -630,20 +688,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -676,31 +722,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -708,7 +754,12 @@ var doc = `{
         },
         "/api/v1/jobs/vectorlookup": {
             "post": {
-                "description": "\u003cb\u003e\u003cu\u003eCreate a vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns the feature and geometry of which the given point intersects\n\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns a list of attribute values of which the given point intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will generate JSON output",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -723,20 +774,8 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Required if passing geospatial data in request body",
                         "name": "Content-Type",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
                         "in": "header"
                     },
                     {
@@ -783,31 +822,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -815,7 +854,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}": {
             "get": {
-                "description": "Get the metadata of a job. This can be used as a way to track job status\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job. This can be used as a way to track job status",
                 "produces": [
                     "application/json"
                 ],
@@ -824,18 +868,6 @@ var doc = `{
                 ],
                 "summary": "Get a job",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Job ID",
@@ -848,31 +880,31 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.Job"
+                            "$ref": "#/definitions/rototiller.Job"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -880,7 +912,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}/storages/input": {
             "get": {
-                "description": "Get the metadata of a job's input\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's input",
                 "produces": [
                     "application/json"
                 ],
@@ -889,18 +926,6 @@ var doc = `{
                 ],
                 "summary": "Get a job's input",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Job ID",
@@ -919,25 +944,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -945,7 +970,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}/storages/input/content": {
             "get": {
-                "description": "Gets the content of a job's input\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a job's input",
                 "produces": [
                     "application/json",
                     " application/zip"
@@ -963,18 +993,6 @@ var doc = `{
                     },
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "Job ID",
                         "name": "id",
                         "in": "path",
@@ -988,25 +1006,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1014,7 +1032,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}/storages/output": {
             "get": {
-                "description": "Get the metadata of a job's output\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's output",
                 "produces": [
                     "application/json"
                 ],
@@ -1023,18 +1046,6 @@ var doc = `{
                 ],
                 "summary": "Get a job's output",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Job ID",
@@ -1053,25 +1064,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1079,7 +1090,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}/storages/output/content": {
             "get": {
-                "description": "Gets the content of a job's output\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a job's output",
                 "produces": [
                     "application/json",
                     " application/zip"
@@ -1097,18 +1113,6 @@ var doc = `{
                     },
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "Job ID",
                         "name": "id",
                         "in": "path",
@@ -1122,25 +1126,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1148,7 +1152,12 @@ var doc = `{
         },
         "/api/v1/jobs/{id}/task": {
             "get": {
-                "description": "Get the metadata of a job's task\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's task",
                 "produces": [
                     "application/json"
                 ],
@@ -1157,18 +1166,6 @@ var doc = `{
                 ],
                 "summary": "Get a job's task",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Job ID",
@@ -1187,25 +1184,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1213,7 +1210,12 @@ var doc = `{
         },
         "/api/v1/storages": {
             "get": {
-                "description": "Get a list of stored datasets based on API Key\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of stored datasets based on API Key",
                 "produces": [
                     "application/json"
                 ],
@@ -1222,18 +1224,6 @@ var doc = `{
                 ],
                 "summary": "Get a list of storage",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "Offset of storages to return",
@@ -1260,19 +1250,24 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Stores a dataset. The ID of this stored dataset can be used as input to jobs\n\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be stored in the request body",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Stores a dataset. The ID of this stored dataset can be used as input to jobs\n\u0026emsp; - Pass the geospatial data to be stored in the request body",
                 "consumes": [
                     "application/json",
                     " application/zip"
@@ -1285,18 +1280,6 @@ var doc = `{
                 ],
                 "summary": "Create a storage",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Storage name",
@@ -1314,19 +1297,19 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1334,7 +1317,12 @@ var doc = `{
         },
         "/api/v1/storages/{id}": {
             "get": {
-                "description": "Get the metadata of a stored dataset\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a stored dataset",
                 "produces": [
                     "application/json"
                 ],
@@ -1343,18 +1331,6 @@ var doc = `{
                 ],
                 "summary": "Get a storage",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
                     {
                         "type": "string",
                         "description": "Storage ID",
@@ -1373,25 +1349,25 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1399,7 +1375,12 @@ var doc = `{
         },
         "/api/v1/storages/{id}/content": {
             "get": {
-                "description": "Gets the content of a stored dataset\n\n\u0026emsp; - API Key is required either as a query parameter or a header",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a stored dataset",
                 "produces": [
                     "application/json",
                     " application/zip"
@@ -1417,18 +1398,6 @@ var doc = `{
                     },
                     {
                         "type": "string",
-                        "description": "API Key query parameter",
-                        "name": "api-key",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "API Key header",
-                        "name": "X-API-Key",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "Storage ID",
                         "name": "id",
                         "in": "path",
@@ -1442,31 +1411,31 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1474,7 +1443,6 @@ var doc = `{
         },
         "/api/v1/tasks": {
             "get": {
-                "description": "\u0026emsp; - API Key is required either as a query parameter or a header",
                 "produces": [
                     "application/json"
                 ],
@@ -1495,13 +1463,13 @@ var doc = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1509,7 +1477,6 @@ var doc = `{
         },
         "/api/v1/tasks/{type}": {
             "get": {
-                "description": "\u0026emsp; - API Key is required either as a query parameter or a header",
                 "produces": [
                     "application/json"
                 ],
@@ -1536,25 +1503,25 @@ var doc = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.Error"
+                            "$ref": "#/definitions/rototiller.Error"
                         }
                     }
                 }
@@ -1562,7 +1529,7 @@ var doc = `{
         }
     },
     "definitions": {
-        "api.Error": {
+        "rototiller.Error": {
             "type": "object",
             "properties": {
                 "error": {
@@ -1570,7 +1537,7 @@ var doc = `{
                 }
             }
         },
-        "api.Job": {
+        "rototiller.Job": {
             "type": "object",
             "properties": {
                 "args": {
@@ -1579,11 +1546,8 @@ var doc = `{
                         "type": "string"
                     }
                 },
-                "customer_id": {
-                    "type": "string"
-                },
                 "end_time": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                    "type": "string"
                 },
                 "error": {
                     "type": "string"
@@ -1598,7 +1562,7 @@ var doc = `{
                     "type": "string"
                 },
                 "start_time": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"
@@ -1612,16 +1576,13 @@ var doc = `{
             "type": "object",
             "properties": {
                 "create_time": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
-                },
-                "customer_id": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
                 "last_used": {
-                    "$ref": "#/definitions/timestamppb.Timestamp"
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -1647,25 +1608,12 @@ var doc = `{
                     "type": "string"
                 }
             }
-        },
-        "timestamppb.Timestamp": {
-            "type": "object",
-            "properties": {
-                "nanos": {
-                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
-                    "type": "integer"
-                },
-                "seconds": {
-                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
-                    "type": "integer"
-                }
-            }
         }
     },
     "securityDefinitions": {
         "ApiKeyAuth": {
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "X-API-Key",
             "in": "header"
         }
     }
@@ -1683,9 +1631,9 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "rototiller.logsquaredn.io",
+	Host:        "localhost:8080",
 	BasePath:    "",
-	Schemes:     []string{"https"},
+	Schemes:     []string{"http"},
 	Title:       "Rototiller",
 	Description: "Geospatial data transformation service.",
 }

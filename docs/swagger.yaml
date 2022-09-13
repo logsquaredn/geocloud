@@ -1,19 +1,17 @@
 definitions:
-  api.Error:
+  rototiller.Error:
     properties:
       error:
         type: string
     type: object
-  api.Job:
+  rototiller.Job:
     properties:
       args:
         items:
           type: string
         type: array
-      customer_id:
-        type: string
       end_time:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       error:
         type: string
       id:
@@ -23,7 +21,7 @@ definitions:
       output_id:
         type: string
       start_time:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       status:
         type: string
       task_type:
@@ -32,13 +30,11 @@ definitions:
   rototiller.Storage:
     properties:
       create_time:
-        $ref: '#/definitions/timestamppb.Timestamp'
-      customer_id:
         type: string
       id:
         type: string
       last_used:
-        $ref: '#/definitions/timestamppb.Timestamp'
+        type: string
       name:
         type: string
       status:
@@ -55,23 +51,7 @@ definitions:
       type:
         type: string
     type: object
-  timestamppb.Timestamp:
-    properties:
-      nanos:
-        description: |-
-          Non-negative fractions of a second at nanosecond resolution. Negative
-          second values with fractions must still have non-negative nanos values
-          that count forward in time. Must be from 0 to 999,999,999
-          inclusive.
-        type: integer
-      seconds:
-        description: |-
-          Represents seconds of UTC time since Unix epoch
-          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-          9999-12-31T23:59:59Z inclusive.
-        type: integer
-    type: object
-host: rototiller.logsquaredn.io
+host: localhost:8080
 info:
   contact:
     email: logsquaredn@gmail.com
@@ -94,51 +74,46 @@ paths:
         name: X-Content-Type
         required: true
         type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       produces:
       - application/json
       responses:
         "2":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "5":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "16":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: RPC Create a storage
       tags:
       - Storage
   /api.storage.v1.StorageService/GetStorage:
     post:
       description: RPC Get the metadata of a stored dataset
-      parameters:
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       produces:
       - application/json
       responses:
         "2":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "5":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "16":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: RPC Get a storage
       tags:
       - Storage
@@ -150,10 +125,6 @@ paths:
         in: header
         name: Accept
         type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       produces:
       - application/json
       - ' application/zip'
@@ -161,29 +132,20 @@ paths:
         "2":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "16":
           description: ""
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: RPC Get a storage's content
       tags:
       - Content
   /api/v1/jobs:
     get:
-      description: |-
-        Get a list of jobs based on API Key
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get a list of jobs based on API Key
       parameters:
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Offset of jobs to return
         in: query
         name: offset
@@ -199,34 +161,26 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.Job'
+              $ref: '#/definitions/rototiller.Job'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a list of jobs
       tags:
       - Job
   /api/v1/jobs/{id}:
     get:
-      description: |-
-        Get the metadata of a job. This can be used as a way to track job status
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get the metadata of a job. This can be used as a way to track job
+        status
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Job ID
         in: path
         name: id
@@ -238,41 +192,32 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job
       tags:
       - Job
   /api/v1/jobs/{id}/storages/input:
     get:
-      description: |-
-        Get the metadata of a job's input
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get the metadata of a job's input
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Job ID
         in: path
         name: id
@@ -288,40 +233,31 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job's input
       tags:
       - Storage
   /api/v1/jobs/{id}/storages/input/content:
     get:
-      description: |-
-        Gets the content of a job's input
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Gets the content of a job's input
       parameters:
       - description: Request results as a Zip or JSON. Default Zip
         in: header
         name: Accept
-        type: string
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: Job ID
         in: path
@@ -337,37 +273,28 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job's input content
       tags:
       - Content
   /api/v1/jobs/{id}/storages/output:
     get:
-      description: |-
-        Get the metadata of a job's output
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get the metadata of a job's output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Job ID
         in: path
         name: id
@@ -383,40 +310,31 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job's output
       tags:
       - Storage
   /api/v1/jobs/{id}/storages/output/content:
     get:
-      description: |-
-        Gets the content of a job's output
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Gets the content of a job's output
       parameters:
       - description: Request results as a Zip or JSON. Default Zip
         in: header
         name: Accept
-        type: string
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: Job ID
         in: path
@@ -432,37 +350,28 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job's output content
       tags:
       - Content
   /api/v1/jobs/{id}/task:
     get:
-      description: |-
-        Get the metadata of a job's task
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get the metadata of a job's task
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Job ID
         in: path
         name: id
@@ -478,19 +387,21 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a job's task
       tags:
       - Task
@@ -504,23 +415,14 @@ paths:
         &emsp; - Buffers every geometry by the given distance
 
         &emsp; - For extra info: https://gdal.org/api/vector_c_api.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi
-        &emsp; - API Key is required either as a query parameter or a header
         &emsp; - Pass the geospatial data to be processed in the request body OR
         &emsp; - Pass the ID of an existing dataset with an empty request body
         &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
         &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -550,23 +452,25 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a buffer job
       tags:
       - Job
@@ -578,24 +482,14 @@ paths:
       description: |-
         <b><u>Create a filter job</u></b>
         &emsp; - Drops features and their geometries that don't match the given filter
-
-        &emsp; - API Key is required either as a query parameter or a header
         &emsp; - Pass the geospatial data to be processed in the request body OR
         &emsp; - Pass the ID of an existing dataset with an empty request body
         &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
         &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -625,24 +519,93 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a filter job
+      tags:
+      - Job
+  /api/v1/jobs/polygonvectorlookup:
+    post:
+      consumes:
+      - application/json
+      - ' application/zip'
+      description: |-
+        <b><u>Create a polygon vector lookup job</u></b>
+        &emsp; - Returns a list of attribute values of which the given polygon intersects
+        &emsp; - Pass the geospatial data to be processed in the request body OR
+        &emsp; - Pass the ID of an existing dataset with an empty request body
+        &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
+        &emsp; - This task will generate JSON output
+      parameters:
+      - description: Required if passing geospatial data in request body
+        in: header
+        name: Content-Type
+        type: string
+      - description: ID of existing dataset to use
+        in: query
+        name: input
+        type: string
+      - description: ID of existing job whose input dataset to use
+        in: query
+        name: input-of
+        type: string
+      - description: ID of existing job whose output dataset to use
+        in: query
+        name: output-of
+        type: string
+      - description: Comma separated list of attributes
+        in: query
+        name: attributes
+        required: true
+        type: string
+      - description: Polygon in WKT format
+        in: query
+        name: polygon
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rototiller.Job'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a polygon vector lookup job
       tags:
       - Job
   /api/v1/jobs/rasterlookup:
@@ -653,24 +616,14 @@ paths:
       description: |-
         <b><u>Create a raster lookup job</u></b>
         &emsp; - Returns the value of each requested band of which the given point intersects
-
-        &emsp; - API Key is required either as a query parameter or a header
         &emsp; - Pass the geospatial data to be processed in the request body OR
         &emsp; - Pass the ID of an existing dataset with an empty request body
         &emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff
         &emsp; - This task will generate JSON output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -705,23 +658,25 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a raster lookup job
       tags:
       - Job
@@ -741,17 +696,9 @@ paths:
         &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
         &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -771,23 +718,25 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a remove bad geometry job
       tags:
       - Job
@@ -799,24 +748,14 @@ paths:
       description: |-
         <b><u>Create a reproject job</u></b>
         &emsp; - Reprojects all geometries to the given projection
-
-        &emsp; - API Key is required either as a query parameter or a header
         &emsp; - Pass the geospatial data to be processed in the request body OR
         &emsp; - Pass the ID of an existing dataset with an empty request body
         &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
         &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -841,23 +780,25 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a reproject job
       tags:
       - Job
@@ -868,25 +809,15 @@ paths:
       - ' application/zip'
       description: |-
         <b><u>Create a vector lookup job</u></b>
-        &emsp; - Returns the feature and geometry of which the given point intersects
-
-        &emsp; - API Key is required either as a query parameter or a header
+        &emsp; - Returns a list of attribute values of which the given point intersects
         &emsp; - Pass the geospatial data to be processed in the request body OR
         &emsp; - Pass the ID of an existing dataset with an empty request body
         &emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input
-        &emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output
+        &emsp; - This task will generate JSON output
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Required if passing geospatial data in request body
         in: header
         name: Content-Type
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: ID of existing dataset to use
         in: query
@@ -921,41 +852,32 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.Job'
+            $ref: '#/definitions/rototiller.Job'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a vector lookup job
       tags:
       - Job
   /api/v1/storages:
     get:
-      description: |-
-        Get a list of stored datasets based on API Key
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get a list of stored datasets based on API Key
       parameters:
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
       - description: Offset of storages to return
         in: query
         name: offset
@@ -976,11 +898,13 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a list of storage
       tags:
       - Storage
@@ -990,18 +914,8 @@ paths:
       - ' application/zip'
       description: |-
         Stores a dataset. The ID of this stored dataset can be used as input to jobs
-
-        &emsp; - API Key is required either as a query parameter or a header
         &emsp; - Pass the geospatial data to be stored in the request body
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Storage name
         in: query
         name: name
@@ -1016,33 +930,24 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Create a storage
       tags:
       - Storage
   /api/v1/storages/{id}:
     get:
-      description: |-
-        Get the metadata of a stored dataset
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Get the metadata of a stored dataset
       parameters:
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
-        type: string
       - description: Storage ID
         in: path
         name: id
@@ -1058,40 +963,31 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a storage
       tags:
       - Storage
   /api/v1/storages/{id}/content:
     get:
-      description: |-
-        Gets the content of a stored dataset
-
-        &emsp; - API Key is required either as a query parameter or a header
+      description: Gets the content of a stored dataset
       parameters:
       - description: Request results as a Zip or JSON. Default Zip
         in: header
         name: Accept
-        type: string
-      - description: API Key query parameter
-        in: query
-        name: api-key
-        type: string
-      - description: API Key header
-        in: header
-        name: X-API-Key
         type: string
       - description: Storage ID
         in: path
@@ -1107,30 +1003,30 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a storage's content
       tags:
       - Content
   /api/v1/tasks:
     get:
-      description: '&emsp; - API Key is required either as a query parameter or a
-        header'
       produces:
       - application/json
       responses:
@@ -1143,18 +1039,16 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
       summary: Get a list of task types
       tags:
       - Task
   /api/v1/tasks/{type}:
     get:
-      description: '&emsp; - API Key is required either as a query parameter or a
-        header'
       parameters:
       - description: Task type
         in: path
@@ -1171,27 +1065,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.Error'
+            $ref: '#/definitions/rototiller.Error'
       summary: Get a task type
       tags:
       - Task
 schemes:
-- https
+- http
 securityDefinitions:
   ApiKeyAuth:
     in: header
-    name: Authorization
+    name: X-API-Key
     type: apiKey
 swagger: "2.0"

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
@@ -29,6 +30,15 @@ func NewErr(err error, codes ...int) *Error {
 	return e
 }
 
+func NewConnectErr(err error, codes ...int) *connect.Error {
+	if e, ok := err.(*Error); ok {
+		return connect.NewError(e.ConnectCode, e)
+	}
+
+	underlying := NewErr(err)
+	return connect.NewError(underlying.ConnectCode, underlying)
+}
+
 type Error struct {
 	Message        string       `json:"error,omitempty"`
 	HTTPStatusCode int          `json:"-"`
@@ -40,5 +50,5 @@ func (e *Error) Error() string {
 		return ""
 	}
 
-	return e.Message
+	return "HTTP " + fmt.Sprint(e.HTTPStatusCode) + ": " + e.Message
 }

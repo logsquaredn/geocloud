@@ -50,7 +50,7 @@ fallthrough: generate fmt install infra detach
 .PHONY: fmt
 fmt:
 	@$(GO) $@ ./...
-	@$(SWAG) fmt -d ./cmd/rototiller
+	@$(SWAG) fmt -d ./ --generalInfo ./cmd/rototiller/main.go
 	@$(BUF) format -w
 
 .PHONY: vet generate

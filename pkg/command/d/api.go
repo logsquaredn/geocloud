@@ -57,7 +57,7 @@ func NewAPI() *cobra.Command {
 					return err
 				}
 
-				srv, err := service.NewServer(datastore, eventStreamProducer, blobstore)
+				srv, err := service.NewHandler(datastore, eventStreamProducer, blobstore)
 				if err != nil {
 					return err
 				}
