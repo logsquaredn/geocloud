@@ -6,8 +6,8 @@
 // @contact.url    https://rototiller.logsquaredn.io/
 // @contact.email  logsquaredn@gmail.com
 
-// @schemes  http
-// @host     localhost:8080
+// @schemes  https
+// @host     rototiller.logsquaredn.io
 
 // @securityDefinitions.apikey  ApiKeyAuth
 // @in                          header
