@@ -6,6 +6,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
@@ -86,4 +87,9 @@ func (a *API) getAPIKeyFromContext(ctx *gin.Context) string {
 	}
 
 	return apiKey
+}
+
+func (a *API) createCustomer(email string) *api.Customer {
+
+	return &api.Customer{Id: "", ApiKey: uuid.New().String(), Email: email}
 }

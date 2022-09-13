@@ -6,4 +6,6 @@ option go_package = "github.com/logsquaredn/rototiller/pkg/api";
 
 message Customer {
   string id = 1;
+  string api_key = 2;
+  string email = 3;
 }
