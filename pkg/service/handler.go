@@ -12,7 +12,7 @@ import (
 	swagger "github.com/swaggo/gin-swagger"
 )
 
-type API struct {
+type Handler struct {
 	Datastore           *postgres.Datastore
 	EventStreamProducer *amqp.EventStreamProducer
 	Blobstore           *bucket.Blobstore
@@ -20,9 +20,9 @@ type API struct {
 	apiconnect.UnimplementedStorageServiceHandler
 }
 
-func NewServer(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStreamProducer, blobstore *bucket.Blobstore) (*API, error) {
+func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStreamProducer, blobstore *bucket.Blobstore) (*Handler, error) {
 	var (
-		a = &API{
+		a = &Handler{
 			Datastore:           datastore,
 			EventStreamProducer: eventStreamProducer,
 			Blobstore:           blobstore,
@@ -107,11 +107,11 @@ func NewServer(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStr
 		}
 	}
 
-	for _, f := range []func(*API) (string, http.Handler){
-		func(a *API) (string, http.Handler) {
+	for _, f := range []func(*Handler) (string, http.Handler){
+		func(a *Handler) (string, http.Handler) {
 			return apiconnect.NewStorageServiceHandler(a)
 		},
-		func(a *API) (string, http.Handler) {
+		func(a *Handler) (string, http.Handler) {
 			return "/", router
 		},
 	} {

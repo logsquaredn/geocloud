@@ -8,7 +8,7 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
-func (a *API) getTask(rawTaskType string) (*api.Task, error) {
+func (a *Handler) getTask(rawTaskType string) (*api.Task, error) {
 	taskType, err := api.ParseTaskType(rawTaskType)
 	if err != nil {
 		return nil, api.NewErr(err, http.StatusBadRequest)
@@ -17,7 +17,7 @@ func (a *API) getTask(rawTaskType string) (*api.Task, error) {
 	return a.getTaskType(taskType)
 }
 
-func (a *API) getTaskType(taskType api.TaskType) (*api.Task, error) {
+func (a *Handler) getTaskType(taskType api.TaskType) (*api.Task, error) {
 	task, err := a.Datastore.GetTask(taskType)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

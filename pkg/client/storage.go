@@ -56,17 +56,10 @@ func (c *Client) GetJobOutput(id string) (*api.Storage, error) {
 func (c *Client) CreateStorage(ctx context.Context, r Request) (*api.Storage, error) {
 	if c.rpc {
 		var (
-			stream  = c.storageClient.CreateStorage(ctx)
-			cookies = c.httpClient.Jar.Cookies(c.url)
+			stream = c.storageClient.CreateStorage(ctx)
 		)
 		stream.RequestHeader().Add("X-Content-Type", r.ContentType())
 		stream.RequestHeader().Add("X-Storage-Name", r.Query()["name"])
-
-		for _, cookie := range cookies {
-			if cookie.Name == api.APIKeyCookie {
-				stream.RequestHeader().Add(api.APIKeyHeader, cookie.Value)
-			}
-		}
 
 		if _, err := io.CopyBuffer(
 			rpcio.NewClientStreamWriter(stream, func(b []byte) *api.CreateStorageRequest {

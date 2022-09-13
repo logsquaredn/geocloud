@@ -17,7 +17,7 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *API) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, customer *api.Customer) (*api.Job, error) {
+func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, customer *api.Customer) (*api.Job, error) {
 	task, err := a.getTaskType(taskType)
 	if err != nil {
 		return nil, err
@@ -91,15 +91,15 @@ func (a *API) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, cust
 	return job, nil
 }
 
-func (a *API) createJob(ctx *gin.Context, taskType api.TaskType) (*api.Job, error) {
+func (a *Handler) createJob(ctx *gin.Context, taskType api.TaskType) (*api.Job, error) {
 	return a.createJobForCustomer(ctx, taskType, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJob(ctx *gin.Context, id string) (*api.Job, error) {
+func (a *Handler) getJob(ctx *gin.Context, id string) (*api.Job, error) {
 	return a.getJobForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Job, error) {
+func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Job, error) {
 	job, err := a.Datastore.GetJob(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -111,7 +111,7 @@ func (a *API) getJobForCustomer(ctx *gin.Context, id string, customer *api.Custo
 	return a.checkJobOwnershipForCustomer(job, customer)
 }
 
-func (a *API) checkJobOwnershipForCustomer(job *api.Job, customer *api.Customer) (*api.Job, error) {
+func (a *Handler) checkJobOwnershipForCustomer(job *api.Job, customer *api.Customer) (*api.Job, error) {
 	if job.CustomerId != customer.Id {
 		return nil, api.NewErr(fmt.Errorf("customer does not own job '%s'", job.Id), http.StatusForbidden)
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/frantjc/go-js"
 	"github.com/logsquaredn/rototiller"
+	"github.com/logsquaredn/rototiller/pkg/api"
 	"github.com/logsquaredn/rototiller/pkg/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/pkg/store/data/postgres"
 	"github.com/logsquaredn/rototiller/pkg/volume"
@@ -182,7 +183,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return err
 	}
 
-	ost, err := w.Datastore.CreateStorage(&rototiller.Storage{
+	ost, err := w.Datastore.CreateStorage(&api.Storage{
 		CustomerId: j.GetCustomerId(),
 		Status:     js.Ternary(t.GetKind() == rototiller.TaskKindLookup.String(), rototiller.StorageStatusFinal.String(), rototiller.StorageStatusTransformable.String()),
 	})

@@ -11,7 +11,7 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
-func (a *API) checkStorageOwnershipForCustomer(storage *api.Storage, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) checkStorageOwnershipForCustomer(storage *api.Storage, customer *api.Customer) (*api.Storage, error) {
 	if storage.CustomerId != customer.Id {
 		return nil, api.NewErr(fmt.Errorf("customer does not own storage '%s'", storage.Id), http.StatusForbidden)
 	}
@@ -19,7 +19,7 @@ func (a *API) checkStorageOwnershipForCustomer(storage *api.Storage, customer *a
 	return storage, nil
 }
 
-func (a *API) getStorageForCustomer(id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getStorageForCustomer(id string, customer *api.Customer) (*api.Storage, error) {
 	storage, err := a.Datastore.GetStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -31,7 +31,7 @@ func (a *API) getStorageForCustomer(id string, customer *api.Customer) (*api.Sto
 	return a.checkStorageOwnershipForCustomer(storage, customer)
 }
 
-func (a *API) createStorageForCustomer(name string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) createStorageForCustomer(name string, customer *api.Customer) (*api.Storage, error) {
 	storage, err := a.Datastore.CreateStorage(&api.Storage{
 		CustomerId: customer.Id,
 		Name:       name,
@@ -43,11 +43,11 @@ func (a *API) createStorageForCustomer(name string, customer *api.Customer) (*ap
 	return storage, nil
 }
 
-func (a *API) getJobOutputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
+func (a *Handler) getJobOutputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
 	return a.getJobOutputStorageForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getJobOutputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
 	storage, err := a.Datastore.GetJobOutputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -59,11 +59,11 @@ func (a *API) getJobOutputStorageForCustomer(ctx *gin.Context, id string, custom
 	return a.checkStorageOwnershipForCustomer(storage, customer)
 }
 
-func (a *API) getJobInputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
+func (a *Handler) getJobInputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
 	return a.getJobInputStorageForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
 }
 
-func (a *API) getJobInputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getJobInputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
 	storage, err := a.Datastore.GetJobInputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
+	"os/user"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -15,33 +15,37 @@ import (
 )
 
 func New(addr, apiKey string, opts ...ClientOpt) (*Client, error) {
-	parsedURL, err := url.Parse(addr)
+	if addr == "" {
+		addr = "http://localhost:8080/"
+		if apiKey == "" {
+			if u, err := user.Current(); err == nil {
+				apiKey = u.Username
+				if apiKey == "" {
+					apiKey = u.Name
+				}
+			}
+		}
+	}
+
+	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &Client{
-		url:          parsedURL,
+		url:          u,
 		httpClient:   http.DefaultClient,
 		pollInterval: time.Second / 2,
 		bufferSize:   8 * 1024,
 	}
+	c.httpClient.Transport = http.DefaultTransport
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
 			return nil, err
 		}
 	}
 
-	if c.httpClient.Jar, err = cookiejar.New(&cookiejar.Options{}); err != nil {
-		return nil, err
-	}
-	c.httpClient.Jar.SetCookies(parsedURL, []*http.Cookie{
-		{
-			Name:  api.APIKeyCookie,
-			Value: apiKey,
-		},
-	})
-
+	c.httpClient.Transport = &RoundTripper{c.httpClient.Transport, apiKey}
 	c.storageClient = apiconnect.NewStorageServiceClient(
 		c.httpClient,
 		c.url.String(),
@@ -89,5 +93,6 @@ func (c *Client) err(res *http.Response) error {
 		return fmt.Errorf("HTTP %d: unable to parse message", res.StatusCode)
 	}
 
-	return fmt.Errorf("HTTP %d: %s", res.StatusCode, e.Message)
+	e.HTTPStatusCode = res.StatusCode
+	return e
 }

@@ -6,9 +6,11 @@ type Customer = api.Customer
 
 type Event = api.Event
 
-type Job = api.Job
+type Error = api.Error
 
-type Storage = api.Storage
+type Job = api.RestJob
+
+type Storage = api.RestStorage
 
 type Task = api.Task
 

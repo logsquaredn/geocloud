@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/user"
 	"path/filepath"
 
 	"github.com/logsquaredn/rototiller/pkg/client"
@@ -25,15 +24,6 @@ func NewRunJobCommand() *cobra.Command {
 			Aliases: []string{"j"},
 			Args:    cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				if addr == "" {
-					addr = defaultAddr
-					if u, err := user.Current(); err == nil {
-						apiKey = u.Username
-						if apiKey == "" {
-							apiKey = u.Name
-						}
-					}
-				}
 				var (
 					req  client.Request
 					opts = []client.ClientOpt{}
@@ -50,9 +40,13 @@ func NewRunJobCommand() *cobra.Command {
 
 				if contentType == "" {
 					switch file {
-					case "", "-":
+					case "", stdin:
 					default:
-						contentType = "application/" + filepath.Ext(file)
+						ext := filepath.Ext(file)
+						if ext == "geojson" {
+							ext = "json"
+						}
+						contentType = "application/" + ext
 					}
 				}
 
@@ -67,16 +61,16 @@ func NewRunJobCommand() *cobra.Command {
 					var (
 						r = cmd.InOrStdin()
 					)
-					switch {
-					case file == stdin:
-					case file != "":
+					switch file {
+					case stdin:
+					case "":
+						cmd.PrintErrln("no input given")
+						os.Exit(1)
+					default:
 						if r, err = os.Open(file); err != nil {
 							cmd.PrintErrln(err)
 							os.Exit(1)
 						}
-					default:
-						cmd.PrintErrln("no input given")
-						os.Exit(1)
 					}
 
 					if contentType == "" {
