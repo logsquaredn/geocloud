@@ -1,8 +1,9 @@
 package client
 
 import (
-	"github.com/logsquaredn/rototiller/pkg/service"
 	"net/http"
+
+	"github.com/logsquaredn/rototiller/pkg/service"
 )
 
 type RoundTripper struct {

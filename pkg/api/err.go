@@ -31,10 +31,6 @@ func NewErr(err error, codes ...int) *Error {
 }
 
 func NewConnectErr(err error, codes ...int) *connect.Error {
-	if e, ok := err.(*Error); ok {
-		return connect.NewError(e.ConnectCode, e)
-	}
-
 	underlying := NewErr(err)
 	return connect.NewError(underlying.ConnectCode, underlying)
 }
