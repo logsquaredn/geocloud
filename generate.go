@@ -1,6 +1,6 @@
 package rototiller
 
-//go:generate swag fmt -d ./cmd/rototiller
+//go:generate swag fmt -d ./ --generalInfo ./cmd/rototiller/main.go
 
 //go:generate swag init -d ./cmd/rototiller --pd --parseDepth 4
 

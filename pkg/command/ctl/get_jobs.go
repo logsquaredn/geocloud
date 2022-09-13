@@ -3,7 +3,6 @@ package command
 import (
 	"encoding/json"
 	"os"
-	"os/user"
 
 	"github.com/logsquaredn/rototiller/pkg/client"
 	"github.com/spf13/cobra"
@@ -19,16 +18,6 @@ func NewGetJobCommand() *cobra.Command {
 			Aliases: []string{"job", "j"},
 			Args:    cobra.MaximumNArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				if addr == "" {
-					addr = defaultAddr
-					if u, err := user.Current(); err == nil {
-						apiKey = u.Username
-						if apiKey == "" {
-							apiKey = u.Name
-						}
-					}
-				}
-
 				var (
 					a    any
 					opts = []client.ClientOpt{}

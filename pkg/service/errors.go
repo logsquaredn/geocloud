@@ -5,7 +5,7 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
-func (a *API) err(ctx *gin.Context, err error) {
+func (a *Handler) err(ctx *gin.Context, err error) {
 	apiErr := api.NewErr(err)
 	ctx.JSON(apiErr.HTTPStatusCode, apiErr)
 }

@@ -18,7 +18,7 @@ const (
 	jsonExt = ".json"
 )
 
-func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, contentType, name string, r io.Reader, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) putRequestVolumeForCustomer(ctx *gin.Context, contentType, name string, r io.Reader, customer *api.Customer) (*api.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (a *API) putRequestVolumeForCustomer(ctx *gin.Context, contentType, name st
 	return storage, nil
 }
 
-func (a *API) getRequestVolume(contentType string, r io.Reader) (volume.Volume, error) {
+func (a *Handler) getRequestVolume(contentType string, r io.Reader) (volume.Volume, error) {
 	var (
 		applicationJSON = strings.Contains(contentType, "application/json")
 		applicationZip  = strings.Contains(contentType, "application/zip")
@@ -54,7 +54,7 @@ func (a *API) getRequestVolume(contentType string, r io.Reader) (volume.Volume, 
 	return volume.New(volume.NewFile(inputName, r, 0)), nil
 }
 
-func (a *API) getVolumeContent(accept string, vol volume.Volume) (io.ReadCloser, string, error) {
+func (a *Handler) getVolumeContent(accept string, vol volume.Volume) (io.ReadCloser, string, error) {
 	var (
 		applicationJSON = strings.Contains(accept, "application/json")
 		applicationZip  = strings.Contains(accept, "application/zip")

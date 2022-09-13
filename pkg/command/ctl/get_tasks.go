@@ -3,7 +3,6 @@ package command
 import (
 	"encoding/json"
 	"os"
-	"os/user"
 
 	"github.com/logsquaredn/rototiller/pkg/client"
 	"github.com/spf13/cobra"
@@ -17,16 +16,6 @@ func NewGetTasksCommand() *cobra.Command {
 			Aliases: []string{"task, t"},
 			Args:    cobra.MaximumNArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				if addr == "" {
-					addr = defaultAddr
-					if u, err := user.Current(); err == nil {
-						apiKey = u.Username
-						if apiKey == "" {
-							apiKey = u.Name
-						}
-					}
-				}
-
 				c, err := client.New(addr, apiKey)
 				if err != nil {
 					cmd.PrintErrln(err)
