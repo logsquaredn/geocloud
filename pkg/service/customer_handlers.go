@@ -19,7 +19,7 @@ type createCustomerQuery struct {
 // @Param    email  query     string  true  "Customer email"
 // @Success  200    {object}  rototiller.Customer
 // @Failure  500    {object}  api.Error
-// @Router   /api/v1/customers/create [post].
+// @Router   /api/v1/customers/create [get].
 func (a *Handler) createCustomerHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&createCustomerQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	_ "embed"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/logsquaredn/rototiller/pkg/api"
@@ -25,7 +26,7 @@ func (d *Datastore) GetCustomer(id string) (*api.Customer, error) {
 }
 
 func (d *Datastore) CreateCustomer(id string, email string) (*api.Customer, error) {
-	apikey := uuid.New().String()
+	apikey := strings.ReplaceAll(uuid.New().String(), "-", "")
 	if _, err := d.stmt.createCustomer.Exec(id, apikey, email); err != nil {
 		return nil, err
 	}
