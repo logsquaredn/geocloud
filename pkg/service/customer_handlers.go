@@ -29,6 +29,7 @@ func (a *Handler) createCustomerHandler(ctx *gin.Context) {
 	email := ctx.Query("email")
 	if email == "" {
 		a.err(ctx, api.NewErr(fmt.Errorf("email cannot be empty"), http.StatusBadRequest))
+		return
 	}
 
 	c, err := a.createCustomer(email)
