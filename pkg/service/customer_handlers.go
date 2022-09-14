@@ -19,8 +19,8 @@ type createCustomerQuery struct {
 // @Param email query string true "Customer email"
 // @Success      200  {object}  rototiller.Customer
 // @Failure      500  {object}  api.Error
-// @Router       /api/v1/customer/create [post].
-func (a *API) createCustomerHandler(ctx *gin.Context) {
+// @Router       /api/v1/customers/create [post].
+func (a *Handler) createCustomerHandler(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&createCustomerQuery{}); err != nil {
 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
 		return
@@ -31,7 +31,11 @@ func (a *API) createCustomerHandler(ctx *gin.Context) {
 		a.err(ctx, api.NewErr(fmt.Errorf("email cannot be empty"), http.StatusBadRequest))
 	}
 
-	// TODO create customer
+	c, err := a.createCustomer(email)
+	if err != nil {
+		a.err(ctx, err)
+		return
+	}
 
-	ctx.JSON(http.StatusOK, &api.Customer{})
+	ctx.JSON(http.StatusOK, c)
 }

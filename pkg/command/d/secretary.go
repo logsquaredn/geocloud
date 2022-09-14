@@ -45,15 +45,6 @@ func NewSecretary() *cobra.Command {
 					return err
 				}
 
-				i := customer.List(&stripe.CustomerListParams{})
-				for i.Next() {
-					c := i.Customer()
-					if _, err := datastore.CreateCustomer(c.ID); err != nil {
-						logr.Error(err, "creating customer", "id", c.ID, "name", c.Name)
-						return err
-					}
-				}
-
 				logr.Info("getting jobs")
 				jobs, err := datastore.GetJobsBefore(workJobsBefore)
 				if err != nil {

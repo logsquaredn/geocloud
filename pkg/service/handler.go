@@ -58,6 +58,10 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 	{
 		v1 := api.Group("/v1")
 		{
+			customers := v1.Group("/customers")
+			{
+				customers.POST("/create", a.createCustomerHandler)
+			}
 			tasks := v1.Group("/tasks")
 			{
 				tasks.GET("", a.listTasksHandler)

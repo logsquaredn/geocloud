@@ -3,11 +3,13 @@ package service
 import (
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/logsquaredn/rototiller/pkg/api"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 )
 
 var (
@@ -85,7 +87,28 @@ func (a *Handler) getAPIKeyFromContext(ctx *gin.Context) string {
 	return a.getAPIKeyFromHeader(ctx.Request.Header)
 }
 
-func (a *API) createCustomer(email string) *api.Customer {
+func (a *Handler) createCustomer(email string) (*api.Customer, error) {
+	if stripe.Key == "" {
+		stripe.Key = os.Getenv("STRIPE_API_KEY")
+	}
 
-	return &api.Customer{Id: "", ApiKey: uuid.New().String(), Email: email}
+	cp := &stripe.CustomerParams{Email: stripe.String(email)}
+	sc, err := customer.New(cp)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := a.Datastore.CreateCustomer(sc.ID, sc.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	cp = &stripe.CustomerParams{}
+	cp.AddMetadata("apikey", c.ApiKey)
+	_, err = customer.Update(sc.ID, cp)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
