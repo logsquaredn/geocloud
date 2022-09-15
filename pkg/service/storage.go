@@ -11,15 +11,15 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
-func (a *Handler) checkStorageOwnershipForCustomer(storage *api.Storage, customer *api.Customer) (*api.Storage, error) {
-	if storage.CustomerId != customer.Id {
-		return nil, api.NewErr(fmt.Errorf("customer does not own storage '%s'", storage.Id), http.StatusForbidden)
+func (a *Handler) checkStorageOwnership(storage *api.Storage, ownerID string) (*api.Storage, error) {
+	if storage.OwnerId != ownerID {
+		return nil, api.NewErr(fmt.Errorf("requester does not own storage '%s'", storage.Id), http.StatusForbidden)
 	}
 
 	return storage, nil
 }
 
-func (a *Handler) getStorageForCustomer(id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getStorageForOwner(id string, ownerID string) (*api.Storage, error) {
 	storage, err := a.Datastore.GetStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -28,12 +28,12 @@ func (a *Handler) getStorageForCustomer(id string, customer *api.Customer) (*api
 		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(storage, customer)
+	return a.checkStorageOwnership(storage, ownerID)
 }
 
-func (a *Handler) createStorageForCustomer(name string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) createStorageForOwner(name string, ownerID string) (*api.Storage, error) {
 	storage, err := a.Datastore.CreateStorage(&api.Storage{
-		CustomerId: customer.Id,
+		OwnerId: ownerID,
 		Name:       name,
 	})
 	if err != nil {
@@ -44,10 +44,14 @@ func (a *Handler) createStorageForCustomer(name string, customer *api.Customer) 
 }
 
 func (a *Handler) getJobOutputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
-	return a.getJobOutputStorageForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return a.getJobOutputStorageForOwner(ctx, id, ownerID)
 }
 
-func (a *Handler) getJobOutputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getJobOutputStorageForOwner(ctx *gin.Context, id string, ownerID string) (*api.Storage, error) {
 	storage, err := a.Datastore.GetJobOutputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -56,14 +60,18 @@ func (a *Handler) getJobOutputStorageForCustomer(ctx *gin.Context, id string, cu
 		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(storage, customer)
+	return a.checkStorageOwnership(storage, ownerID)
 }
 
 func (a *Handler) getJobInputStorage(ctx *gin.Context, id string) (*api.Storage, error) {
-	return a.getJobInputStorageForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return a.getJobInputStorageForOwner(ctx, id, ownerID)
 }
 
-func (a *Handler) getJobInputStorageForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) getJobInputStorageForOwner(ctx *gin.Context, id string, ownerID string) (*api.Storage, error) {
 	storage, err := a.Datastore.GetJobInputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -72,5 +80,5 @@ func (a *Handler) getJobInputStorageForCustomer(ctx *gin.Context, id string, cus
 		return nil, err
 	}
 
-	return a.checkStorageOwnershipForCustomer(storage, customer)
+	return a.checkStorageOwnership(storage, ownerID)
 }

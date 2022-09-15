@@ -32,7 +32,12 @@ func (a *Handler) listStorageHandler(ctx *gin.Context) {
 		return
 	}
 
-	storage, err := a.Datastore.GetCustomerStorage(a.getAssumedCustomerFromContext(ctx).GetId(), q.Offset, q.Limit)
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		a.err(ctx, err)
+		return
+	}
+	storage, err := a.Datastore.GetCustomerStorage(ownerID, q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		storage = []*api.Storage{}
@@ -59,9 +64,12 @@ func (a *Handler) listStorageHandler(ctx *gin.Context) {
 // @Failure      500  {object}  rototiller.Error
 // @Router       /api/v1/storages/{id} [get].
 func (a *Handler) getStorageHandler(ctx *gin.Context) {
-	var (
-		storage, err = a.getStorageForCustomer(ctx.Param("storage"), a.getAssumedCustomerFromContext(ctx))
-	)
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		a.err(ctx, err)
+		return
+	}
+	storage, err := a.getStorageForOwner(ctx.Param("storage"), ownerID)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -85,7 +93,12 @@ func (a *Handler) getStorageHandler(ctx *gin.Context) {
 // @Failure      500  {object}  rototiller.Error
 // @Router       /api/v1/storages/{id}/content [get].
 func (a *Handler) getStorageContentHandler(ctx *gin.Context) {
-	storage, err := a.getStorageForCustomer(ctx.Param("storage"), a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		a.err(ctx, err)
+		return
+	}
+	storage, err := a.getStorageForOwner(ctx.Param("storage"), ownerID)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -129,7 +142,12 @@ func (a *Handler) createStorageHandler(ctx *gin.Context) {
 		return
 	}
 
-	storage, err := a.createStorageForCustomer(ctx.Query("name"), a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		a.err(ctx, err)
+		return
+	}
+	storage, err := a.createStorageForOwner(ctx.Query("name"), ownerID)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -153,13 +171,12 @@ func (a *Handler) createStorageHandler(ctx *gin.Context) {
 // @Failure      16      {object}  rototiller.Error
 // @Router       /api.storage.v1.StorageService/GetStorageContent [post].
 func (a *Handler) GetStorageContent(ctx context.Context, req *connect.Request[api.GetStorageContentRequest], stream *connect.ServerStream[api.GetStorageContentResponse]) error {
-	// TODO refactor into interceptor https://connect.build/docs/go/streaming#interceptors
-	_, err := a.getCustomerFromHeader(req.Header())
+	ownerID, err := a.getOwnerIDFromHeader(req.Header())
 	if err != nil {
 		return api.NewConnectErr(err)
 	}
 
-	storage, err := a.getStorageForCustomer(req.Msg.Id, a.getAssumedCustomerFromHeader(req.Header()))
+	storage, err := a.getStorageForOwner(req.Msg.Id, ownerID)
 	if err != nil {
 		return api.NewConnectErr(err)
 	}
@@ -204,12 +221,12 @@ func (a *Handler) GetStorageContent(ctx context.Context, req *connect.Request[ap
 // @Failure      16  {object}  rototiller.Error
 // @Router       /api.storage.v1.StorageService/GetStorage [post].
 func (a *Handler) GetStorage(ctx context.Context, req *connect.Request[api.GetStorageRequest]) (*connect.Response[api.GetStorageResponse], error) {
-	_, err := a.getCustomerFromHeader(req.Header())
+	ownerID, err := a.getOwnerIDFromHeader(req.Header())
 	if err != nil {
 		return nil, api.NewConnectErr(err)
 	}
 
-	storage, err := a.getStorageForCustomer(req.Msg.GetId(), a.getAssumedCustomerFromHeader(req.Header()))
+	storage, err := a.getStorageForOwner(req.Msg.GetId(), ownerID)
 	if err != nil {
 		return nil, api.NewConnectErr(err)
 	}
@@ -234,7 +251,7 @@ func (a *Handler) GetStorage(ctx context.Context, req *connect.Request[api.GetSt
 // @Failure      16              {object}  rototiller.Error
 // @Router       /api.storage.v1.StorageService/CreateStorage [post].
 func (a *Handler) CreateStorage(ctx context.Context, stream *connect.ClientStream[api.CreateStorageRequest]) (*connect.Response[api.CreateStorageResponse], error) {
-	_, err := a.getCustomerFromHeader(stream.RequestHeader())
+	ownerID, err := a.getOwnerIDFromHeader(stream.RequestHeader())
 	if err != nil {
 		return nil, api.NewConnectErr(err)
 	}
@@ -252,9 +269,9 @@ func (a *Handler) CreateStorage(ctx context.Context, stream *connect.ClientStrea
 		return nil, api.NewConnectErr(err)
 	}
 
-	storage, err := a.createStorageForCustomer(
+	storage, err := a.createStorageForOwner(
 		stream.RequestHeader().Get("X-Storage-Name"),
-		a.getAssumedCustomerFromHeader(stream.RequestHeader()),
+		ownerID,
 	)
 	if err != nil {
 		return nil, api.NewConnectErr(err)

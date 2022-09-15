@@ -63,34 +63,34 @@ func NewSecretary() *cobra.Command {
 
 				logr.Info("processing jobs")
 				for _, j := range jobs {
-					c, err := customer.Get(j.GetCustomerId(), nil)
+					c, err := customer.Get(j.GetOwnerId(), nil)
 					if err != nil {
-						logr.Error(err, "getting customer", "id", j.GetCustomerId())
+						logr.Error(err, "getting customer", "id", j.GetOwnerId())
 						return err
 					}
 
-					logr.Info("parsing charge_rate for customer", "id", j.GetCustomerId())
+					logr.Info("parsing charge_rate for customer", "id", j.GetOwnerId())
 					chargeRate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 					if err != nil {
 						return err
 					}
 
-					logr.Info("updating balance for customer", "id", j.GetCustomerId())
+					logr.Info("updating balance for customer", "id", j.GetOwnerId())
 					updateBalance := c.Balance + chargeRate
-					if _, err = customer.Update(j.GetCustomerId(), &stripe.CustomerParams{
+					if _, err = customer.Update(j.GetOwnerId(), &stripe.CustomerParams{
 						Balance: &updateBalance,
 					}); err != nil {
-						logr.Error(err, "updating balance for customer", "id", j.GetCustomerId())
+						logr.Error(err, "updating balance for customer", "id", j.GetOwnerId())
 						return err
 					}
 
-					logr.Info("deleting data for customer", "id", j.GetCustomerId())
+					logr.Info("deleting data for customer", "id", j.GetOwnerId())
 					if err = datastore.DeleteJob(j.GetId()); err != nil {
-						logr.Error(err, "deleting data for customer", "id", j.GetCustomerId())
+						logr.Error(err, "deleting data for customer", "id", j.GetOwnerId())
 						return err
 					}
 
-					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetCustomerId(), c.Name}, ",") + "\n")
+					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetOwnerId(), c.Name}, ",") + "\n")
 				}
 
 				logr.Info("getting storages")

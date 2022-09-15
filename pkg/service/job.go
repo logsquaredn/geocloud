@@ -17,7 +17,7 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, customer *api.Customer) (*api.Job, error) {
+func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, ownerID string) (*api.Job, error) {
 	task, err := a.getTaskType(taskType)
 	if err != nil {
 		return nil, err
@@ -39,22 +39,22 @@ func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, 
 	case len(inputIDs) > 1:
 		return nil, api.NewErr(fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf), http.StatusBadRequest)
 	case input != "":
-		storage, err = a.getStorageForCustomer(input, customer)
+		storage, err = a.getStorageForOwner(input, ownerID)
 		if err != nil {
 			return nil, err
 		}
 	case inputOf != "":
-		storage, err = a.getJobInputStorageForCustomer(ctx, inputOf, customer)
+		storage, err = a.getJobInputStorageForOwner(ctx, inputOf, ownerID)
 		if err != nil {
 			return nil, err
 		}
 	case outputOf != "":
-		storage, err = a.getJobOutputStorageForCustomer(ctx, outputOf, customer)
+		storage, err = a.getJobOutputStorageForOwner(ctx, outputOf, ownerID)
 		if err != nil {
 			return nil, err
 		}
 	default:
-		storage, err = a.putRequestVolumeForCustomer(ctx, ctx.GetHeader("Content-Type"), ctx.Query("name"), ctx.Request.Body, customer)
+		storage, err = a.putRequestVolumeForOwner(ctx, ctx.GetHeader("Content-Type"), ctx.Query("name"), ctx.Request.Body, ownerID)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,7 @@ func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, 
 	job, err := a.Datastore.CreateJob(&api.Job{
 		TaskType:   task.Type,
 		Args:       buildJobArgs(ctx, task.Params),
-		CustomerId: customer.Id,
+		OwnerId: ownerID,
 		InputId:    storage.Id,
 	})
 	if err != nil {
@@ -92,14 +92,22 @@ func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, 
 }
 
 func (a *Handler) createJob(ctx *gin.Context, taskType api.TaskType) (*api.Job, error) {
-	return a.createJobForCustomer(ctx, taskType, a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return a.createJobForCustomer(ctx, taskType, ownerID)
 }
 
 func (a *Handler) getJob(ctx *gin.Context, id string) (*api.Job, error) {
-	return a.getJobForCustomer(ctx, id, a.getAssumedCustomerFromContext(ctx))
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return a.getJobForCustomer(ctx, id, ownerID)
 }
 
-func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, customer *api.Customer) (*api.Job, error) {
+func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, ownerID string) (*api.Job, error) {
 	job, err := a.Datastore.GetJob(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -108,11 +116,11 @@ func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, customer *api.C
 		return nil, err
 	}
 
-	return a.checkJobOwnershipForCustomer(job, customer)
+	return a.checkJobOwnership(job, ownerID)
 }
 
-func (a *Handler) checkJobOwnershipForCustomer(job *api.Job, customer *api.Customer) (*api.Job, error) {
-	if job.CustomerId != customer.Id {
+func (a *Handler) checkJobOwnership(job *api.Job, ownerID string) (*api.Job, error) {
+	if job.OwnerId != ownerID {
 		return nil, api.NewErr(fmt.Errorf("customer does not own job '%s'", job.Id), http.StatusForbidden)
 	}
 

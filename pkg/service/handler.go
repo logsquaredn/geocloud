@@ -65,7 +65,6 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 			}
 			storages := v1.Group("/storages")
 			{
-				storages.Use(a.customerMiddleware)
 				storages.POST("", a.createStorageHandler)
 				storages.GET("", a.listStorageHandler)
 				storage := storages.Group("/:storage")
@@ -76,7 +75,6 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 			}
 			jobs := v1.Group("/jobs")
 			{
-				jobs.Use(a.customerMiddleware)
 				jobs.GET("", a.listJobHandler)
 				jobs.POST("/buffer", a.createBufferJobHandler)
 				jobs.POST("/filter", a.createFilterJobHandler)
