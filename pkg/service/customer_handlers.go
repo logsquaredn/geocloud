@@ -9,7 +9,7 @@ import (
 )
 
 type createCustomerQuery struct {
-	email string `form:"email" binding:"required"`
+	Email string `form:"email" binding:"required"`
 }
 
 // @Summary  Create a new customer
