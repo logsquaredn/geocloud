@@ -2,7 +2,7 @@ CREATE TYPE job_status AS ENUM ('waiting', 'inprogress', 'complete', 'error');
 
 CREATE TABLE IF NOT EXISTS job ( 
     job_id VARCHAR (64) PRIMARY KEY,
-    customer_id VARCHAR (64) NOT NULL REFERENCES customer(customer_id),
+    owner_id VARCHAR (64) NOT NULL,
     input_id VARCHAR (64) NOT NULL REFERENCES storage(storage_id),
     output_id VARCHAR (64) REFERENCES storage(storage_id),
     task_type VARCHAR (32) NOT NULL REFERENCES task(task_type),
