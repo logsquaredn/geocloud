@@ -70,10 +70,10 @@ func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, 
 	}
 
 	job, err := a.Datastore.CreateJob(&api.Job{
-		TaskType:   task.Type,
-		Args:       buildJobArgs(ctx, task.Params),
-		OwnerId: ownerID,
-		InputId:    storage.Id,
+		TaskType: task.Type,
+		Args:     buildJobArgs(ctx, task.Params),
+		OwnerId:  ownerID,
+		InputId:  storage.Id,
 	})
 	if err != nil {
 		return nil, err

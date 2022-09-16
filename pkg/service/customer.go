@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	OwnerIDHeader   = "X-Owner-ID" //nolint:gosec // not an API key, just the header to check for API keys
+	OwnerIDHeader   = "X-Owner-ID"
 	errUnauthorized = api.NewErr(
 		errors.New(OwnerIDHeader+" header must exist"),
 		http.StatusBadRequest, int(connect.CodeInvalidArgument),

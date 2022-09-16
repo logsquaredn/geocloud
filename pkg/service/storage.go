@@ -34,7 +34,7 @@ func (a *Handler) getStorageForOwner(id string, ownerID string) (*api.Storage, e
 func (a *Handler) createStorageForOwner(name string, ownerID string) (*api.Storage, error) {
 	storage, err := a.Datastore.CreateStorage(&api.Storage{
 		OwnerId: ownerID,
-		Name:       name,
+		Name:    name,
 	})
 	if err != nil {
 		return nil, err

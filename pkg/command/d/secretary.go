@@ -45,13 +45,12 @@ func NewSecretary() *cobra.Command {
 					return err
 				}
 
+				logr.Info("getting customers from stripe")
+				customers := make(map[string]*stripe.Customer)
 				i := customer.List(&stripe.CustomerListParams{})
 				for i.Next() {
 					c := i.Customer()
-					if _, err := datastore.CreateCustomer(c.ID); err != nil {
-						logr.Error(err, "creating customer", "id", c.ID, "name", c.Name)
-						return err
-					}
+					customers[c.Metadata["owner_id"]] = c
 				}
 
 				logr.Info("getting jobs")
@@ -63,34 +62,31 @@ func NewSecretary() *cobra.Command {
 
 				logr.Info("processing jobs")
 				for _, j := range jobs {
-					c, err := customer.Get(j.GetOwnerId(), nil)
-					if err != nil {
-						logr.Error(err, "getting customer", "id", j.GetOwnerId())
-						return err
-					}
-
-					logr.Info("parsing charge_rate for customer", "id", j.GetOwnerId())
+					c := customers[j.OwnerId]
 					chargeRate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 					if err != nil {
+						logr.Error(err, "parsing customer charge rate", "id", j.GetOwnerId())
 						return err
 					}
+					c.Balance += chargeRate
+					customers[j.OwnerId] = c
 
-					logr.Info("updating balance for customer", "id", j.GetOwnerId())
-					updateBalance := c.Balance + chargeRate
-					if _, err = customer.Update(j.GetOwnerId(), &stripe.CustomerParams{
-						Balance: &updateBalance,
-					}); err != nil {
-						logr.Error(err, "updating balance for customer", "id", j.GetOwnerId())
-						return err
-					}
-
-					logr.Info("deleting data for customer", "id", j.GetOwnerId())
 					if err = datastore.DeleteJob(j.GetId()); err != nil {
 						logr.Error(err, "deleting data for customer", "id", j.GetOwnerId())
 						return err
 					}
 
 					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetOwnerId(), c.Name}, ",") + "\n")
+				}
+
+				logr.Info("updating customer's balances")
+				for _, c := range customers {
+					if _, err = customer.Update(c.ID, &stripe.CustomerParams{
+						Balance: &c.Balance,
+					}); err != nil {
+						logr.Error(err, "updating balance for customer", "id", c.ID)
+						return err
+					}
 				}
 
 				logr.Info("getting storages")

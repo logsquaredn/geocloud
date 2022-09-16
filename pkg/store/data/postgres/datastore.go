@@ -33,9 +33,9 @@ type Datastore struct {
 		createStorage           *sql.Stmt
 		deleteStorage           *sql.Stmt
 		updateStorage           *sql.Stmt
-		getStorageByOwnerID  *sql.Stmt
+		getStorageByOwnerID     *sql.Stmt
 		getStorageBefore        *sql.Stmt
-		getJobsByOwnerID     *sql.Stmt
+		getJobsByOwnerID        *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
 	}
@@ -57,9 +57,9 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			createStorage           *sql.Stmt
 			deleteStorage           *sql.Stmt
 			updateStorage           *sql.Stmt
-			getStorageByOwnerID  *sql.Stmt
+			getStorageByOwnerID     *sql.Stmt
 			getStorageBefore        *sql.Stmt
-			getJobsByOwnerID     *sql.Stmt
+			getJobsByOwnerID        *sql.Stmt
 			getOutputStorageByJobID *sql.Stmt
 			getInputStorageByJobID  *sql.Stmt
 		}{},
