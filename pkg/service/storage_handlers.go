@@ -37,7 +37,7 @@ func (a *Handler) listStorageHandler(ctx *gin.Context) {
 		a.err(ctx, err)
 		return
 	}
-	storage, err := a.Datastore.GetCustomerStorage(ownerID, q.Offset, q.Limit)
+	storage, err := a.Datastore.GetOwnerStorage(ownerID, q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		storage = []*api.Storage{}

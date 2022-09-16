@@ -28,7 +28,6 @@ type Datastore struct {
 		getTaskByJobID          *sql.Stmt
 		getTaskByType           *sql.Stmt
 		getTasksByTypes         *sql.Stmt
-		getCustomerByID         *sql.Stmt
 		getStorage              *sql.Stmt
 		createStorage           *sql.Stmt
 		deleteStorage           *sql.Stmt
@@ -52,7 +51,6 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getTaskByJobID          *sql.Stmt
 			getTaskByType           *sql.Stmt
 			getTasksByTypes         *sql.Stmt
-			getCustomerByID         *sql.Stmt
 			getStorage              *sql.Stmt
 			createStorage           *sql.Stmt
 			deleteStorage           *sql.Stmt

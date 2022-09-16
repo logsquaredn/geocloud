@@ -13,7 +13,7 @@ import (
 
 // @Security     ApiKeyAuth
 // @Summary      Get a list of jobs
-// @Description  Get a list of jobs based on API Key
+// @Description  Get a list of jobs based on owner ID
 // @Tags         Job
 // @Produce      application/json
 // @Param        offset  query     int  false  "Offset of jobs to return"

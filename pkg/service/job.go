@@ -17,7 +17,7 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *Handler) createJobForCustomer(ctx *gin.Context, taskType api.TaskType, ownerID string) (*api.Job, error) {
+func (a *Handler) createJobForOwner(ctx *gin.Context, taskType api.TaskType, ownerID string) (*api.Job, error) {
 	task, err := a.getTaskType(taskType)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (a *Handler) createJob(ctx *gin.Context, taskType api.TaskType) (*api.Job, 
 	if err != nil {
 		return nil, err
 	}
-	return a.createJobForCustomer(ctx, taskType, ownerID)
+	return a.createJobForOwner(ctx, taskType, ownerID)
 }
 
 func (a *Handler) getJob(ctx *gin.Context, id string) (*api.Job, error) {
@@ -104,10 +104,10 @@ func (a *Handler) getJob(ctx *gin.Context, id string) (*api.Job, error) {
 	if err != nil {
 		return nil, err
 	}
-	return a.getJobForCustomer(ctx, id, ownerID)
+	return a.getJobForOwner(ctx, id, ownerID)
 }
 
-func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, ownerID string) (*api.Job, error) {
+func (a *Handler) getJobForOwner(ctx *gin.Context, id string, ownerID string) (*api.Job, error) {
 	job, err := a.Datastore.GetJob(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -121,7 +121,7 @@ func (a *Handler) getJobForCustomer(ctx *gin.Context, id string, ownerID string)
 
 func (a *Handler) checkJobOwnership(job *api.Job, ownerID string) (*api.Job, error) {
 	if job.OwnerId != ownerID {
-		return nil, api.NewErr(fmt.Errorf("customer does not own job '%s'", job.Id), http.StatusForbidden)
+		return nil, api.NewErr(fmt.Errorf("user does not own job '%s'", job.Id), http.StatusForbidden)
 	}
 
 	return job, nil

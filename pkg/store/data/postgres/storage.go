@@ -105,7 +105,7 @@ func (d *Datastore) DeleteStorage(id string) error {
 	return err
 }
 
-func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*api.Storage, error) {
+func (d *Datastore) GetOwnerStorage(id string, offset, limit int) ([]*api.Storage, error) {
 	rows, err := d.stmt.getStorageByOwnerID.Query(id, offset, limit)
 	if err != nil {
 		return nil, err
