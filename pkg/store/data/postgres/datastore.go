@@ -21,7 +21,6 @@ type Datastore struct {
 	*sql.DB
 	stmt *struct {
 		createJob               *sql.Stmt
-		createCustomer          *sql.Stmt
 		updateJob               *sql.Stmt
 		getJobByID              *sql.Stmt
 		getJobsBefore           *sql.Stmt
@@ -29,14 +28,13 @@ type Datastore struct {
 		getTaskByJobID          *sql.Stmt
 		getTaskByType           *sql.Stmt
 		getTasksByTypes         *sql.Stmt
-		getCustomerByID         *sql.Stmt
 		getStorage              *sql.Stmt
 		createStorage           *sql.Stmt
 		deleteStorage           *sql.Stmt
 		updateStorage           *sql.Stmt
-		getStorageByCustomerID  *sql.Stmt
+		getStorageByOwnerID     *sql.Stmt
 		getStorageBefore        *sql.Stmt
-		getJobsByCustomerID     *sql.Stmt
+		getJobsByOwnerID        *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
 	}
@@ -46,7 +44,6 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 	d := &Datastore{
 		stmt: &struct {
 			createJob               *sql.Stmt
-			createCustomer          *sql.Stmt
 			updateJob               *sql.Stmt
 			getJobByID              *sql.Stmt
 			getJobsBefore           *sql.Stmt
@@ -54,14 +51,13 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getTaskByJobID          *sql.Stmt
 			getTaskByType           *sql.Stmt
 			getTasksByTypes         *sql.Stmt
-			getCustomerByID         *sql.Stmt
 			getStorage              *sql.Stmt
 			createStorage           *sql.Stmt
 			deleteStorage           *sql.Stmt
 			updateStorage           *sql.Stmt
-			getStorageByCustomerID  *sql.Stmt
+			getStorageByOwnerID     *sql.Stmt
 			getStorageBefore        *sql.Stmt
-			getJobsByCustomerID     *sql.Stmt
+			getJobsByOwnerID        *sql.Stmt
 			getOutputStorageByJobID *sql.Stmt
 			getInputStorageByJobID  *sql.Stmt
 		}{},
@@ -106,10 +102,6 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if d.stmt.createCustomer, err = d.DB.Prepare(createCustomerSQL); err != nil {
-		return nil, fmt.Errorf("failed to prepare statement: %w", err)
-	}
-
 	if d.stmt.updateJob, err = d.DB.Prepare(updateJobSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
@@ -138,10 +130,6 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if d.stmt.getCustomerByID, err = d.DB.Prepare(getCustomerByIDSQL); err != nil {
-		return nil, fmt.Errorf("failed to prepare statement; %w", err)
-	}
-
 	if d.stmt.createStorage, err = d.DB.Prepare(createStorageSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
@@ -158,11 +146,11 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 
-	if d.stmt.getJobsByCustomerID, err = d.DB.Prepare(getJobsByCustomerIDSQL); err != nil {
+	if d.stmt.getJobsByOwnerID, err = d.DB.Prepare(getJobsByOwnerIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 
-	if d.stmt.getStorageByCustomerID, err = d.DB.Prepare(getStorgageByCustomerIDSQL); err != nil {
+	if d.stmt.getStorageByOwnerID, err = d.DB.Prepare(getStorgageByOwnerIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

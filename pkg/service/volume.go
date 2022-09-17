@@ -18,13 +18,13 @@ const (
 	jsonExt = ".json"
 )
 
-func (a *Handler) putRequestVolumeForCustomer(ctx *gin.Context, contentType, name string, r io.Reader, customer *api.Customer) (*api.Storage, error) {
+func (a *Handler) putRequestVolumeForOwner(ctx *gin.Context, contentType, name string, r io.Reader, ownerID string) (*api.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := a.createStorageForCustomer(name, customer)
+	storage, err := a.createStorageForOwner(name, ownerID)
 	if err != nil {
 		return nil, err
 	}

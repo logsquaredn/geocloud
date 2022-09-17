@@ -2,8 +2,6 @@ package rototiller
 
 import "github.com/logsquaredn/rototiller/pkg/api"
 
-type Customer = api.Customer
-
 type Event = api.Event
 
 type Error = api.Error

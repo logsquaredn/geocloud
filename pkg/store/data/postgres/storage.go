@@ -23,8 +23,8 @@ var (
 	//go:embed sql/execs/update_storage.sql
 	updateStorageSQL string
 
-	//go:embed sql/queries/get_storage_by_customer_id.sql
-	getStorgageByCustomerIDSQL string
+	//go:embed sql/queries/get_storage_by_owner_id.sql
+	getStorgageByOwnerIDSQL string
 
 	//go:embed sql/queries/get_storage_before.sql
 	getStorageBeforeSQL string
@@ -43,7 +43,7 @@ func (d *Datastore) UpdateStorage(s *api.Storage) (*api.Storage, error) {
 	if err := d.stmt.updateStorage.QueryRow(
 		s.Id, s.Status, time.Now(),
 	).Scan(
-		&s.Id, &s.Status, &s.CustomerId,
+		&s.Id, &s.Status, &s.OwnerId,
 		&s.Name, &lastUsed, &createTime,
 	); err != nil {
 		return nil, err
@@ -67,9 +67,9 @@ func (d *Datastore) CreateStorage(s *api.Storage) (*api.Storage, error) {
 	}
 
 	if err = d.stmt.createStorage.QueryRow(
-		id, s.Status, s.CustomerId, s.Name,
+		id, s.Status, s.OwnerId, s.Name,
 	).Scan(
-		&s.Id, &s.Status, &s.CustomerId,
+		&s.Id, &s.Status, &s.OwnerId,
 		&s.Name, &lastUsed, &createTime,
 	); err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (d *Datastore) GetStorage(id string) (*api.Storage, error) {
 	)
 
 	if err := d.stmt.getStorage.QueryRow(id).Scan(
-		&s.Id, &s.Status, &s.CustomerId,
+		&s.Id, &s.Status, &s.OwnerId,
 		&s.Name, &lastUsed, &createTime,
 	); err != nil {
 		return nil, err
@@ -105,8 +105,8 @@ func (d *Datastore) DeleteStorage(id string) error {
 	return err
 }
 
-func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*api.Storage, error) {
-	rows, err := d.stmt.getStorageByCustomerID.Query(id, offset, limit)
+func (d *Datastore) GetOwnerStorage(id string, offset, limit int) ([]*api.Storage, error) {
+	rows, err := d.stmt.getStorageByOwnerID.Query(id, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (d *Datastore) GetCustomerStorage(id string, offset, limit int) ([]*api.Sto
 		)
 
 		if err = rows.Scan(
-			&s.Id, &s.Status, &s.CustomerId,
+			&s.Id, &s.Status, &s.OwnerId,
 			&s.Name, &lastUsed, &createTime,
 		); err != nil {
 			return nil, err
@@ -143,7 +143,7 @@ func (d *Datastore) GetJobInputStorage(id string) (*api.Storage, error) {
 	)
 
 	if err := d.stmt.getInputStorageByJobID.QueryRow(id).Scan(
-		&s.Id, &s.Status, &s.CustomerId,
+		&s.Id, &s.Status, &s.OwnerId,
 		&s.Name, &lastUsed, &createTime,
 	); err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (d *Datastore) GetJobOutputStorage(id string) (*api.Storage, error) {
 	)
 
 	if err := d.stmt.getOutputStorageByJobID.QueryRow(id).Scan(
-		&s.Id, &s.Status, &s.CustomerId,
+		&s.Id, &s.Status, &s.OwnerId,
 		&s.Name, &lastUsed, &createTime,
 	); err != nil {
 		return nil, err
@@ -191,7 +191,7 @@ func (d *Datastore) GetStorageBefore(duration time.Duration) ([]*api.Storage, er
 		)
 
 		if err = rows.Scan(
-			&s.Id, &s.Status, &s.CustomerId,
+			&s.Id, &s.Status, &s.OwnerId,
 			&s.Name, &lastUsed, &createTime,
 		); err != nil {
 			return nil, err

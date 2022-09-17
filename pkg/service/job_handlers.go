@@ -13,7 +13,7 @@ import (
 
 // @Security     ApiKeyAuth
 // @Summary      Get a list of jobs
-// @Description  Get a list of jobs based on API Key
+// @Description  Get a list of jobs based on owner ID
 // @Tags         Job
 // @Produce      application/json
 // @Param        offset  query     int  false  "Offset of jobs to return"
@@ -29,7 +29,11 @@ func (a *Handler) listJobHandler(ctx *gin.Context) {
 		return
 	}
 
-	jobs, err := a.Datastore.GetCustomerJobs(a.getAssumedCustomerFromContext(ctx).GetId(), q.Offset, q.Limit)
+	ownerID, err := a.getOwnerIDFromContext(ctx)
+	if err != nil {
+		a.err(ctx, err)
+	}
+	jobs, err := a.Datastore.GetOwnerJobs(ownerID, q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		jobs = []*api.Job{}

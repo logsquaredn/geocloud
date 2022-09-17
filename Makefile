@@ -107,11 +107,7 @@ migrate:
 	@$(DOCKER-COMPOSE) up --build migrate
 
 .PHONY: infra infrastructure
-infra infrastructure: services sleep migrate secretary local
-
-.PHONY: local
-local:
-	@$(DOCKER-COMPOSE) exec -T postgres psql -U rototiller -c "INSERT INTO customer VALUES ('$(WHOAMI)') ON CONFLICT DO NOTHING;"
+infra infrastructure: services sleep migrate secretary
 
 .PHONY: up
 up:

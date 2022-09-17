@@ -11,7 +11,7 @@
 
 // @securityDefinitions.apikey  ApiKeyAuth
 // @in                          header
-// @name                        X-API-Key
+// @name                        X-Owner-ID
 
 package main
 

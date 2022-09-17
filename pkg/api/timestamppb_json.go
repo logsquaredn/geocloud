@@ -8,16 +8,16 @@ import (
 )
 
 type RestJob struct {
-	Id         string    `json:"id,omitempty"`
-	CustomerId string    `json:"-"`
-	InputId    string    `json:"input_id,omitempty"`
-	OutputId   string    `json:"output_id,omitempty"`
-	TaskType   string    `json:"task_type,omitempty"`
-	Status     string    `json:"status,omitempty"`
-	Error      string    `json:"error,omitempty"`
-	StartTime  time.Time `json:"start_time,omitempty"`
-	EndTime    time.Time `json:"end_time,omitempty"`
-	Args       []string  `json:"args,omitempty"`
+	Id        string    `json:"id,omitempty"`
+	OwnerId   string    `json:"-"`
+	InputId   string    `json:"input_id,omitempty"`
+	OutputId  string    `json:"output_id,omitempty"`
+	TaskType  string    `json:"task_type,omitempty"`
+	Status    string    `json:"status,omitempty"`
+	Error     string    `json:"error,omitempty"`
+	StartTime time.Time `json:"start_time,omitempty"`
+	EndTime   time.Time `json:"end_time,omitempty"`
+	Args      []string  `json:"args,omitempty"`
 }
 
 func (j *Job) MarshalJSON() ([]byte, error) {
@@ -41,7 +41,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 	}
 
 	j.Id = rj.Id
-	j.CustomerId = rj.CustomerId
+	j.OwnerId = rj.OwnerId
 	j.InputId = rj.InputId
 	j.OutputId = rj.OutputId
 	j.TaskType = rj.TaskType
@@ -55,7 +55,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 
 type RestStorage struct {
 	Id         string    `json:"id,omitempty"`
-	CustomerId string    `json:"-"`
+	OwnerId    string    `json:"-"`
 	Name       string    `json:"name,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	LastUsed   time.Time `json:"last_used,omitempty"`
@@ -79,7 +79,7 @@ func (s *Storage) UnmarshalJSON(data []byte) error {
 	}
 
 	s.Id = rs.Id
-	s.CustomerId = rs.CustomerId
+	s.OwnerId = rs.OwnerId
 	s.Name = rs.Name
 	s.Status = rs.Status
 	s.LastUsed = timestamppb.New(rs.LastUsed)
