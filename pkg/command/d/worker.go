@@ -60,14 +60,12 @@ func NewWorker() *cobra.Command {
 				}
 
 				gorolimitVar := os.Getenv("GORO_LIMIT")
-				var gorolimit int
+				gorolimit := 16
 				if gorolimitVar != "" {
 					gorolimit, err = strconv.Atoi(gorolimitVar)
 					if err != nil {
 						gorolimit = 16
 					}
-				} else {
-					gorolimit = 16
 				}
 				sem := make(chan struct{}, gorolimit)
 				eventC, errC := eventStreamConsumer.Listen(ctx)
