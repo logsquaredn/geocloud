@@ -85,13 +85,10 @@ func NewWorker() *cobra.Command {
 
 							if err = wrkr.DoJob(ctx, id); err != nil {
 								logr.Error(err, "job failed", "id", id)
-								if err = eventStreamConsumer.Nack(event); err != nil {
-									logr.Error(err, "failed to nack", "event", event.GetId())
-								}
-							} else {
-								if err = eventStreamConsumer.Ack(event); err != nil {
-									logr.Error(err, "failed to ack", "event", event.GetId())
-								}
+							}
+
+							if err = eventStreamConsumer.Ack(event); err != nil {
+								logr.Error(err, "failed to ack", "event", event.GetId())
 							}
 
 							<-sem
