@@ -37,6 +37,8 @@ type Datastore struct {
 		getJobsByOwnerID        *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
+		createSink              *sql.Stmt
+		getSinksByJobID         *sql.Stmt
 	}
 }
 
@@ -60,6 +62,8 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getJobsByOwnerID        *sql.Stmt
 			getOutputStorageByJobID *sql.Stmt
 			getInputStorageByJobID  *sql.Stmt
+			createSink              *sql.Stmt
+			getSinksByJobID         *sql.Stmt
 		}{},
 	}
 
@@ -164,6 +168,14 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 
 	if d.stmt.getInputStorageByJobID, err = d.DB.Prepare(getInputStorageByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if d.stmt.createSink, err = d.DB.Prepare(createSinkSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement: %w", err)
+	}
+
+	if d.stmt.getSinksByJobID, err = d.DB.Prepare(getSinksByJobIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
 	return d, nil

@@ -33,14 +33,13 @@ var (
 
 func (d *Datastore) CreateJob(j *api.Job) (*api.Job, error) {
 	var (
-		id                 = uuid.New().String()
 		jobErr             sql.NullString
 		startTime, endTime sql.NullTime
 		outputID           sql.NullString
 	)
 
 	if err := d.stmt.createJob.QueryRow(
-		id, j.OwnerId,
+		uuid.NewString(), j.OwnerId,
 		j.InputId,
 		j.TaskType,
 		pq.Array(j.Args),

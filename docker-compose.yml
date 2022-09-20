@@ -21,8 +21,8 @@ services:
       STRIPE_API_KEY: ${STRIPE_API_KEY}
   api:
     <<: *rototiller_service
-    command: api -p=8081 --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
-    ports: [8080:8081]
+    command: api --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
+    ports: [8080:8080]
   worker: &worker_service
     <<: *rototiller_service
     command: worker --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
@@ -31,6 +31,9 @@ services:
   secretary:
     <<: *rototiller_service
     command: secretary --postgres-addr=postgres:5432 --bucket-addr=rototiller --archive-bucket-addr=rototiller-archive
+  plumber:
+    <<: *rototiller_service
+    command: plumber --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
     ports: [5432:5432]

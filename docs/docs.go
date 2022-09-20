@@ -161,7 +161,7 @@ var doc = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get a list of jobs based on API Key",
+                "description": "Get a list of jobs based on owner ID",
                 "produces": [
                     "application/json"
                 ],
@@ -1613,7 +1613,7 @@ var doc = `{
     "securityDefinitions": {
         "ApiKeyAuth": {
             "type": "apiKey",
-            "name": "X-API-Key",
+            "name": "X-Owner-ID",
             "in": "header"
         }
     }
@@ -1631,9 +1631,9 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "localhost:8080",
+	Host:        "rototiller.logsquaredn.io",
 	BasePath:    "",
-	Schemes:     []string{"http"},
+	Schemes:     []string{"https"},
 	Title:       "Rototiller",
 	Description: "Geospatial data transformation service.",
 }

@@ -49,6 +49,11 @@ func NewWorker() *cobra.Command {
 					return err
 				}
 
+				eventStreamProducer, err := eventStream.NewProducer(ctx)
+				if err != nil {
+					return err
+				}
+
 				blobstore, err := bucket.New(ctx, bucketAddr)
 				if err != nil {
 					return err
@@ -59,18 +64,15 @@ func NewWorker() *cobra.Command {
 					return err
 				}
 
-				gorolimitVar := os.Getenv("GORO_LIMIT")
-				var gorolimit int
-				if gorolimitVar != "" {
-					gorolimit, err = strconv.Atoi(gorolimitVar)
-					if err != nil {
-						gorolimit = 16
+				var (
+					eventC, errC = eventStreamConsumer.Listen(ctx)
+					sem          = make(chan byte, 16)
+				)
+				if val := os.Getenv("GORO_LIMIT"); val != "" {
+					if lim, err := strconv.Atoi(val); err == nil {
+						sem = make(chan byte, lim)
 					}
-				} else {
-					gorolimit = 16
 				}
-				sem := make(chan struct{}, gorolimit)
-				eventC, errC := eventStreamConsumer.Listen(ctx)
 
 				logr.Info("listening for jobs")
 				for {
@@ -79,19 +81,27 @@ func NewWorker() *cobra.Command {
 						logr.Error(err, "event stream errored")
 						return err
 					case event := <-eventC:
-						sem <- struct{}{}
+						sem <- 0
+
 						go func() {
 							id := api.JobEventMetadata(event.Metadata).GetId()
 
 							if err = wrkr.DoJob(ctx, id); err != nil {
 								logr.Error(err, "job failed", "id", id)
 								if err = eventStreamConsumer.Nack(event); err != nil {
-									logr.Error(err, "failed to nack", "event", event.GetId())
+									logr.Error(err, "failed to nack event", "id", event.GetId())
 								}
 							} else {
 								if err = eventStreamConsumer.Ack(event); err != nil {
-									logr.Error(err, "failed to ack", "event", event.GetId())
+									logr.Error(err, "failed to ack event", "id", event.GetId())
 								}
+							}
+
+							if err = eventStreamProducer.Emit(ctx, &api.Event{
+								Type:     api.EventTypeJobCompleted.String(),
+								Metadata: event.Metadata,
+							}); err != nil {
+								logr.Error(err, "failed to emit event", "job", id, "type", api.EventTypeJobCompleted.String())
 							}
 
 							<-sem

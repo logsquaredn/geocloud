@@ -23,6 +23,7 @@ import (
 	command "github.com/logsquaredn/rototiller/pkg/command/d"
 
 	_ "github.com/logsquaredn/rototiller/docs"
+	_ "github.com/logsquaredn/rototiller/pkg/sink/httpsink"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/s3blob"
 )

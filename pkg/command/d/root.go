@@ -21,7 +21,7 @@ func NewRoot() *cobra.Command {
 
 	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
 	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
-	rootCmd.AddCommand(NewAPI(), NewWorker(), NewMigrate(), NewSecretary())
+	rootCmd.AddCommand(NewAPI(), NewWorker(), NewMigrate(), NewSecretary(), NewPlumber())
 
 	return rootCmd
 }

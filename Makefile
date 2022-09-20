@@ -115,7 +115,7 @@ up:
 
 .PHONY: detach
 detach:
-	@$(DOCKER-COMPOSE) up -d --build worker api
+	@$(DOCKER-COMPOSE) up -d --build worker api plumber
 	
 .PHONY: restart
 restart:
@@ -144,13 +144,13 @@ sleep:
 docs:
 	@$(SWAG) init -d ./cmd/rototiller --pd --parseDepth 4
 
-MIGRATION = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
-TITLE ?= replace_me
+UUID = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
+MIGRATION ?= replace_me
 
 .PHONY: migration
 migration:
-	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
-	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"
+	@touch pkg/store/data/postgres/sql/migrations/$(UUID)_$(MIGRATION).up.sql
+	@echo "created pkg/store/data/postgres/sql/migrations/$(UUID)_$(MIGRATION).up.sql"
 
 RELEASE ?= $(VERSION)
 ifneq "$(strip $(PRERELEASE))" ""

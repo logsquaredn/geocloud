@@ -9,12 +9,14 @@ import (
 	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller/pkg/api"
+	"github.com/logsquaredn/rototiller/pkg/sink"
 )
 
 const (
 	qInput    = "input"
 	qInputOf  = "input-of"
 	qOutputOf = "output-of"
+	qPostTo   = "post-to"
 )
 
 func (a *Handler) createJobForOwner(ctx *gin.Context, taskType api.TaskType, ownerID string) (*api.Job, error) {
@@ -27,6 +29,7 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType api.TaskType, own
 		input    = ctx.Query(qInput)
 		inputOf  = ctx.Query(qInputOf)
 		outputOf = ctx.Query(qOutputOf)
+		postTo   = ctx.Query(qPostTo)
 		inputIDs = js.Filter(
 			[]string{input, inputOf, outputOf},
 			func(s string, _ int, _ []string) bool {
@@ -79,10 +82,23 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType api.TaskType, own
 		return nil, err
 	}
 
+	if postTo != "" {
+		if _, err := sink.OpenSink(ctx, postTo); err != nil {
+			return nil, err
+		}
+
+		if _, err := a.Datastore.CreateSink(&api.Sink{
+			Address: postTo,
+			JobId:   job.GetId(),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	if err = a.EventStreamProducer.Emit(ctx, &api.Event{
 		Type: api.EventTypeJobCreated.String(),
 		Metadata: map[string]string{
-			"id": job.Id,
+			"id": job.GetId(),
 		},
 	}); err != nil {
 		return nil, err

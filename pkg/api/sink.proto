@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package rototiller.api;
+
+option go_package = "github.com/logsquaredn/rototiller/pkg/api";
+
+message Sink {
+  string id = 1;
+  string address = 2;
+  string job_id = 3;
+}

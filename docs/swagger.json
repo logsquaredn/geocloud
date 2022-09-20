@@ -1,6 +1,6 @@
 {
     "schemes": [
-        "http"
+        "https"
     ],
     "swagger": "2.0",
     "info": {
@@ -13,7 +13,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "rototiller.logsquaredn.io",
     "paths": {
         "/api.storage.v1.StorageService/CreateStorage": {
             "post": {
@@ -149,7 +149,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get a list of jobs based on API Key",
+                "description": "Get a list of jobs based on owner ID",
                 "produces": [
                     "application/json"
                 ],
@@ -1601,7 +1601,7 @@
     "securityDefinitions": {
         "ApiKeyAuth": {
             "type": "apiKey",
-            "name": "X-API-Key",
+            "name": "X-Owner-ID",
             "in": "header"
         }
     }
