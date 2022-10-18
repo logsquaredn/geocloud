@@ -60,14 +60,12 @@ func NewWorker() *cobra.Command {
 				}
 
 				gorolimitVar := os.Getenv("GORO_LIMIT")
-				var gorolimit int
+				gorolimit := 16
 				if gorolimitVar != "" {
 					gorolimit, err = strconv.Atoi(gorolimitVar)
 					if err != nil {
 						gorolimit = 16
 					}
-				} else {
-					gorolimit = 16
 				}
 				sem := make(chan struct{}, gorolimit)
 				eventC, errC := eventStreamConsumer.Listen(ctx)
@@ -85,13 +83,10 @@ func NewWorker() *cobra.Command {
 
 							if err = wrkr.DoJob(ctx, id); err != nil {
 								logr.Error(err, "job failed", "id", id)
-								if err = eventStreamConsumer.Nack(event); err != nil {
-									logr.Error(err, "failed to nack", "event", event.GetId())
-								}
-							} else {
-								if err = eventStreamConsumer.Ack(event); err != nil {
-									logr.Error(err, "failed to ack", "event", event.GetId())
-								}
+							}
+
+							if err = eventStreamConsumer.Ack(event); err != nil {
+								logr.Error(err, "failed to ack", "event", event.GetId())
 							}
 
 							<-sem

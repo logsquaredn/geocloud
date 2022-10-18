@@ -62,7 +62,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		jobErr := stderr.Bytes()
 		switch {
 		case len(jobErr) > 0:
-			j.Error = string(jobErr)
+			j.Error = strings.ReplaceAll(string(jobErr)[0:512], "\n", " ")
 			j.Status = rototiller.JobStatusError.String()
 		case err != nil:
 			j.Error = err.Error()
@@ -74,6 +74,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		if updatedJob, err := w.Datastore.UpdateJob(j); err == nil {
 			j = updatedJob
 		} else {
+			fmt.Println(j.Error)
 			logr.Error(err, "updating job", "id", j.GetId())
 		}
 	}()
