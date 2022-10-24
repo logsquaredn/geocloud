@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"runtime"
 
 	"github.com/logsquaredn/rototiller"
@@ -48,7 +49,7 @@ func NewRoot() *cobra.Command {
 	)
 
 	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
-	rootCmd.Flags().StringVar(&proxyAddr, "proxy-addr", "", "proxy address")
+	rootCmd.Flags().StringVar(&proxyAddr, "proxy-addr", os.Getenv("ROTOTILLER_PROXY_ADDR"), "proxy address")
 	rootCmd.Flags().StringVar(&key, "key", "", "key")
 	rootCmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
 	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
