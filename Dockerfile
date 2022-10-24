@@ -30,8 +30,9 @@ ARG prerelease=
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rototiller ./cmd/rototiller
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoctl ./cmd/rotoctl
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoproxy ./cmd/rotoproxy
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rototiller ./cmd/rototiller
 
 FROM base_image AS rototiller
 ARG zip=assets/zip_3.0_x86_64.tgz

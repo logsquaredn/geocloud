@@ -11,7 +11,7 @@
 
 // @securityDefinitions.apikey  ApiKeyAuth
 // @in                          header
-// @name                        X-Owner-ID
+// @name                        Authorization
 
 package main
 
@@ -20,11 +20,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	command "github.com/logsquaredn/rototiller/pkg/command/rototiller"
+	command "github.com/logsquaredn/rototiller/pkg/command/proxy"
 
-	_ "github.com/logsquaredn/rototiller/pkg/docs/rototiller"
-	_ "gocloud.dev/blob/fileblob"
-	_ "gocloud.dev/blob/s3blob"
+	_ "github.com/logsquaredn/rototiller/pkg/docs/proxy"
+	_ "github.com/logsquaredn/rototiller/pkg/service"
 )
 
 func main() {

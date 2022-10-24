@@ -51,7 +51,7 @@ definitions:
       type:
         type: string
     type: object
-host: localhost:8080
+host: rototiller.logsquaredn.io
 info:
   contact:
     email: logsquaredn@gmail.com
@@ -144,7 +144,7 @@ paths:
       - Content
   /api/v1/jobs:
     get:
-      description: Get a list of jobs based on API Key
+      description: Get a list of jobs based on owner ID
       parameters:
       - description: Offset of jobs to return
         in: query
@@ -1082,10 +1082,10 @@ paths:
       tags:
       - Task
 schemes:
-- http
+- https
 securityDefinitions:
   ApiKeyAuth:
     in: header
-    name: X-API-Key
+    name: X-Owner-ID
     type: apiKey
 swagger: "2.0"

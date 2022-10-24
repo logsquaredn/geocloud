@@ -111,16 +111,16 @@ infra infrastructure: services sleep migrate secretary
 
 .PHONY: up
 up:
-	@$(DOCKER-COMPOSE) up --build worker api
+	@$(DOCKER-COMPOSE) up --build worker api proxy
 
 .PHONY: detach
 detach:
-	@$(DOCKER-COMPOSE) up -d --build worker api
+	@$(DOCKER-COMPOSE) up -d --build worker api proxy
 	
 .PHONY: restart
 restart:
-	@$(DOCKER-COMPOSE) stop worker api
-	@$(DOCKER-COMPOSE) up --build worker api
+	@$(DOCKER-COMPOSE) stop worker api proxy
+	@$(DOCKER-COMPOSE) up --build worker api proxy
 
 .PHONY: down
 down:

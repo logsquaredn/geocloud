@@ -116,3 +116,5 @@ require (
 	github.com/stripe/stripe-go/v72 v72.122.0
 	golang.org/x/mod v0.5.0 // indirect
 )
+
+require github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
