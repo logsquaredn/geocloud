@@ -33,7 +33,7 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 	}
 
 	var (
-		reverseProxy   = httputil.NewSingleHostReverseProxy(u)
+		reverseProxy = httputil.NewSingleHostReverseProxy(u)
 	)
 
 	router.GET("/healthz", func(ctx *gin.Context) {
@@ -139,7 +139,6 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 
 		reverseProxy.ServeHTTP(ctx.Writer, ctx.Request)
 	})
-
 
 	return router, nil
 }
