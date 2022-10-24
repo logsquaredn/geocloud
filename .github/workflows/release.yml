@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: ${{ needs.push.outputs.tag }}
+          release_name: v${{ needs.push.outputs.tag }}
           body: |
             **Image**:   `ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}`
             **Digest**:  `${{ needs.push.outputs.digest }}`
