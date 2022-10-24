@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 permissions: 
   contents: read
   packages: write 
@@ -25,7 +25,7 @@ jobs:
         run: echo "::set-output name=short-sha::${GITHUB_SHA::7}"
       - name: get-tag
         id: get-tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/})"
+        run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
       - uses: actions/checkout@v3
       - name: build
         id: build
@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITOPS_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: v${{ needs.push.outputs.tag }}
+          release_name: ${{ needs.push.outputs.tag }}
           body: |
             **Image**:   `ghcr.io/${{ github.repository }}:${{ needs.push.outputs.tag }}`
             **Digest**:  `${{ needs.push.outputs.digest }}`
