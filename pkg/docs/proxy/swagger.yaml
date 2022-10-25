@@ -1,12 +1,12 @@
 definitions:
-  api.Claims:
-    properties:
-      email:
-        type: string
-    type: object
   rototiller.Auth:
     properties:
       api_key:
+        type: string
+    type: object
+  rototiller.Claims:
+    properties:
+      email:
         type: string
     type: object
   rototiller.Error:
@@ -152,7 +152,7 @@ paths:
       summary: RPC Get a storage's content
       tags:
       - Content
-  /api/v1/apikey:
+  /api/v1/api-key:
     post:
       consumes:
       - application/json
@@ -163,7 +163,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.Claims'
+          $ref: '#/definitions/rototiller.Claims'
       produces:
       - application/json
       responses:
@@ -181,7 +181,7 @@ paths:
             $ref: '#/definitions/rototiller.Error'
       summary: Create an API key
       tags:
-      - API-key
+      - API-Key
   /api/v1/jobs:
     get:
       description: Get a list of jobs based on owner ID
@@ -1084,6 +1084,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a list of task types
       tags:
       - Task
@@ -1118,6 +1120,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
       summary: Get a task type
       tags:
       - Task

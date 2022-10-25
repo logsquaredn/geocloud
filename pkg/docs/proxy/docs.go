@@ -154,7 +154,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/apikey": {
+        "/api/v1/api-key": {
             "post": {
                 "description": "\u003cb\u003e\u003cu\u003eCreate an API key\u003c/u\u003e\u003c/b\u003e",
                 "consumes": [
@@ -164,7 +164,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "API-key"
+                    "API-Key"
                 ],
                 "summary": "Create an API key",
                 "parameters": [
@@ -174,7 +174,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.Claims"
+                            "$ref": "#/definitions/rototiller.Claims"
                         }
                     }
                 ],
@@ -1489,6 +1489,11 @@ var doc = `{
         },
         "/api/v1/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1523,6 +1528,11 @@ var doc = `{
         },
         "/api/v1/tasks/{type}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1575,18 +1585,18 @@ var doc = `{
         }
     },
     "definitions": {
-        "api.Claims": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
         "rototiller.Auth": {
             "type": "object",
             "properties": {
                 "api_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "rototiller.Claims": {
+            "type": "object",
+            "properties": {
+                "email": {
                     "type": "string"
                 }
             }

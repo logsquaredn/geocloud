@@ -1443,6 +1443,11 @@ var doc = `{
         },
         "/api/v1/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1477,6 +1482,11 @@ var doc = `{
         },
         "/api/v1/tasks/{type}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
