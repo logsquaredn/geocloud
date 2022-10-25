@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
-	"net/mail"
 	"net/url"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/pkg/api"
 	"github.com/logsquaredn/rototiller/pkg/service"
@@ -19,12 +16,17 @@ import (
 	swagger "github.com/swaggo/gin-swagger"
 )
 
+type Handler struct {
+	Key string
+}
+
 func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error) {
 	var (
 		_              = rototiller.LoggerFrom(ctx)
 		router         = gin.Default()
 		swaggerHandler = swagger.WrapHandler(files.Handler)
 		tokenParser    = jwt.NewParser()
+		h              = &Handler{key}
 	)
 
 	u, err := url.Parse(proxyAddr)
@@ -46,7 +48,7 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 	swagger := router.Group("/swagger/v1")
 	{
 		swagger.GET("/*any", func(ctx *gin.Context) {
-			if ctx.Param("any") == "" {
+			if ctx.Param("any") == "/" || ctx.Param("any") == "" {
 				ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
 			} else {
 				swaggerHandler(ctx)
@@ -54,51 +56,9 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 		})
 	}
 
-	token := router.Group("/api/v1/token")
+	apiKey := router.Group("/api/v1/apikey")
 	{
-		// @Summary      Create a token
-		// @Description  <b><u>Create a token</u></b>
-		// @Tags         Token
-		// @Accept       application/json
-		// @Produce      application/json
-		// @Success      201                {object}  rototiller.Auth
-		// @Failure      400                {object}  rototiller.Error
-		// @Failure      500                {object}  rototiller.Error
-		// @Router       /api/v1/token [post].
-		token.POST("", func(ctx *gin.Context) {
-			claims := &api.Claims{}
-			if err := ctx.ShouldBindJSON(claims); err != nil {
-				ctx.JSON(http.StatusBadRequest, api.NewErr(err))
-				return
-			}
-
-			if _, err = mail.ParseAddress(claims.GetEmail()); err != nil {
-				ctx.JSON(http.StatusBadRequest, api.NewErr(err))
-				return
-			}
-
-			var (
-				now   = time.Now()
-				exp   = now.Add(time.Hour * 24 * 7 * 4)
-				token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-					Subject:   claims.GetEmail(),
-					NotBefore: jwt.NewNumericDate(now),
-					IssuedAt:  jwt.NewNumericDate(now),
-					ExpiresAt: jwt.NewNumericDate(exp),
-					ID:        uuid.NewString(),
-				})
-			)
-
-			apiKey, err := token.SignedString([]byte(key))
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, api.NewErr(err))
-				return
-			}
-
-			ctx.JSON(http.StatusCreated, &api.Auth{
-				ApiKey: apiKey,
-			})
-		})
+		apiKey.POST("", h.createApiKey)
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {

@@ -1,4 +1,14 @@
 definitions:
+  api.Claims:
+    properties:
+      email:
+        type: string
+    type: object
+  rototiller.Auth:
+    properties:
+      api_key:
+        type: string
+    type: object
   rototiller.Error:
     properties:
       error:
@@ -142,6 +152,36 @@ paths:
       summary: RPC Get a storage's content
       tags:
       - Content
+  /api/v1/apikey:
+    post:
+      consumes:
+      - application/json
+      description: <b><u>Create an API key</u></b>
+      parameters:
+      - description: user info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.Claims'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rototiller.Auth'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+      summary: Create an API key
+      tags:
+      - API-key
   /api/v1/jobs:
     get:
       description: Get a list of jobs based on owner ID

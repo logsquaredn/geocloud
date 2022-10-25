@@ -154,6 +154,52 @@ var doc = `{
                 }
             }
         },
+        "/api/v1/apikey": {
+            "post": {
+                "description": "\u003cb\u003e\u003cu\u003eCreate an API key\u003c/u\u003e\u003c/b\u003e",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API-key"
+                ],
+                "summary": "Create an API key",
+                "parameters": [
+                    {
+                        "description": "user info",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.Claims"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Auth"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/jobs": {
             "get": {
                 "security": [
@@ -1529,6 +1575,22 @@ var doc = `{
         }
     },
     "definitions": {
+        "api.Claims": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "rototiller.Auth": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                }
+            }
+        },
         "rototiller.Error": {
             "type": "object",
             "properties": {

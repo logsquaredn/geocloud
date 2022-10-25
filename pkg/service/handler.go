@@ -45,7 +45,7 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 		v1 := swagger.Group("/v1")
 		{
 			v1.GET("/*any", func(ctx *gin.Context) {
-				if ctx.Param("any") == "" {
+				if ctx.Param("any") == "/" || ctx.Param("any") == "" {
 					ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
 				} else {
 					swaggerHandler(ctx)
