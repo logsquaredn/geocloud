@@ -32,7 +32,9 @@ func (a *Handler) listJobHandler(ctx *gin.Context) {
 	ownerID, err := a.getOwnerIDFromContext(ctx)
 	if err != nil {
 		a.err(ctx, err)
+		return
 	}
+
 	jobs, err := a.Datastore.GetOwnerJobs(ownerID, q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

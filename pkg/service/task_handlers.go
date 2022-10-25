@@ -10,6 +10,7 @@ import (
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
+// @Security     ApiKeyAuth
 // @Summary  Get a list of task types
 // @Tags     Task
 // @Produce  application/json
@@ -34,6 +35,7 @@ func (a *Handler) listTasksHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, tasks)
 }
 
+// @Security     ApiKeyAuth
 // @Summary  Get a task type
 // @Tags     Task
 // @Produce  application/json

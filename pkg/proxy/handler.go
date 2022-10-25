@@ -56,7 +56,7 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 		})
 	}
 
-	apiKey := router.Group("/api/v1/apikey")
+	apiKey := router.Group("/api/v1/api-key")
 	{
 		apiKey.POST("", h.createApiKey)
 	}
@@ -89,7 +89,7 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 		}
 
 		if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
-			ctx.Header(service.OwnerIDHeader, claims.Subject)
+			ctx.Request.Header.Set(service.OwnerIDHeader, claims.Subject)
 		} else {
 			ctx.JSON(http.StatusForbidden, &api.Error{
 				Message: "API key invalid",

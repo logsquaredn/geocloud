@@ -8,22 +8,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	_ "github.com/logsquaredn/rototiller"
+	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
 // @Summary      Create an API key
 // @Description  <b><u>Create an API key</u></b>
-// @Tags         API-key
+// @Tags         API-Key
 // @Accept       application/json
 // @Produce      application/json
-// @Param        request  body      api.Claims  true  "user info"
+// @Param        request  body      rototiller.Claims  true  "user info"
 // @Success      201      {object}  rototiller.Auth
 // @Failure      400      {object}  rototiller.Error
 // @Failure      500      {object}  rototiller.Error
-// @Router       /api/v1/apikey [post].
+// @Router       /api/v1/api-key [post].
 func (h *Handler) createApiKey(ctx *gin.Context) {
-	claims := &api.Claims{}
+	claims := &rototiller.Claims{}
 	if err := ctx.ShouldBindJSON(claims); err != nil {
 		ctx.JSON(http.StatusBadRequest, api.NewErr(err))
 		return
