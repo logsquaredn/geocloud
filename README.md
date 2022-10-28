@@ -33,6 +33,8 @@ make release VERSION=1.0.0 PRERELEASE=
 #### Example API calls
 
 ```sh
+# get an API key
+curl -d '{ "email": "" }' -X POST "https://rototiller.logsquaredn.io/api/v1/api-key"
 # create buffer job
 curl -X POST -H "Content-Type: application/zip" -H "X-API-Key: cus_LcKO8YPhzJZQgu" --data-binary '@/path/to/a.zip' "https://rototiller.logsquaredn.io/api/v1/jobs/buffer?buffer-distance=5&quadrant-segment-count=50"
 # get job result
