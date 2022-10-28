@@ -6,6 +6,7 @@ import (
 	"net/mail"
 	"net/smtp"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -72,13 +73,13 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 func sendEmail(email string, apiKey string) error {
 	from := os.Getenv("EMAIL_FROM")
 	password := os.Getenv("EMAIL_PASSWORD")
+	smtpAddress := os.Getenv("SMTP_ADDRESS")
 	to := []string{email}
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
+
 	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", from, to, apiKey))
 
-	auth := smtp.PlainAuth("", from, password, smtpHost)
-	err := smtp.SendMail(fmt.Sprintf("%s:%s", smtpHost, smtpPort), auth, from, to, message)
+	auth := smtp.PlainAuth("", from, password, strings.Split(smtpAddress, ":")[0])
+	err := smtp.SendMail(smtpAddress, auth, from, to, message)
 	if err != nil {
 		return err
 	}
