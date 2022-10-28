@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/mail"
 	"net/smtp"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +25,7 @@ import (
 // @Failure      500      {object}  rototiller.Error
 // @Router       /api/v1/api-key [post].
 func (h *Handler) createApiKey(ctx *gin.Context) {
-	logr := rototiller.LoggerFrom(ctx)
+	logr := rototiller.NewLogger()
 
 	claims := &rototiller.Claims{}
 	if err := ctx.ShouldBindJSON(claims); err != nil {
@@ -60,29 +58,25 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 		return
 	}
 
-	err = sendEmail(claims.Email, apiKey)
-	if err != nil {
-		logr.Error(err, "failed to send email containing api-key")
-		ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing api-key")))
-		return
-	}
+	if h.SMTPURL != nil {
+		err = h.sendEmail(claims.Email, apiKey)
+		if err != nil {
+			logr.Error(err, "failed to send email containing api-key")
+			ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing api-key")))
+			return
+		}
 
-	ctx.Status(http.StatusCreated)
+		ctx.Status(http.StatusCreated)
+	} else {
+		ctx.JSON(http.StatusCreated, &api.Auth{
+			ApiKey: apiKey,
+		})
+	}
 }
 
-func sendEmail(email string, apiKey string) error {
-	from := os.Getenv("EMAIL_FROM")
-	password := os.Getenv("EMAIL_PASSWORD")
-	smtpAddress := os.Getenv("SMTP_ADDRESS")
+func (h *Handler) sendEmail(email string, apiKey string) error {
 	to := []string{email}
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", h.From, to, apiKey))
 
-	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", from, to, apiKey))
-
-	auth := smtp.PlainAuth("", from, password, strings.Split(smtpAddress, ":")[0])
-	err := smtp.SendMail(smtpAddress, auth, from, to, message)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return smtp.SendMail(h.SMTPURL.Host, h.SMTPAuth, h.From, to, message)
 }
