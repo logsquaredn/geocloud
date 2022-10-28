@@ -1,8 +1,11 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"net/mail"
+	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +55,28 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &api.Auth{
-		ApiKey: apiKey,
-	})
+	err = sendEmail(claims.Email, apiKey)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing api-key")))
+		return
+	}
+
+	ctx.Status(http.StatusCreated)
+}
+
+func sendEmail(email string, apiKey string) error {
+	from := os.Getenv("EMAIL_FROM")
+	password := os.Getenv("EMAIL_PASSWORD")
+	to := []string{email}
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", from, to, apiKey))
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err := smtp.SendMail(fmt.Sprintf("%s:%s", smtpHost, smtpPort), auth, from, to, message)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
