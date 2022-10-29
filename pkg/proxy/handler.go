@@ -7,7 +7,6 @@ import (
 	"net/http/httputil"
 	"net/smtp"
 	"net/url"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -25,13 +24,13 @@ type Handler struct {
 	From     string
 }
 
-func NewHandler(ctx context.Context, proxyAddr, smtpAddr, from, key string) (http.Handler, error) {
+func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, smtpUsername, smtpPassword, key string) (http.Handler, error) {
 	var (
 		_              = rototiller.LoggerFrom(ctx)
 		router         = gin.Default()
 		swaggerHandler = swagger.WrapHandler(files.Handler)
 		tokenParser    = jwt.NewParser()
-		h              = &Handler{key, nil, nil, from}
+		h              = &Handler{key, nil, nil, smtpFrom}
 	)
 
 	u, err := url.Parse(proxyAddr)
@@ -45,8 +44,6 @@ func NewHandler(ctx context.Context, proxyAddr, smtpAddr, from, key string) (htt
 			return nil, err
 		}
 
-		smtpUsername := os.Getenv("SMTP_USERNAME")
-		smtpPassword := os.Getenv("SMTP_PASSWORD")
 		if smtpUsername != "" && smtpPassword != "" {
 			h.SMTPAuth = smtp.PlainAuth("", smtpUsername, smtpPassword, h.SMTPURL.Hostname())
 			h.SMTPURL.User = url.UserPassword(smtpUsername, smtpPassword)

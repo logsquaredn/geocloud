@@ -19,8 +19,8 @@ services:
       AMQP_USERNAME: rototiller
       AMQP_PASSWORD: rototiller
       STRIPE_API_KEY: ${STRIPE_API_KEY}
-      SMTP_USERNAME:
-      SMTP_PASSWORD: 
+      ROTOTILLER_SMTP_USERNAME:
+      ROTOTILLER_SMTP_PASSWORD: 
   api:
     <<: *rototiller_service
     command: api --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller

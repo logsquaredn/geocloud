@@ -16,10 +16,10 @@ import (
 
 func NewRoot() *cobra.Command {
 	var (
-		verbosity                      int
-		port                           int64
-		proxyAddr, smtpAddr, from, key string
-		rootCmd                        = &cobra.Command{
+		verbosity                                                      int
+		port                                                           int64
+		proxyAddr, smtpAddr, smtpFrom, smtpUsername, smtpPassword, key string
+		rootCmd                                                        = &cobra.Command{
 			Use:     "rotoproxy",
 			Version: rototiller.Semver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -37,7 +37,7 @@ func NewRoot() *cobra.Command {
 					return err
 				}
 
-				srv, err := proxy.NewHandler(ctx, proxyAddr, smtpAddr, from, key)
+				srv, err := proxy.NewHandler(ctx, proxyAddr, smtpAddr, smtpFrom, smtpUsername, smtpPassword, key)
 				if err != nil {
 					return err
 				}
@@ -51,7 +51,9 @@ func NewRoot() *cobra.Command {
 	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
 	rootCmd.Flags().StringVar(&proxyAddr, "proxy-addr", os.Getenv("ROTOTILLER_PROXY_ADDR"), "proxy address")
 	rootCmd.Flags().StringVar(&smtpAddr, "smtp-addr", os.Getenv("ROTOTILLER_SMTP_ADDR"), "smtp address")
-	rootCmd.Flags().StringVar(&from, "smtp-from", os.Getenv("ROTOTILLER_SMTP_FROM"), "smtp from")
+	rootCmd.Flags().StringVar(&smtpFrom, "smtp-from", os.Getenv("ROTOTILLER_SMTP_FROM"), "smtp from")
+	rootCmd.Flags().StringVar(&smtpUsername, "smtp-username", os.Getenv("ROTOTILLER_SMTP_USERNAME"), "smtp username")
+	rootCmd.Flags().StringVar(&smtpPassword, "smtp-password", os.Getenv("ROTOTILLER_SMTP_PASSWORD"), "smtp password")
 	rootCmd.Flags().StringVar(&key, "key", "", "key")
 	rootCmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
 	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
