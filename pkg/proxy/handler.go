@@ -54,6 +54,10 @@ func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, smtpUsername
 		reverseProxy = httputil.NewSingleHostReverseProxy(u)
 	)
 
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
+	})
+
 	router.GET("/healthz", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "application/text", []byte("ok\n"))
 	})
