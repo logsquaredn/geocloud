@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"net/smtp"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -17,16 +18,19 @@ import (
 )
 
 type Handler struct {
-	Key string
+	Key      string
+	SMTPURL  *url.URL
+	SMTPAuth smtp.Auth
+	From     string
 }
 
-func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error) {
+func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, smtpUsername, smtpPassword, key string) (http.Handler, error) {
 	var (
 		_              = rototiller.LoggerFrom(ctx)
 		router         = gin.Default()
 		swaggerHandler = swagger.WrapHandler(files.Handler)
 		tokenParser    = jwt.NewParser()
-		h              = &Handler{key}
+		h              = &Handler{key, nil, nil, smtpFrom}
 	)
 
 	u, err := url.Parse(proxyAddr)
@@ -34,9 +38,25 @@ func NewHandler(ctx context.Context, proxyAddr, key string) (http.Handler, error
 		return nil, err
 	}
 
+	if smtpAddr != "" {
+		h.SMTPURL, err = url.Parse(smtpAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		if smtpUsername != "" && smtpPassword != "" {
+			h.SMTPAuth = smtp.PlainAuth("", smtpUsername, smtpPassword, h.SMTPURL.Hostname())
+			h.SMTPURL.User = url.UserPassword(smtpUsername, smtpPassword)
+		}
+	}
+
 	var (
 		reverseProxy = httputil.NewSingleHostReverseProxy(u)
 	)
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
+	})
 
 	router.GET("/healthz", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "application/text", []byte("ok\n"))

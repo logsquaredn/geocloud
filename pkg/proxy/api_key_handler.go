@@ -1,8 +1,10 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"net/mail"
+	"net/smtp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,14 +25,18 @@ import (
 // @Failure      500      {object}  rototiller.Error
 // @Router       /api/v1/api-key [post].
 func (h *Handler) createApiKey(ctx *gin.Context) {
+	logr := rototiller.NewLogger()
+
 	claims := &rototiller.Claims{}
 	if err := ctx.ShouldBindJSON(claims); err != nil {
+		logr.Error(err, "failed bind request body")
 		ctx.JSON(http.StatusBadRequest, api.NewErr(err))
 		return
 	}
 
 	if _, err := mail.ParseAddress(claims.GetEmail()); err != nil {
-		ctx.JSON(http.StatusBadRequest, api.NewErr(err))
+		logr.Error(err, "failed to parse email address")
+		ctx.JSON(http.StatusBadRequest, api.NewErr(fmt.Errorf("failed to parse email address")))
 		return
 	}
 
@@ -52,7 +58,25 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &api.Auth{
-		ApiKey: apiKey,
-	})
+	if h.SMTPURL != nil {
+		err = h.sendEmail(claims.Email, apiKey)
+		if err != nil {
+			logr.Error(err, "failed to send email containing api-key")
+			ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing api-key")))
+			return
+		}
+
+		ctx.Status(http.StatusCreated)
+	} else {
+		ctx.JSON(http.StatusCreated, &api.Auth{
+			ApiKey: apiKey,
+		})
+	}
+}
+
+func (h *Handler) sendEmail(email string, apiKey string) error {
+	to := []string{email}
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", h.From, to, apiKey))
+
+	return smtp.SendMail(h.SMTPURL.Host, h.SMTPAuth, h.From, to, message)
 }
