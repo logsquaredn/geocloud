@@ -24,9 +24,7 @@ type ClientStreamReader[T any] struct {
 var _ io.Reader = &ClientStreamReader[any]{}
 
 func (r *ClientStreamReader[T]) Read(p []byte) (int, error) {
-	var (
-		pLen = len(p)
-	)
+	pLen := len(p)
 	for r.Buffer.Len() < pLen && r.ClientStream.Receive() {
 		var (
 			msg = r.ClientStream.Msg()

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/pkg/store/data/postgres"
 	"github.com/spf13/cobra"
 
@@ -16,6 +17,7 @@ func NewMigrate() *cobra.Command {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				var (
 					ctx = cmd.Context()
+					_   = rototiller.LoggerFrom(ctx)
 				)
 
 				migrations, err := postgres.NewMigrations(ctx, postgresAddr)

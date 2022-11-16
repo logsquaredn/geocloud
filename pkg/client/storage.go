@@ -55,9 +55,7 @@ func (c *Client) GetJobOutput(id string) (*api.Storage, error) {
 
 func (c *Client) CreateStorage(ctx context.Context, r Request) (*api.Storage, error) {
 	if c.rpc {
-		var (
-			stream = c.storageClient.CreateStorage(ctx)
-		)
+		stream := c.storageClient.CreateStorage(ctx)
 		stream.RequestHeader().Add("X-Content-Type", r.ContentType())
 		stream.RequestHeader().Add("X-Storage-Name", r.Query()["name"])
 

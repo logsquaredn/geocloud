@@ -25,7 +25,7 @@ make restart
 ```sh
 # push a tag--automation handles the rest
 # please use semantic versioning
-make release VERSION=1.0.0 PRERELEASE=
+make release SEMVER=1.0.0
 ```
 
 ### Examples

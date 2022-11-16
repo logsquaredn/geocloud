@@ -20,7 +20,7 @@ var doc = `{
         "contact": {
             "name": "logsquaredn",
             "url": "https://rototiller.logsquaredn.io/",
-            "email": "logsquaredn@gmail.com"
+            "email": "rototiller@logsquaredn.io"
         },
         "version": "{{.Version}}"
     },

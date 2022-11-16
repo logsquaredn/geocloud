@@ -64,7 +64,7 @@ definitions:
 host: rototiller.logsquaredn.io
 info:
   contact:
-    email: logsquaredn@gmail.com
+    email: rototiller@logsquaredn.io
     name: logsquaredn
     url: https://rototiller.logsquaredn.io/
   description: Geospatial data transformation service.

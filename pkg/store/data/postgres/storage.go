@@ -37,9 +37,7 @@ var (
 )
 
 func (d *Datastore) UpdateStorage(s *api.Storage) (*api.Storage, error) {
-	var (
-		lastUsed, createTime sql.NullTime
-	)
+	var lastUsed, createTime sql.NullTime
 	if err := d.stmt.updateStorage.QueryRow(
 		s.Id, s.Status, time.Now(),
 	).Scan(

@@ -2,17 +2,10 @@ package rototiller
 
 import "runtime/debug"
 
-var (
-	Version    = "0.0.0"
-	Prerelease = ""
-)
+var Semver = "0.0.0"
 
-func Semver() string {
-	version := Version
-
-	if Prerelease != "" {
-		version += "-" + Prerelease
-	}
+func GetSemver() string {
+	semver := Semver
 
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		var (
@@ -33,13 +26,13 @@ func Semver() string {
 			if i > 7 {
 				i = 7
 			}
-			version += "+" + revision[:i]
+			semver += "+" + revision[:i]
 		}
 
 		if modified {
-			version += "*"
+			semver += "*"
 		}
 	}
 
-	return version
+	return semver
 }

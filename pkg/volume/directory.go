@@ -9,7 +9,7 @@ import (
 )
 
 func NewDir(path string) (Volume, error) {
-	return Directory(path), os.MkdirAll(path, 0755)
+	return Directory(path), os.MkdirAll(path, 0o755)
 }
 
 type DirectoryFile struct {

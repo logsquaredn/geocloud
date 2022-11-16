@@ -17,13 +17,11 @@ const (
 	TaskTypePolygonVectorLookup TaskType = "polygonVectorLookup"
 )
 
-var (
-	AllTaskTypes = []TaskType{
-		TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
-		TaskTypeReproject, TaskTypeVectorLookup, TaskTypeRasterLookup,
-		TaskTypePolygonVectorLookup,
-	}
-)
+var AllTaskTypes = []TaskType{
+	TaskTypeBuffer, TaskTypeFilter, TaskTypeRemoveBadGeometry,
+	TaskTypeReproject, TaskTypeVectorLookup, TaskTypeRasterLookup,
+	TaskTypePolygonVectorLookup,
+}
 
 func (t TaskType) String() string {
 	return string(t)

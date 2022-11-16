@@ -20,9 +20,7 @@ import (
 	"mellium.im/sysexit"
 )
 
-var (
-	HyphenToUnderscoreReplacer = strings.NewReplacer("-", "_")
-)
+var HyphenToUnderscoreReplacer = strings.NewReplacer("-", "_")
 
 type Worker struct {
 	*postgres.Datastore

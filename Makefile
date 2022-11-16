@@ -37,10 +37,7 @@ REPOSITORY ?= logsquaredn/rototiller
 MODULE ?= github.com/$(REPOSITORY)
 TAG ?= $(REGISTRY)/$(REPOSITORY):latest
 
-VERSION ?= 0.0.0
-PRERELEASE ?= alpha0
-
-WHOAMI ?= $(shell whoami)
+SEMVER ?= 0.0.0
 
 .DEFAULT_GOAL := fallthrough
 
@@ -62,7 +59,7 @@ vet generate:
 
 .PHONY: lint
 lint:
-	@$(LINT) run
+	@$(LINT) run --fix
 
 .PHONY: tests
 tests:
@@ -78,7 +75,7 @@ test: tests
 
 .PHONY: rototiller rotoctl
 rototiller rotoctl:
-	@$(GO) build -ldflags "-s -w -X $(MODULE).Version=$(VERSION) -X $(MODULE).Prerelease=$(PRERELEASE)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
+	@$(GO) build -ldflags "-s -w -X $(MODULE).Semver=$(SEMVER)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
 
 .PHONY: install-rototiller
 install-rototiller: rototiller
@@ -116,7 +113,7 @@ up:
 .PHONY: detach
 detach:
 	@$(DOCKER-COMPOSE) up -d --build worker api proxy
-	
+
 .PHONY: restart
 restart:
 	@$(DOCKER-COMPOSE) stop worker api proxy
@@ -124,7 +121,7 @@ restart:
 
 .PHONY: down
 down:
-	@$(DOCKER-COMPOSE) down --remove-orphans
+	@$(DOCKER-COMPOSE) $@ --remove-orphans
 
 CLEAN ?= bin/* hack/rototiller/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
@@ -134,15 +131,11 @@ clean: down
 
 .PHONY: prune
 prune: clean
-	@$(DOCKER) system prune --volumes -a
+	@$(DOCKER) system $@ --volumes -a
 
 .PHONY: sleep
 sleep:
-	@sleep 2
-
-.PHONY: docs
-docs:
-	@$(SWAG) init -d ./cmd/rototiller --pd --parseDepth 4
+	@$@ 2
 
 MIGRATION = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
 TITLE ?= replace_me
@@ -152,12 +145,7 @@ migration:
 	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
 	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"
 
-RELEASE ?= $(VERSION)
-ifneq "$(strip $(PRERELEASE))" ""
-	RELEASE = $(VERSION)-$(PRERELEASE)
-endif
-
 .PHONY: release
 release:
-	@$(GIT) tag -a $(RELEASE) -m $(RELEASE)
+	@$(GIT) tag -a v$(SEMVER) -m v$(SEMVER)
 	@$(GIT) push --follow-tags

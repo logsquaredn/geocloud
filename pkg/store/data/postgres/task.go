@@ -16,9 +16,7 @@ var (
 )
 
 func (d *Datastore) GetTaskByJobID(id string) (*rototiller.Task, error) {
-	var (
-		t = &rototiller.Task{}
-	)
+	t := &rototiller.Task{}
 
 	if err := d.stmt.getTaskByJobID.QueryRow(id).Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
 		return nil, err
@@ -31,9 +29,7 @@ func (d *Datastore) GetTaskByJobID(id string) (*rototiller.Task, error) {
 var getTaskByTypeSQL string
 
 func (d *Datastore) GetTask(tt rototiller.TaskType) (*rototiller.Task, error) {
-	var (
-		t = &rototiller.Task{}
-	)
+	t := &rototiller.Task{}
 
 	if err := d.stmt.getTaskByType.QueryRow(tt.String()).Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
 		return nil, err
@@ -57,9 +53,7 @@ func (d *Datastore) GetTasks(taskTypes ...rototiller.TaskType) ([]*rototiller.Ta
 	var tasks []*rototiller.Task
 
 	for rows.Next() {
-		var (
-			t = &rototiller.Task{}
-		)
+		t := &rototiller.Task{}
 
 		if err = rows.Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
 			return nil, err

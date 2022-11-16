@@ -25,9 +25,11 @@ import (
 // @Failure      500      {object}  rototiller.Error
 // @Router       /api/v1/api-key [post].
 func (h *Handler) createApiKey(ctx *gin.Context) {
-	logr := rototiller.NewLogger()
+	var (
+		logr   = rototiller.NewLogger()
+		claims = &rototiller.Claims{}
+	)
 
-	claims := &rototiller.Claims{}
 	if err := ctx.ShouldBindJSON(claims); err != nil {
 		logr.Error(err, "failed bind request body")
 		ctx.JSON(http.StatusBadRequest, api.NewErr(err))
@@ -62,7 +64,7 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 		err = h.sendEmail(claims.Email, apiKey)
 		if err != nil {
 			logr.Error(err, "failed to send email containing api-key")
-			ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing api-key")))
+			ctx.JSON(http.StatusInternalServerError, api.NewErr(fmt.Errorf("failed to send email containing API key")))
 			return
 		}
 
@@ -75,8 +77,10 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 }
 
 func (h *Handler) sendEmail(email string, apiKey string) error {
-	to := []string{email}
-	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", h.From, to, apiKey))
+	var (
+		to      = []string{email}
+		message = []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Rototiller API Key\r\n%s", h.From, to, apiKey))
+	)
 
 	return smtp.SendMail(h.SMTPURL.Host, h.SMTPAuth, h.From, to, message)
 }

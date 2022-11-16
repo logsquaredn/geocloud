@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"net/smtp"
 	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -24,7 +25,7 @@ type Handler struct {
 	From     string
 }
 
-func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, smtpUsername, smtpPassword, key string) (http.Handler, error) {
+func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, key string) (http.Handler, error) {
 	var (
 		_              = rototiller.LoggerFrom(ctx)
 		router         = gin.Default()
@@ -44,15 +45,17 @@ func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, smtpUsername
 			return nil, err
 		}
 
+		var (
+			smtpUsername = os.Getenv("ROTOTILLER_SMTP_USERNAME")
+			smtpPassword = os.Getenv("ROTOTILLER_SMTP_PASSWORD")
+		)
 		if smtpUsername != "" && smtpPassword != "" {
 			h.SMTPAuth = smtp.PlainAuth("", smtpUsername, smtpPassword, h.SMTPURL.Hostname())
 			h.SMTPURL.User = url.UserPassword(smtpUsername, smtpPassword)
 		}
 	}
 
-	var (
-		reverseProxy = httputil.NewSingleHostReverseProxy(u)
-	)
+	reverseProxy := httputil.NewSingleHostReverseProxy(u)
 
 	router.GET("/healthz", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "application/text", []byte("ok\n"))

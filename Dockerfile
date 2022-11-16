@@ -1,5 +1,5 @@
 ARG base_image=osgeo/gdal:alpine-normal-3.4.3
-ARG build_image=golang:1.18-alpine3.15
+ARG build_image=golang:1.19-alpine3.15
 ARG build_tasks_image=osgeo/gdal:alpine-normal-3.4.3
 
 FROM ${base_image} AS base_image
@@ -25,14 +25,13 @@ RUN gcc -Wall lookup/rasterlookup.c shared/shared.c -l gdal -o /assets/rasterloo
 RUN gcc -Wall lookup/polygonVectorLookup.c shared/shared.c -l gdal -o /assets/polygonVectorLookup
 
 FROM build_image AS build
-ARG version=0.0.0
-ARG prerelease=
+ARG semver=0.0.0
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoctl ./cmd/rotoctl
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rotoproxy ./cmd/rotoproxy
-RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Version=${version} -X github.com/logsquaredn/rototiller.Prerelease=${prerelease}" -o /assets/rototiller ./cmd/rototiller
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rotoctl ./cmd/rotoctl
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rotoproxy ./cmd/rotoproxy
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rototiller ./cmd/rototiller
 
 FROM base_image AS rototiller
 ARG zip=assets/zip_3.0_x86_64.tgz

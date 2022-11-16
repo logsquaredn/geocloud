@@ -58,9 +58,7 @@ func NewRunJobCommand() *cobra.Command {
 				case outputOf != "":
 					req = client.NewJobWithOutputOfJob(outputOf, query)
 				default:
-					var (
-						r = cmd.InOrStdin()
-					)
+					r := cmd.InOrStdin()
 					switch file {
 					case stdin:
 					case "":

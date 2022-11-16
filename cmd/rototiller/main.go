@@ -4,7 +4,7 @@
 
 // @contact.name   logsquaredn
 // @contact.url    https://rototiller.logsquaredn.io/
-// @contact.email  logsquaredn@gmail.com
+// @contact.email  rototiller@logsquaredn.io
 
 // @schemes  https
 // @host     rototiller.logsquaredn.io

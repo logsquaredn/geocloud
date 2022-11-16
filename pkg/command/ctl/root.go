@@ -12,7 +12,7 @@ func NewRoot() *cobra.Command {
 		verbosity int
 		rootCmd   = &cobra.Command{
 			Use:     "rotoctl",
-			Version: rototiller.Semver(),
+			Version: rototiller.GetSemver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
 				cmd.SetContext(rototiller.WithLogger(cmd.Context(), rototiller.NewLogger().V(verbosity)))
 			},
