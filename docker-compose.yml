@@ -32,7 +32,7 @@ services:
   proxy:
     <<: *rototiller_service
     entrypoint: rotoproxy
-    command: --proxy-addr=http://api:8080/ --smtp-addr=smtp://smtp.gmail.com:587 --smtp-from=rototiller@logsquaredn.io --key=rototiller
+    command: --proxy-addr=http://api:8080/ --smtp-addr=smtp://smtp.gmail.com:587 --smtp-from=${ROTOTILLER_SMTP_USERNAME:-rototiller@logsquaredn.io} --key=rototiller
     depends_on: [api]
     ports: ["8081:8080"]
   worker-alt: *worker_service
