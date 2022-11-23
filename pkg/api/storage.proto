@@ -15,6 +15,12 @@ message Storage {
   google.protobuf.Timestamp create_time = 9;
 }
 
+message GetStoragesRequest {}
+
+message GetStoragesResponse {
+  repeated Storage storages = 1;
+}
+
 message GetStorageRequest {
   string id = 1;
 }
@@ -23,24 +29,7 @@ message GetStorageResponse {
   Storage storage = 1;
 }
 
-message GetStorageContentRequest {
-  string id = 1;
-}
-
-message GetStorageContentResponse {
-  bytes data = 1;
-}
-
-message CreateStorageRequest {
-  bytes data = 1;
-}
-
-message CreateStorageResponse {
-  Storage storage = 1;
-}
-
 service StorageService {
-  rpc GetStorageContent(GetStorageContentRequest) returns (stream GetStorageContentResponse) {}
+  rpc GetStorages(GetStoragesRequest) returns (GetStoragesResponse) {}
   rpc GetStorage(GetStorageRequest) returns (GetStorageResponse) {}
-  rpc CreateStorage(stream CreateStorageRequest) returns (CreateStorageResponse) {}
 }

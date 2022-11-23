@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
@@ -23,7 +22,7 @@ func (a *Handler) getStorageForOwner(id string, ownerID string) (*api.Storage, e
 	storage, err := a.Datastore.GetStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, api.NewErr(fmt.Errorf("storage '%s' not found", id), http.StatusNotFound, int(connect.CodeNotFound))
+		return nil, api.NewErr(fmt.Errorf("storage '%s' not found", id), http.StatusNotFound)
 	case err != nil:
 		return nil, err
 	}

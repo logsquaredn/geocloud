@@ -9,3 +9,22 @@ message Task {
   string kind = 2;
   repeated string params = 3;
 }
+
+message GetTasksRequest {}
+
+message GetTasksResponse {
+  repeated Task tasks = 1;
+}
+
+message GetTaskRequest {
+  string task_type = 1;
+}
+
+message GetTaskResponse {
+  Task task = 1;
+}
+
+service TaskService {
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {}
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {}
+}

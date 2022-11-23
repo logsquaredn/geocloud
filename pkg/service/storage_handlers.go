@@ -1,16 +1,13 @@
 package service
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"io"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	_ "github.com/logsquaredn/rototiller"
-	"github.com/logsquaredn/rototiller/internal/rpcio"
 	"github.com/logsquaredn/rototiller/pkg/api"
 )
 
@@ -159,132 +156,4 @@ func (a *Handler) createStorageHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, storage)
-}
-
-// @Security     ApiKeyAuth
-// @Summary      RPC Get a storage's content
-// @Description  RPC Gets the content of a stored dataset
-// @Tags         Content
-// @Produce      application/json, application/zip
-// @Param        Accept  header    string  false  "Request results as a Zip or JSON. Default Zip"
-// @Failure      2       {object}  rototiller.Error
-// @Failure      16      {object}  rototiller.Error
-// @Router       /api.storage.v1.StorageService/GetStorageContent [post].
-func (a *Handler) GetStorageContent(ctx context.Context, req *connect.Request[api.GetStorageContentRequest], stream *connect.ServerStream[api.GetStorageContentResponse]) error {
-	ownerID, err := a.getOwnerIDFromHeader(req.Header())
-	if err != nil {
-		return api.NewConnectErr(err)
-	}
-
-	storage, err := a.getStorageForOwner(req.Msg.Id, ownerID)
-	if err != nil {
-		return api.NewConnectErr(err)
-	}
-
-	volume, err := a.Blobstore.GetObject(ctx, storage.GetId())
-	if err != nil {
-		return api.NewConnectErr(err)
-	}
-
-	r, contentType, err := a.getVolumeContent(req.Header().Get("Accept"), volume)
-	if err != nil {
-		return api.NewConnectErr(err)
-	}
-	defer r.Close()
-
-	stream.ResponseHeader().Set("X-Content-Type", contentType)
-	_, err = io.Copy(
-		rpcio.NewServerStreamWriter(
-			stream,
-			func(b []byte) *api.GetStorageContentResponse {
-				return &api.GetStorageContentResponse{
-					Data: b,
-				}
-			},
-		),
-		r,
-	)
-	if err != nil {
-		return api.NewConnectErr(err)
-	}
-
-	return nil
-}
-
-// @Security     ApiKeyAuth
-// @Summary      RPC Get a storage
-// @Description  RPC Get the metadata of a stored dataset
-// @Tags         Storage
-// @Produce      application/json
-// @Failure      2   {object}  rototiller.Error
-// @Failure      5   {object}  rototiller.Error
-// @Failure      16  {object}  rototiller.Error
-// @Router       /api.storage.v1.StorageService/GetStorage [post].
-func (a *Handler) GetStorage(ctx context.Context, req *connect.Request[api.GetStorageRequest]) (*connect.Response[api.GetStorageResponse], error) {
-	ownerID, err := a.getOwnerIDFromHeader(req.Header())
-	if err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	storage, err := a.getStorageForOwner(req.Msg.GetId(), ownerID)
-	if err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	return connect.NewResponse(&api.GetStorageResponse{
-		Storage: &api.Storage{
-			Id:   storage.Id,
-			Name: storage.Name,
-		},
-	}), nil
-}
-
-// @Security     ApiKeyAuth
-// @Summary      RPC Create a storage
-// @Description  RPC Stores a dataset. The ID of this stored dataset can be used as input to jobs
-// @Tags         Storage
-// @Accept       application/json, application/zip
-// @Produce      application/json
-// @Param        X-Content-Type  header    string  true  "Content type to be stored"
-// @Failure      2               {object}  rototiller.Error
-// @Failure      5               {object}  rototiller.Error
-// @Failure      16              {object}  rototiller.Error
-// @Router       /api.storage.v1.StorageService/CreateStorage [post].
-func (a *Handler) CreateStorage(ctx context.Context, stream *connect.ClientStream[api.CreateStorageRequest]) (*connect.Response[api.CreateStorageResponse], error) {
-	ownerID, err := a.getOwnerIDFromHeader(stream.RequestHeader())
-	if err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	volume, err := a.getRequestVolume(
-		stream.RequestHeader().Get("X-Content-Type"),
-		rpcio.NewClientStreamReader(
-			stream,
-			func(t *api.CreateStorageRequest) []byte {
-				return t.GetData()
-			},
-		),
-	)
-	if err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	storage, err := a.createStorageForOwner(
-		stream.RequestHeader().Get("X-Storage-Name"),
-		ownerID,
-	)
-	if err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	if err = a.Blobstore.PutObject(ctx, storage.GetId(), volume); err != nil {
-		return nil, api.NewConnectErr(err)
-	}
-
-	return connect.NewResponse(&api.CreateStorageResponse{
-		Storage: &api.Storage{
-			Id:   storage.Id,
-			Name: storage.Name,
-		},
-	}), nil
 }

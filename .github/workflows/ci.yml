@@ -60,12 +60,10 @@ jobs:
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::${GITHUB_SHA::7}"
-      - uses: actions/checkout@v3
       - name: build
         id: build
         uses: docker/build-push-action@v3
         with:
-          context: .
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
           push: true
           tags: |

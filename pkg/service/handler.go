@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/rototiller/pkg/api/apiconnect"
 	"github.com/logsquaredn/rototiller/pkg/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/pkg/store/data/postgres"
 	"github.com/logsquaredn/rototiller/pkg/stream/event/amqp"
@@ -17,7 +16,6 @@ type Handler struct {
 	EventStreamProducer *amqp.EventStreamProducer
 	Blobstore           *bucket.Blobstore
 	*http.ServeMux
-	apiconnect.UnimplementedStorageServiceHandler
 }
 
 func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStreamProducer, blobstore *bucket.Blobstore) (*Handler, error) {
@@ -106,9 +104,6 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 	}
 
 	for _, f := range []func(*Handler) (string, http.Handler){
-		func(a *Handler) (string, http.Handler) {
-			return apiconnect.NewStorageServiceHandler(a)
-		},
 		func(a *Handler) (string, http.Handler) {
 			return "/", router
 		},

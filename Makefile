@@ -24,11 +24,12 @@ PKGS = $(shell $(GO) list ./... | grep -v /cmd/| grep -v /docs)
 
 DOCKER = docker
 SWAG = swag
-LINT = golangci-lint
+GOLANGCI-LINT = golangci-lint
 BUF = buf
 GCC ?= gcc
 INSTALL ?= sudo install
 GIT ?= git
+PRE-COMMIT ?= pre-commit
 
 BIN ?= /usr/local/bin
 
@@ -41,111 +42,90 @@ SEMVER ?= 0.0.0
 
 .DEFAULT_GOAL := fallthrough
 
-.PHONY: fallthrough
-fallthrough: generate fmt install infra detach
+fallthrough: install infra detach
 
-.PHONY: fmt
-fmt:
+fmt generate test vet:
 	@$(GO) $@ ./...
-	@$(SWAG) fmt -d ./ --generalInfo ./cmd/rototiller/main.go
+
+download vendor verify:
+	@$(GO) mod $@
+
+protos:
 	@$(BUF) format -w
+	@$(BUF) generate .
 
-.PHONY: vet generate
-vet generate:
-	@$(GO) $@ ./...
-
-.PHONY: download tidy
-	@$(GO) mody $@
-
-.PHONY: lint
 lint:
-	@$(LINT) run --fix
+	@$(GOLANGCI-LINT) run --fix
 
-.PHONY: tests
-tests:
-	@for pkg in $(PKGS); do \
-		$(GO) test -o $(CURDIR)/bin/$$(basename $$pkg).test -c $$pkg; \
-	done
+docs:
+	@$(SWAG) init -d ./cmd/rototiller --pd --parseDepth 4 -o ./pkg/docs/rototiller
+	@$(SWAG) init -d ./cmd/rotoproxy --pd --parseDepth 4 -o ./pkg/docs/proxy
 
-.PHONY: test
-test: tests
-	@for test in $(CURDIR)/bin/*.test; do \
-		$$test; \
-	done
-
-.PHONY: rototiller rotoctl
-rototiller rotoctl:
+rototiller rotoctl rotoproxy:
 	@$(GO) build -ldflags "-s -w -X $(MODULE).Semver=$(SEMVER)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
 
-.PHONY: install-rototiller
 install-rototiller: rototiller
 	@$(INSTALL) $(CURDIR)/bin/rototiller $(BIN)
 
-.PHONY: install-rotoctl
 install-rotoctl: rotoctl
 	@$(INSTALL) $(CURDIR)/bin/rotoctl $(BIN)
 
-install: install-rototiller install-rotoctl
+install-rotoproxy: rotoproxy
+	@$(INSTALL) $(CURDIR)/bin/rotoproxy $(BIN)
 
-.PHONY: services
+install: install-rototiller install-rotoctl install-rotoproxy
+
 services:
 	@$(DOCKER-COMPOSE) up -d minio postgres rabbitmq
 
-.PHONY: build
-build:
-	@$(DOCKER-COMPOSE) build
-
-.PHONY: secretary
 secretary:
 	@$(DOCKER-COMPOSE) up --build secretary
 
-.PHONY: migrate
 migrate:
 	@$(DOCKER-COMPOSE) up --build migrate
 
-.PHONY: infra infrastructure
 infra infrastructure: services sleep migrate secretary
 
-.PHONY: up
 up:
 	@$(DOCKER-COMPOSE) up --build worker api proxy
 
-.PHONY: detach
 detach:
 	@$(DOCKER-COMPOSE) up -d --build worker api proxy
 
-.PHONY: restart
 restart:
 	@$(DOCKER-COMPOSE) stop worker api proxy
 	@$(DOCKER-COMPOSE) up --build worker api proxy
 
-.PHONY: down
 down:
 	@$(DOCKER-COMPOSE) $@ --remove-orphans
 
-CLEAN ?= bin/* hack/rototiller/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
-
-.PHONY: clean
 clean: down
-	@rm -rf $(CLEAN)
+	@rm -rf bin/* hack/rototiller/* hack/rototiller/blobstore/* hack/minio/.minio.sys hack/minio/rototiller-archive/* hack/minio/rototiller/* hack/postgresql/* hack/rabbitmq/lib/* hack/rabbitmq/lib/.erlang.cookie hack/rabbitmq/log/*
 
-.PHONY: prune
 prune: clean
 	@$(DOCKER) system $@ --volumes -a
 
-.PHONY: sleep
 sleep:
 	@$@ 2
 
 MIGRATION = $(shell date -u +%Y%m%d%T | tr -cd [0-9])
 TITLE ?= replace_me
 
-.PHONY: migration
 migration:
 	@touch pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql
 	@echo "created pkg/store/data/postgres/sql/migrations/$(MIGRATION)_$(TITLE).up.sql; replace title and add SQL"
 
-.PHONY: release
 release:
 	@$(GIT) tag -a v$(SEMVER) -m v$(SEMVER)
 	@$(GIT) push --follow-tags
+
+proto: protos
+buf: proto
+gen: generate
+dl: download
+ven: vendor
+ver: verify
+format: fmt
+	@$(SWAG) fmt -d ./ -g ./cmd/rototiller/main.go
+	@$(SWAG) fmt -d ./ -g ./cmd/rotoproxy/main.go
+	@$(BUF) format -w

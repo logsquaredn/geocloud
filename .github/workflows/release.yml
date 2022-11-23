@@ -26,12 +26,10 @@ jobs:
       - name: get-tag
         id: get-tag
         run: echo "::set-output name=tag::$(echo ${GITHUB_REF#refs/tags/v})"
-      - uses: actions/checkout@v3
       - name: build
         id: build
         uses: docker/build-push-action@v3
         with:
-          context: .
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:${{ steps.get-short-sha.outputs.short-sha }}
           push: true
           build-args: |

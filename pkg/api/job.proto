@@ -18,3 +18,5 @@ message Job {
   google.protobuf.Timestamp end_time = 9;
   repeated string args = 10;
 }
+
+service JobService {}

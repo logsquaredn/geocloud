@@ -11,7 +11,6 @@ require (
 )
 
 require (
-	github.com/bufbuild/connect-go v0.4.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0
@@ -117,4 +116,7 @@ require (
 	golang.org/x/mod v0.5.0 // indirect
 )
 
-require github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
+require (
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
+	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
+)
