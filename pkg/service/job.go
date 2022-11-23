@@ -70,8 +70,7 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType api.TaskType, own
 	}
 
 	job, err := a.Datastore.CreateJob(&api.Job{
-		TaskType: task.Type,
-		Args:     buildJobArgs(ctx, task.Params),
+		Steps: []*api.Step{{TaskType: taskType.String(), Args: buildJobArgs(ctx, task.Params)}},
 		OwnerId:  ownerID,
 		InputId:  storage.Id,
 	})

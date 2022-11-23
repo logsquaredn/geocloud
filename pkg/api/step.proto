@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package rototiller.api;
+
+option go_package = "github.com/logsquaredn/rototiller/pkg/api";
+
+message Step {
+  string task_type = 1;
+  repeated string args = 2;
+}
