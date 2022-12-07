@@ -155,7 +155,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	// e.g. task.type = 'reproject'
 	//		=> task.params = ['target-projection'],
 	//      => ROTOTILLER_TARGET_PROJECTION=${?target-projection}
-	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
+	task.Env = append(task.Env, js.Map(j.Steps[0].Args, func(a string, i int, _ []string) string {
 		return "ROTOTILLER_" + strings.ToUpper(HyphenToUnderscoreReplacer.Replace(t.Params[i])) + "=" + a
 	})...)
 	task.Stdin = os.Stdin

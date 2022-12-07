@@ -12,6 +12,8 @@ type Error = api.Error
 
 type Job = api.RestJob
 
+type Step = api.RestStep
+
 type Storage = api.RestStorage
 
 type StorageStatus = api.StorageStatus

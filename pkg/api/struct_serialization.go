@@ -12,12 +12,11 @@ type RestJob struct {
 	OwnerId   string    `json:"-"`
 	InputId   string    `json:"input_id,omitempty"`
 	OutputId  string    `json:"output_id,omitempty"`
-	TaskType  string    `json:"task_type,omitempty"`
 	Status    string    `json:"status,omitempty"`
 	Error     string    `json:"error,omitempty"`
 	StartTime time.Time `json:"start_time,omitempty"`
 	EndTime   time.Time `json:"end_time,omitempty"`
-	Args      []string  `json:"args,omitempty"`
+	Steps     []*Step   `json:"steps,omitempty"`
 }
 
 func (j *Job) MarshalJSON() ([]byte, error) {
@@ -25,12 +24,10 @@ func (j *Job) MarshalJSON() ([]byte, error) {
 		Id:        j.GetId(),
 		InputId:   j.GetInputId(),
 		OutputId:  j.GetOutputId(),
-		TaskType:  j.GetTaskType(),
 		Status:    j.GetStatus(),
 		Error:     j.GetError(),
 		StartTime: j.GetStartTime().AsTime(),
 		EndTime:   j.GetEndTime().AsTime(),
-		Args:      j.GetArgs(),
 	})
 }
 
@@ -44,13 +41,23 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 	j.OwnerId = rj.OwnerId
 	j.InputId = rj.InputId
 	j.OutputId = rj.OutputId
-	j.TaskType = rj.TaskType
 	j.Status = rj.Status
 	j.StartTime = timestamppb.New(rj.StartTime)
 	j.EndTime = timestamppb.New(rj.EndTime)
-	j.Args = rj.Args
 
 	return nil
+}
+
+type RestStep struct {
+	TaskType string   `json:"task_type,omitempty"`
+	Args     []string `json:"args,omitempty"`
+}
+
+func (s *Step) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&RestStep{
+		TaskType: s.TaskType,
+		Args:     s.Args,
+	})
 }
 
 type RestStorage struct {

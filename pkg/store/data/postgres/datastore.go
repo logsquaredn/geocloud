@@ -37,6 +37,8 @@ type Datastore struct {
 		getJobsByOwnerID        *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
+		createStep              *sql.Stmt
+		getStepsByJobID         *sql.Stmt
 	}
 }
 
@@ -60,6 +62,8 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getJobsByOwnerID        *sql.Stmt
 			getOutputStorageByJobID *sql.Stmt
 			getInputStorageByJobID  *sql.Stmt
+			createStep              *sql.Stmt
+			getStepsByJobID         *sql.Stmt
 		}{},
 	}
 
@@ -163,6 +167,14 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 	}
 
 	if d.stmt.getInputStorageByJobID, err = d.DB.Prepare(getInputStorageByJobIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if d.stmt.createStep, err = d.DB.Prepare(createStepSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if d.stmt.getStepsByJobID, err = d.DB.Prepare(getStepsByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

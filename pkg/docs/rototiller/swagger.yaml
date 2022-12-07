@@ -214,6 +214,43 @@ paths:
       summary: Get a job
       tags:
       - Job
+  /api/v1/jobs/{id}/steps:
+    get:
+      description: Get the metadata of a job's steps
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rototiller.Task'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rototiller.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a job's steps
+      tags:
+      - Task
   /api/v1/jobs/{id}/storages/input:
     get:
       description: Get the metadata of a job's input
@@ -368,43 +405,6 @@ paths:
       summary: Get a job's output content
       tags:
       - Content
-  /api/v1/jobs/{id}/task:
-    get:
-      description: Get the metadata of a job's task
-      parameters:
-      - description: Job ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rototiller.Task'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/rototiller.Error'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/rototiller.Error'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/rototiller.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rototiller.Error'
-      security:
-      - ApiKeyAuth: []
-      summary: Get a job's task
-      tags:
-      - Task
   /api/v1/jobs/buffer:
     post:
       consumes:
