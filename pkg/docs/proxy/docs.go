@@ -1585,6 +1585,26 @@ var doc = `{
         }
     },
     "definitions": {
+        "api.Step": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "task_type": {
+                    "type": "string"
+                }
+            }
+        },
         "rototiller.Auth": {
             "type": "object",
             "properties": {
@@ -1612,12 +1632,6 @@ var doc = `{
         "rototiller.Job": {
             "type": "object",
             "properties": {
-                "args": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "end_time": {
                     "type": "string"
                 },
@@ -1639,8 +1653,11 @@ var doc = `{
                 "status": {
                     "type": "string"
                 },
-                "task_type": {
-                    "type": "string"
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Step"
+                    }
                 }
             }
         },

@@ -1,4 +1,17 @@
 definitions:
+  api.Step:
+    properties:
+      args:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      job_id:
+        type: string
+      task_type:
+        type: string
+    type: object
   rototiller.Error:
     properties:
       error:
@@ -6,10 +19,6 @@ definitions:
     type: object
   rototiller.Job:
     properties:
-      args:
-        items:
-          type: string
-        type: array
       end_time:
         type: string
       error:
@@ -24,8 +33,10 @@ definitions:
         type: string
       status:
         type: string
-      task_type:
-        type: string
+      steps:
+        items:
+          $ref: '#/definitions/api.Step'
+        type: array
     type: object
   rototiller.Storage:
     properties:
