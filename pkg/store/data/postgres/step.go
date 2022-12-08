@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	_ "embed"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
