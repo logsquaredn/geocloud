@@ -513,14 +513,14 @@ func (a *Handler) createPolygonVectorLookupJobHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, job)
 }
 
-type taskChainQuery struct {
-	InputID string `form:"attributes" binding:"required"`
-}
+// type taskChainQuery struct {
+// 	InputID string `form:"attributes" binding:"required"`
+// }
 
-func (a *Handler) createTaskChainJobHandler(ctx *gin.Context) {
-	if err := ctx.ShouldBindQuery(&taskChainQuery{}); err != nil {
-		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
-		return
-	}
+// func (a *Handler) createTaskChainJobHandler(ctx *gin.Context) {
+// 	if err := ctx.ShouldBindQuery(&taskChainQuery{}); err != nil {
+// 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
+// 		return
+// 	}
 
-}
+// }

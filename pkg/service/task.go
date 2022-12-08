@@ -30,7 +30,7 @@ func (a *Handler) getTaskType(taskType api.TaskType) (*api.Task, error) {
 }
 
 func (a *Handler) getTasksFromJobSteps(job *api.Job) ([]*api.Task, error) {
-	var tasks []*api.Task
+	tasks := make([]*api.Task, len(job.Steps))
 	for _, step := range job.Steps {
 		task, err := a.getTaskType(api.TaskType(step.TaskType))
 		if err != nil {
