@@ -25,7 +25,7 @@ type Datastore struct {
 		getJobByID              *sql.Stmt
 		getJobsBefore           *sql.Stmt
 		deleteJob               *sql.Stmt
-		getTaskByJobID          *sql.Stmt
+		getTasksByJobID         *sql.Stmt
 		getTaskByType           *sql.Stmt
 		getTasksByTypes         *sql.Stmt
 		getStorage              *sql.Stmt
@@ -50,7 +50,7 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getJobByID              *sql.Stmt
 			getJobsBefore           *sql.Stmt
 			deleteJob               *sql.Stmt
-			getTaskByJobID          *sql.Stmt
+			getTasksByJobID         *sql.Stmt
 			getTaskByType           *sql.Stmt
 			getTasksByTypes         *sql.Stmt
 			getStorage              *sql.Stmt
@@ -122,7 +122,7 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if d.stmt.getTaskByJobID, err = d.DB.Prepare(getTaskByJobIDSQL); err != nil {
+	if d.stmt.getTasksByJobID, err = d.DB.Prepare(getTasksByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 

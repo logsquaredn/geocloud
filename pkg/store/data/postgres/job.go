@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	_ "embed"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"

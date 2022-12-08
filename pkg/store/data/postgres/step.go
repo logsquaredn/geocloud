@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	_ "embed"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -28,7 +29,7 @@ func (d *Datastore) createSteps(jobID string, steps []*api.Step) ([]*api.Step, e
 			return d.stmt.createStep.QueryRow(
 				id, jobID,
 				step.TaskType,
-				step.Args,
+				pq.Array(step.Args),
 			).Scan(
 				&step.Id, &step.JobId,
 				&step.TaskType, pq.Array(&step.Args),
