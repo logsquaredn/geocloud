@@ -28,6 +28,7 @@ func (j *Job) MarshalJSON() ([]byte, error) {
 		Error:     j.GetError(),
 		StartTime: j.GetStartTime().AsTime(),
 		EndTime:   j.GetEndTime().AsTime(),
+		Steps:     j.Steps,
 	})
 }
 
