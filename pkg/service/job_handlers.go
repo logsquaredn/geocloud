@@ -72,8 +72,8 @@ func (a *Handler) getJobHandler(ctx *gin.Context) {
 }
 
 // @Security     ApiKeyAuth
-// @Summary      Get a job's steps
-// @Description  Get the metadata of a job's steps
+// @Summary      Get a job's tasks
+// @Description  Get the metadata of a job's tasks
 // @Tags         Task
 // @Produce      application/json
 // @Param        id   path      string  true  "Job ID"
@@ -82,8 +82,8 @@ func (a *Handler) getJobHandler(ctx *gin.Context) {
 // @Failure      403  {object}  rototiller.Error
 // @Failure      404  {object}  rototiller.Error
 // @Failure      500  {object}  rototiller.Error
-// @Router       /api/v1/jobs/{id}/steps [get].
-func (a *Handler) getJobStepsHandler(ctx *gin.Context) {
+// @Router       /api/v1/jobs/{id}/tasks [get].
+func (a *Handler) getJobTasksHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, ctx.Param("job"))
 	if err != nil {
 		a.err(ctx, err)

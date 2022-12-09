@@ -31,13 +31,13 @@ func (a *Handler) getTaskType(taskType api.TaskType) (*api.Task, error) {
 
 func (a *Handler) getTasksFromJobSteps(job *api.Job) ([]*api.Task, error) {
 	tasks := make([]*api.Task, len(job.Steps))
-	for _, step := range job.Steps {
+	for i, step := range job.Steps {
 		task, err := a.getTaskType(api.TaskType(step.TaskType))
 		if err != nil {
 			return nil, err
 		}
 
-		tasks = append(tasks, task)
+		tasks[i] = task
 	}
 
 	return tasks, nil
