@@ -86,7 +86,7 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 				job := jobs.Group("/:job")
 				{
 					job.GET("", a.getJobHandler)
-					job.GET("/task", a.getJobTaskHandler)
+					job.GET("/tasks", a.getJobTasksHandler)
 					jobStorages := job.Group("storages")
 					{
 						jobStorageInput := jobStorages.Group("input")

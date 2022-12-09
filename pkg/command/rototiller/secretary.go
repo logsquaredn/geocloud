@@ -76,7 +76,8 @@ func NewSecretary() *cobra.Command {
 						return err
 					}
 
-					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetOwnerId(), c.Name}, ",") + "\n")
+					// TODO write all steps, not just first one
+					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.Steps[0].TaskType, j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.Steps[0].GetArgs(), "|"), j.GetOwnerId(), c.Name}, ",") + "\n")
 				}
 
 				logr.Info("updating customer's balances")

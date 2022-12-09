@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/logsquaredn/rototiller/pkg/api"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -42,15 +41,11 @@ func (d *Datastore) CreateJob(j *api.Job) (*api.Job, error) {
 	if err := d.stmt.createJob.QueryRow(
 		id, j.OwnerId,
 		j.InputId,
-		j.TaskType,
-		pq.Array(j.Args),
 	).Scan(
 		&j.Id, &j.OwnerId,
 		&j.InputId, &outputID,
-		&j.TaskType,
 		&j.Status, &jobErr,
 		&startTime, &endTime,
-		pq.Array(&j.Args),
 	); err != nil {
 		return j, err
 	}
@@ -59,6 +54,12 @@ func (d *Datastore) CreateJob(j *api.Job) (*api.Job, error) {
 	j.StartTime = timestamppb.New(startTime.Time)
 	j.EndTime = timestamppb.New(endTime.Time)
 	j.OutputId = outputID.String
+
+	var err error
+	j.Steps, err = d.createSteps(j.Id, j.Steps)
+	if err != nil {
+		return j, err
+	}
 
 	return j, nil
 }
@@ -78,10 +79,8 @@ func (d *Datastore) UpdateJob(j *api.Job) (*api.Job, error) {
 		).Scan(
 			&j.Id, &j.OwnerId,
 			&j.InputId, &outputID,
-			&j.TaskType,
 			&j.Status, &jobErr,
 			&startTime, &endTime,
-			pq.Array(&j.Args),
 		); err != nil {
 			return j, err
 		}
@@ -93,10 +92,8 @@ func (d *Datastore) UpdateJob(j *api.Job) (*api.Job, error) {
 		).Scan(
 			&j.Id, &j.OwnerId,
 			&j.InputId, &outputID,
-			&j.TaskType,
 			&j.Status, &jobErr,
 			&startTime, &endTime,
-			pq.Array(&j.Args),
 		); err != nil {
 			return j, err
 		}
@@ -106,6 +103,8 @@ func (d *Datastore) UpdateJob(j *api.Job) (*api.Job, error) {
 	j.StartTime = timestamppb.New(startTime.Time)
 	j.EndTime = timestamppb.New(endTime.Time)
 	j.OutputId = outputID.String
+
+	// TODO any reason why Steps would need updated?
 
 	return j, nil
 }
@@ -121,10 +120,8 @@ func (d *Datastore) GetJob(id string) (*api.Job, error) {
 	if err = d.stmt.getJobByID.QueryRow(id).Scan(
 		&j.Id, &j.OwnerId,
 		&j.InputId, &outputID,
-		&j.TaskType,
 		&j.Status, &jobErr,
 		&startTime, &endTime,
-		pq.Array(&j.Args),
 	); err != nil {
 		return j, err
 	}
@@ -133,6 +130,11 @@ func (d *Datastore) GetJob(id string) (*api.Job, error) {
 	j.StartTime = timestamppb.New(startTime.Time)
 	j.EndTime = timestamppb.New(endTime.Time)
 	j.OutputId = outputID.String
+
+	j.Steps, err = d.getSteps(j.Id)
+	if err != nil {
+		return j, err
+	}
 
 	return j, nil
 }
@@ -158,10 +160,8 @@ func (d *Datastore) GetJobsBefore(duration time.Duration) ([]*api.Job, error) {
 		err = rows.Scan(
 			&j.Id, &j.OwnerId,
 			&j.InputId, &outputID,
-			&j.TaskType,
 			&j.Status, &jobErr,
 			&startTime, &endTime,
-			pq.Array(&j.Args),
 		)
 		if err != nil {
 			return nil, err
@@ -171,6 +171,11 @@ func (d *Datastore) GetJobsBefore(duration time.Duration) ([]*api.Job, error) {
 		j.StartTime = timestamppb.New(startTime.Time)
 		j.EndTime = timestamppb.New(endTime.Time)
 		j.OutputId = outputID.String
+
+		j.Steps, err = d.getSteps(j.Id)
+		if err != nil {
+			return nil, err
+		}
 
 		jobs = append(jobs, j)
 	}
@@ -201,10 +206,8 @@ func (d *Datastore) GetOwnerJobs(id string, offset, limit int) ([]*api.Job, erro
 		err = rows.Scan(
 			&j.Id, &j.OwnerId,
 			&j.InputId, &outputID,
-			&j.TaskType,
 			&j.Status, &jobErr,
 			&startTime, &endTime,
-			pq.Array(&j.Args),
 		)
 		if err != nil {
 			return nil, err
@@ -214,6 +217,11 @@ func (d *Datastore) GetOwnerJobs(id string, offset, limit int) ([]*api.Job, erro
 		j.StartTime = timestamppb.New(startTime.Time)
 		j.EndTime = timestamppb.New(endTime.Time)
 		j.OutputId = outputID.String
+
+		j.Steps, err = d.getSteps(j.Id)
+		if err != nil {
+			return nil, err
+		}
 
 		jobs = append(jobs, j)
 	}

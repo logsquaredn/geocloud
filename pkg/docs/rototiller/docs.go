@@ -910,6 +910,64 @@ var doc = `{
                 }
             }
         },
+        "/api/v1/jobs/{id}/steps": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's steps",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get a job's steps",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Task"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/jobs/{id}/storages/input": {
             "get": {
                 "security": [
@@ -1122,64 +1180,6 @@ var doc = `{
                 "responses": {
                     "200": {
                         "description": ""
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/rototiller.Error"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/rototiller.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/rototiller.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/rototiller.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/jobs/{id}/task": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get the metadata of a job's task",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Task"
-                ],
-                "summary": "Get a job's task",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Job ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/rototiller.Task"
-                        }
                     },
                     "401": {
                         "description": "Unauthorized",
@@ -1539,6 +1539,26 @@ var doc = `{
         }
     },
     "definitions": {
+        "api.Step": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "task_type": {
+                    "type": "string"
+                }
+            }
+        },
         "rototiller.Error": {
             "type": "object",
             "properties": {
@@ -1550,12 +1570,6 @@ var doc = `{
         "rototiller.Job": {
             "type": "object",
             "properties": {
-                "args": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "end_time": {
                     "type": "string"
                 },
@@ -1577,8 +1591,11 @@ var doc = `{
                 "status": {
                     "type": "string"
                 },
-                "task_type": {
-                    "type": "string"
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Step"
+                    }
                 }
             }
         },
