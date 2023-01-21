@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/store/data/postgres"
 	"github.com/logsquaredn/rototiller/stream/event/amqp"
@@ -18,9 +20,10 @@ type Handler struct {
 	*http.ServeMux
 }
 
-func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventStreamProducer, blobstore *bucket.Blobstore) (*Handler, error) {
+func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamProducer *amqp.EventStreamProducer, blobstore *bucket.Blobstore) (*Handler, error) {
 	var (
-		a = &Handler{
+		logger = rototiller.LoggerFrom(ctx)
+		a      = &Handler{
 			Datastore:           datastore,
 			EventStreamProducer: eventStreamProducer,
 			Blobstore:           blobstore,
@@ -109,7 +112,10 @@ func NewHandler(datastore *postgres.Datastore, eventStreamProducer *amqp.EventSt
 		},
 	} {
 		path, handler := f(a)
-		a.ServeMux.Handle(path, handler)
+		a.ServeMux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.WithContext(rototiller.WithLogger(r.Context(), logger))
+			handler.ServeHTTP(w, r)
+		}))
 	}
 
 	return a, nil

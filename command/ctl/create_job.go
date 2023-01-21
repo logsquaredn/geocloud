@@ -18,7 +18,6 @@ func NewCreateJobCommand() *cobra.Command {
 		input, inputOf, outputOf  string
 		file                      string
 		query                     = map[string]string{}
-		rpc                       bool
 		createJobCmd              = &cobra.Command{
 			Use:     "job",
 			Aliases: []string{"j"},
@@ -28,9 +27,6 @@ func NewCreateJobCommand() *cobra.Command {
 					req  client.Request
 					opts = []client.ClientOpt{}
 				)
-				if rpc {
-					opts = append(opts, client.WithRPC)
-				}
 
 				c, err := client.New(addr, apiKey, opts...)
 				if err != nil {
@@ -102,7 +98,6 @@ func NewCreateJobCommand() *cobra.Command {
 		}
 	)
 
-	createJobCmd.Flags().BoolVar(&rpc, "rpc", false, "use RPC")
 	createJobCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
 	createJobCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
 	createJobCmd.Flags().StringVarP(&file, "file", "f", "", "path to input file")

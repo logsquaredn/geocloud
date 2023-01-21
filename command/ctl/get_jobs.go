@@ -12,7 +12,6 @@ func NewGetJobCommand() *cobra.Command {
 	var (
 		addr, apiKey, contentType string
 		query                     = map[string]string{}
-		rpc                       bool
 		getJobCmd                 = &cobra.Command{
 			Use:     "jobs",
 			Aliases: []string{"job", "j"},
@@ -22,9 +21,6 @@ func NewGetJobCommand() *cobra.Command {
 					a    any
 					opts = []client.ClientOpt{}
 				)
-				if rpc {
-					opts = append(opts, client.WithRPC)
-				}
 
 				c, err := client.New(addr, apiKey, opts...)
 				if err != nil {
@@ -53,7 +49,6 @@ func NewGetJobCommand() *cobra.Command {
 		}
 	)
 
-	getJobCmd.Flags().BoolVar(&rpc, "rpc", false, "use RPC")
 	getJobCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
 	getJobCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
 	getJobCmd.Flags().StringVar(&contentType, "content-type", "", "content-type")
