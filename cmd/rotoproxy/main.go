@@ -20,10 +20,10 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	command "github.com/logsquaredn/rototiller/pkg/command/proxy"
+	command "github.com/logsquaredn/rototiller/command/proxy"
 
-	_ "github.com/logsquaredn/rototiller/pkg/docs/proxy"
-	_ "github.com/logsquaredn/rototiller/pkg/service"
+	_ "github.com/logsquaredn/rototiller/api"
+	_ "github.com/logsquaredn/rototiller/docs/proxy"
 )
 
 func main() {

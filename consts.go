@@ -1,21 +1,21 @@
 package rototiller
 
-import "github.com/logsquaredn/rototiller/pkg/api"
+import "github.com/logsquaredn/rototiller/pb"
 
 const (
-	StorageStatusUnknown       = api.StorageStatusUnknown
-	StorageStatusFinal         = api.StorageStatusFinal
-	StorageStatusUnusable      = api.StorageStatusUnusable
-	StorageStatusTransformable = api.StorageStatusTransformable
+	StorageStatusUnknown       = pb.StorageStatusUnknown
+	StorageStatusFinal         = pb.StorageStatusFinal
+	StorageStatusUnusable      = pb.StorageStatusUnusable
+	StorageStatusTransformable = pb.StorageStatusTransformable
 )
 
 const (
-	JobStatusWaiting    = api.JobStatusWaiting
-	JobStatusInProgress = api.JobStatusInProgress
-	JobStatusComplete   = api.JobStatusComplete
-	JobStatusError      = api.JobStatusError
+	JobStatusWaiting    = pb.JobStatusWaiting
+	JobStatusInProgress = pb.JobStatusInProgress
+	JobStatusComplete   = pb.JobStatusComplete
+	JobStatusError      = pb.JobStatusError
 )
 
 const (
-	TaskKindLookup = api.TaskKindLookup
+	TaskKindLookup = pb.TaskKindLookup
 )

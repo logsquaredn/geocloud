@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package rototiller.pb;
+
+option go_package = "github.com/logsquaredn/rototiller/pb";
+
+message Task {
+  string type = 1;
+  string kind = 2;
+  repeated string params = 3;
+}
