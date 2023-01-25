@@ -29,6 +29,7 @@ BUF = buf
 GCC ?= gcc
 INSTALL ?= sudo install
 GIT ?= git
+NPM ?= npm
 
 BIN ?= /usr/local/bin
 
@@ -46,6 +47,7 @@ fallthrough: generate fmt install infra detach
 fmt:
 	@$(GO) $@ ./...
 	@$(SWAG) fmt -d ./ --generalInfo ./cmd/rototiller/main.go
+	@$(SWAG) fmt -d ./ --generalInfo ./cmd/rotoproxy/main.go
 	@$(BUF) format -w
 
 test vet generate:
@@ -56,6 +58,10 @@ download tidy:
 
 lint:
 	@$(GOLANGCI-LINT) run --fix
+
+static:
+	@cd ui/ && $(NPM) run build
+	@cp -R ui/build/* static/
 
 rototiller rotoctl:
 	@$(GO) build -ldflags "-s -w -X $(MODULE).Semver=$(SEMVER)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
@@ -71,11 +77,8 @@ install: install-rototiller install-rotoctl
 services:
 	@$(DOCKER-COMPOSE) up -d minio postgres rabbitmq
 
-secretary:
-	@$(DOCKER-COMPOSE) up --build secretary
-
-migrate:
-	@$(DOCKER-COMPOSE) up --build migrate
+secretary migrate:
+	@$(DOCKER-COMPOSE) up --build $@
 
 infra infrastructure: services sleep migrate secretary
 
@@ -116,4 +119,4 @@ gen: generate
 
 .PHONY: clean retach down download fallthrough fmt gen generate infra infrastructure \
 	install-rotoctl install-rototiller linnt migrate migration prune release restart \
-	rotoctl rototiller secretary services sleep tidy up vet
+	rotoctl rototiller secretary services sleep static tidy up vet

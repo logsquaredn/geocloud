@@ -19,7 +19,7 @@ func NewAPI() *cobra.Command {
 	var (
 		port                               int64
 		postgresAddr, bucketAddr, amqpAddr string
-		apiCmd                             = &cobra.Command{
+		cmd                                = &cobra.Command{
 			Use:     "api",
 			Aliases: []string{"a"},
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -74,10 +74,10 @@ func NewAPI() *cobra.Command {
 		}
 	)
 
-	apiCmd.Flags().StringVar(&amqpAddr, "amqp-addr", "", "AMQP address")
-	apiCmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
-	apiCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
-	apiCmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
+	cmd.Flags().StringVar(&amqpAddr, "amqp-addr", "", "AMQP address")
+	cmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
+	cmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
+	cmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
 
-	return apiCmd
+	return cmd
 }

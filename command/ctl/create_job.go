@@ -12,17 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCreateJobCommand() *cobra.Command {
+func NewCreateJob() *cobra.Command {
 	var (
 		addr, apiKey, contentType string
 		input, inputOf, outputOf  string
 		file                      string
 		query                     = map[string]string{}
-		createJobCmd              = &cobra.Command{
+		cmd                       = &cobra.Command{
 			Use:     "job",
 			Aliases: []string{"j"},
 			Args:    cobra.ExactArgs(1),
-			Run: func(cmd *cobra.Command, args []string) {
+			RunE: func(cmd *cobra.Command, args []string) error {
 				var (
 					req  client.Request
 					opts = []client.ClientOpt{}
@@ -30,8 +30,7 @@ func NewCreateJobCommand() *cobra.Command {
 
 				c, err := client.New(addr, apiKey, opts...)
 				if err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
+					return err
 				}
 
 				if contentType == "" {
@@ -90,23 +89,20 @@ func NewCreateJobCommand() *cobra.Command {
 				encoder := json.NewEncoder(cmd.OutOrStdout())
 				encoder.SetIndent("", "  ")
 
-				if err = encoder.Encode(j); err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
-				}
+				return encoder.Encode(j)
 			},
 		}
 	)
 
-	createJobCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
-	createJobCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
-	createJobCmd.Flags().StringVarP(&file, "file", "f", "", "path to input file")
-	_ = createJobCmd.MarkFlagFilename("file", "json", "yaml", "yml", "zip")
-	createJobCmd.Flags().StringVar(&input, "input", "", "storage ID to use")
-	createJobCmd.Flags().StringVar(&inputOf, "input-of", "", "job ID to use the input of")
-	createJobCmd.Flags().StringVar(&outputOf, "output-of", "", "job ID to use the output of")
-	createJobCmd.Flags().StringVar(&contentType, "content-type", "", "content-type")
-	createJobCmd.Flags().StringToStringVarP(&query, "query", "q", map[string]string{}, "query params")
+	cmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
+	cmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
+	cmd.Flags().StringVarP(&file, "file", "f", "", "path to input file")
+	_ = cmd.MarkFlagFilename("file", "json", "yaml", "yml", "zip")
+	cmd.Flags().StringVar(&input, "input", "", "storage ID to use")
+	cmd.Flags().StringVar(&inputOf, "input-of", "", "job ID to use the input of")
+	cmd.Flags().StringVar(&outputOf, "output-of", "", "job ID to use the output of")
+	cmd.Flags().StringVar(&contentType, "content-type", "", "content-type")
+	cmd.Flags().StringToStringVarP(&query, "query", "q", map[string]string{}, "query params")
 
-	return createJobCmd
+	return cmd
 }

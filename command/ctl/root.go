@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRoot() *cobra.Command {
+func New() *cobra.Command {
 	var (
 		verbosity int
-		rootCmd   = &cobra.Command{
+		cmd       = &cobra.Command{
 			Use:     "rotoctl",
 			Version: rototiller.GetSemver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -31,13 +31,13 @@ func NewRoot() *cobra.Command {
 		}
 	)
 
-	createCmd.AddCommand(NewCreateJobCommand())
-	getCmd.AddCommand(NewGetJobCommand(), NewGetTasksCommand())
-	runCmd.AddCommand(NewRunJobCommand())
+	createCmd.AddCommand(NewCreateJob())
+	getCmd.AddCommand(NewGetJob(), NewGetTasks())
+	runCmd.AddCommand(NewRunJob())
 
-	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
-	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
-	rootCmd.AddCommand(createCmd, getCmd, runCmd)
+	cmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
+	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
+	cmd.AddCommand(createCmd, getCmd, runCmd)
 
-	return rootCmd
+	return cmd
 }

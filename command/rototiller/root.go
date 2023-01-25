@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRoot() *cobra.Command {
+func New() *cobra.Command {
 	var (
 		verbosity int
-		rootCmd   = &cobra.Command{
+		cmd       = &cobra.Command{
 			Use:     "rototiller",
 			Version: rototiller.GetSemver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -19,9 +19,9 @@ func NewRoot() *cobra.Command {
 		}
 	)
 
-	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
-	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
-	rootCmd.AddCommand(NewAPI(), NewWorker(), NewMigrate(), NewSecretary())
+	cmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
+	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
+	cmd.AddCommand(NewAPI(), NewWorker(), NewMigrate(), NewSecretary())
 
-	return rootCmd
+	return cmd
 }

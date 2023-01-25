@@ -14,12 +14,12 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-func NewRoot() *cobra.Command {
+func New() *cobra.Command {
 	var (
 		verbosity                          int
 		port                               int64
 		proxyAddr, smtpAddr, smtpFrom, key string
-		rootCmd                            = &cobra.Command{
+		cmd                                = &cobra.Command{
 			Use:     "rotoproxy",
 			Version: rototiller.GetSemver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -48,18 +48,18 @@ func NewRoot() *cobra.Command {
 		}
 	)
 
-	rootCmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
-	rootCmd.Flags().StringVar(&proxyAddr, "proxy-addr", os.Getenv("ROTOTILLER_PROXY_ADDR"), "proxy address")
-	rootCmd.Flags().StringVar(&smtpAddr, "smtp-addr", os.Getenv("ROTOTILLER_SMTP_ADDR"), "smtp address")
-	rootCmd.Flags().StringVar(&smtpFrom, "smtp-from", os.Getenv("ROTOTILLER_SMTP_FROM"), "smtp from")
+	cmd.PersistentFlags().CountVarP(&verbosity, "verbose", "V", "verbose")
+	cmd.Flags().StringVar(&proxyAddr, "proxy-addr", os.Getenv("ROTOTILLER_PROXY_ADDR"), "proxy address")
+	cmd.Flags().StringVar(&smtpAddr, "smtp-addr", os.Getenv("ROTOTILLER_SMTP_ADDR"), "smtp address")
+	cmd.Flags().StringVar(&smtpFrom, "smtp-from", os.Getenv("ROTOTILLER_SMTP_FROM"), "smtp from")
 	// TODO use viper
 	// setting secrets as the default can easily leak the secret
 	// if the command exits with an error
-	// rootCmd.Flags().StringVar(&smtpUsername, "smtp-username", os.Getenv("ROTOTILLER_SMTP_USERNAME"), "smtp username")
-	// rootCmd.Flags().StringVar(&smtpPassword, "smtp-password", os.Getenv("ROTOTILLER_SMTP_PASSWORD"), "smtp password")
-	rootCmd.Flags().StringVar(&key, "key", "", "key")
-	rootCmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
-	rootCmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
+	// cmd.Flags().StringVar(&smtpUsername, "smtp-username", os.Getenv("ROTOTILLER_SMTP_USERNAME"), "smtp username")
+	// cmd.Flags().StringVar(&smtpPassword, "smtp-password", os.Getenv("ROTOTILLER_SMTP_PASSWORD"), "smtp password")
+	cmd.Flags().StringVar(&key, "key", "", "key")
+	cmd.Flags().Int64VarP(&port, "port", "p", 8080, "listen port")
+	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
 
-	return rootCmd
+	return cmd
 }

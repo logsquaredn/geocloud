@@ -11,7 +11,7 @@ import (
 func NewMigrate() *cobra.Command {
 	var (
 		postgresAddr string
-		migrateCmd   = &cobra.Command{
+		cmd          = &cobra.Command{
 			Use:     "migrate",
 			Aliases: []string{"m"},
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -30,7 +30,7 @@ func NewMigrate() *cobra.Command {
 		}
 	)
 
-	migrateCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
+	cmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
 
-	return migrateCmd
+	return cmd
 }

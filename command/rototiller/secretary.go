@@ -21,7 +21,7 @@ func NewSecretary() *cobra.Command {
 		defaultDuration                             = time.Hour * 24
 		workJobsBefore, workStorageBefore           time.Duration
 		postgresAddr, bucketAddr, archiveBucketAddr string
-		secretaryCmd                                = &cobra.Command{
+		cmd                                         = &cobra.Command{
 			Use:     "secretary",
 			Aliases: []string{"s"},
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -149,12 +149,12 @@ func NewSecretary() *cobra.Command {
 		}
 	)
 
-	secretaryCmd.Flags().StringVar(&archiveBucketAddr, "archive-bucket-addr", "", "archive bucket address")
-	secretaryCmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
-	secretaryCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
-	secretaryCmd.Flags().StringVar(&stripe.Key, "stripe-api-key", "", "Stripe API key")
-	secretaryCmd.Flags().DurationVar(&workJobsBefore, "work-jobs-before", defaultDuration, "work jobs before")
-	secretaryCmd.Flags().DurationVar(&workStorageBefore, "work-storage-before", defaultDuration, "work storage before")
+	cmd.Flags().StringVar(&archiveBucketAddr, "archive-bucket-addr", "", "archive bucket address")
+	cmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
+	cmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
+	cmd.Flags().StringVar(&stripe.Key, "stripe-api-key", "", "Stripe API key")
+	cmd.Flags().DurationVar(&workJobsBefore, "work-jobs-before", defaultDuration, "work jobs before")
+	cmd.Flags().DurationVar(&workStorageBefore, "work-storage-before", defaultDuration, "work storage before")
 
-	return secretaryCmd
+	return cmd
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/frantjc/go-js"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller/pb"
-	api "github.com/logsquaredn/rototiller/pb"
 	"github.com/logsquaredn/rototiller/volume"
 )
 
@@ -19,7 +18,7 @@ const (
 	jsonExt = ".json"
 )
 
-func (a *Handler) putRequestVolumeForOwner(ctx *gin.Context, contentType, name string, r io.Reader, ownerID string) (*api.Storage, error) {
+func (a *Handler) putRequestVolumeForOwner(ctx *gin.Context, contentType, name string, r io.Reader, ownerID string) (*pb.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
 		return nil, err

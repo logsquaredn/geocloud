@@ -16,7 +16,7 @@ import (
 func NewWorker() *cobra.Command {
 	var (
 		workingDir, postgresAddr, bucketAddr, amqpAddr string
-		workerCmd                                      = &cobra.Command{
+		cmd                                            = &cobra.Command{
 			Use:     "worker",
 			Aliases: []string{"w"},
 			RunE: func(cmd *cobra.Command, args []string) error {
@@ -97,10 +97,10 @@ func NewWorker() *cobra.Command {
 		}
 	)
 
-	workerCmd.Flags().StringVar(&amqpAddr, "amqp-addr", "", "AMQP address")
-	workerCmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
-	workerCmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
-	workerCmd.Flags().StringVar(&workingDir, "working-dir", "/var/lib/rototiller", "working directory")
+	cmd.Flags().StringVar(&amqpAddr, "amqp-addr", "", "AMQP address")
+	cmd.Flags().StringVar(&bucketAddr, "bucket-addr", "", "bucket address")
+	cmd.Flags().StringVar(&postgresAddr, "postgres-addr", "", "Postgres address")
+	cmd.Flags().StringVar(&workingDir, "working-dir", "/var/lib/rototiller", "working directory")
 
-	return workerCmd
+	return cmd
 }

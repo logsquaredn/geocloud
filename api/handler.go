@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller"
+	ui "github.com/logsquaredn/rototiller/static"
 	"github.com/logsquaredn/rototiller/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/store/data/postgres"
 	"github.com/logsquaredn/rototiller/stream/event/amqp"
@@ -36,10 +37,6 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 	router.GET("/readyz", a.readyzHandler)
 
 	swaggerHandler := swagger.WrapHandler(files.Handler)
-
-	router.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusFound, "/swagger/v1/index.html")
-	})
 
 	swagger := router.Group("/swagger")
 	{
@@ -106,6 +103,14 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 		}
 	}
 
+	uiHandler := http.FileServer(http.FS(ui.FS))
+
+	router.NoRoute(
+		func(ctx *gin.Context) {
+			uiHandler.ServeHTTP(ctx.Writer, ctx.Request)
+		},
+	)
+
 	for _, f := range []func(*Handler) (string, http.Handler){
 		func(a *Handler) (string, http.Handler) {
 			return "/", router
@@ -113,8 +118,7 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 	} {
 		path, handler := f(a)
 		a.ServeMux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r.WithContext(rototiller.WithLogger(r.Context(), logger))
-			handler.ServeHTTP(w, r)
+			handler.ServeHTTP(w, r.WithContext(rototiller.WithLogger(r.Context(), logger)))
 		}))
 	}
 

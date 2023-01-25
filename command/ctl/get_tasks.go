@@ -2,24 +2,22 @@ package command
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/logsquaredn/rototiller/client"
 	"github.com/spf13/cobra"
 )
 
-func NewGetTasksCommand() *cobra.Command {
+func NewGetTasks() *cobra.Command {
 	var (
 		addr, apiKey string
-		getTasksCmd  = &cobra.Command{
+		cmd          = &cobra.Command{
 			Use:     "tasks",
 			Aliases: []string{"task, t"},
 			Args:    cobra.MaximumNArgs(1),
-			Run: func(cmd *cobra.Command, args []string) {
+			RunE: func(cmd *cobra.Command, args []string) error {
 				c, err := client.New(addr, apiKey)
 				if err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
+					return err
 				}
 
 				var a any
@@ -29,23 +27,19 @@ func NewGetTasksCommand() *cobra.Command {
 					a, err = c.GetTasks()
 				}
 				if err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
+					return err
 				}
 
 				encoder := json.NewEncoder(cmd.OutOrStdout())
 				encoder.SetIndent("", "  ")
 
-				if err = encoder.Encode(a); err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
-				}
+				return encoder.Encode(a)
 			},
 		}
 	)
 
-	getTasksCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
-	getTasksCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
+	cmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
+	cmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
 
-	return getTasksCmd
+	return cmd
 }

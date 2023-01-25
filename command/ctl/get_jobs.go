@@ -2,21 +2,20 @@ package command
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/logsquaredn/rototiller/client"
 	"github.com/spf13/cobra"
 )
 
-func NewGetJobCommand() *cobra.Command {
+func NewGetJob() *cobra.Command {
 	var (
 		addr, apiKey, contentType string
 		query                     = map[string]string{}
-		getJobCmd                 = &cobra.Command{
+		cmd                       = &cobra.Command{
 			Use:     "jobs",
 			Aliases: []string{"job", "j"},
 			Args:    cobra.MaximumNArgs(1),
-			Run: func(cmd *cobra.Command, args []string) {
+			RunE: func(cmd *cobra.Command, args []string) error {
 				var (
 					a    any
 					opts = []client.ClientOpt{}
@@ -24,8 +23,7 @@ func NewGetJobCommand() *cobra.Command {
 
 				c, err := client.New(addr, apiKey, opts...)
 				if err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
+					return err
 				}
 
 				if len(args) > 0 {
@@ -34,25 +32,21 @@ func NewGetJobCommand() *cobra.Command {
 					a, err = c.GetJobs()
 				}
 				if err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
+					return err
 				}
 
 				encoder := json.NewEncoder(cmd.OutOrStdout())
 				encoder.SetIndent("", "  ")
 
-				if err = encoder.Encode(a); err != nil {
-					cmd.PrintErrln(err)
-					os.Exit(1)
-				}
+				return encoder.Encode(a)
 			},
 		}
 	)
 
-	getJobCmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
-	getJobCmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
-	getJobCmd.Flags().StringVar(&contentType, "content-type", "", "content-type")
-	getJobCmd.Flags().StringToStringVarP(&query, "query", "q", map[string]string{}, "query params")
+	cmd.Flags().StringVar(&addr, "addr", "", "rototiller address")
+	cmd.Flags().StringVar(&apiKey, "api-key", "", "rototiller API key")
+	cmd.Flags().StringVar(&contentType, "content-type", "", "content-type")
+	cmd.Flags().StringToStringVarP(&query, "query", "q", map[string]string{}, "query params")
 
-	return getJobCmd
+	return cmd
 }
