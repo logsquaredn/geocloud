@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller"
-	ui "github.com/logsquaredn/rototiller/static"
 	"github.com/logsquaredn/rototiller/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/store/data/postgres"
 	"github.com/logsquaredn/rototiller/stream/event/amqp"
@@ -102,14 +101,6 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 			}
 		}
 	}
-
-	uiHandler := http.FileServer(http.FS(ui.FS))
-
-	router.NoRoute(
-		func(ctx *gin.Context) {
-			uiHandler.ServeHTTP(ctx.Writer, ctx.Request)
-		},
-	)
 
 	for _, f := range []func(*Handler) (string, http.Handler){
 		func(a *Handler) (string, http.Handler) {

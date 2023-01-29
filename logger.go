@@ -19,7 +19,7 @@ func LoggerFrom(ctx context.Context) Logger {
 }
 
 func NewLogger() Logger {
-	zapLogger, err := zap.NewDevelopment()
+	zapLogger, err := zap.NewProduction()
 	if err != nil {
 		panic(err)
 	}

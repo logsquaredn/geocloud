@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/gin-gonic/gin"
 	"github.com/logsquaredn/rototiller/pb"
 )
@@ -13,7 +12,7 @@ var (
 	OwnerIDHeader   = "X-Owner-ID"
 	errUnauthorized = pb.NewErr(
 		errors.New(OwnerIDHeader+" header must exist"),
-		http.StatusBadRequest, int(connect.CodeInvalidArgument),
+		http.StatusBadRequest,
 	)
 )
 
