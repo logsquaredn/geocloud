@@ -3,6 +3,7 @@ syntax = "proto3";
 package rototiller.pb;
 
 import "google/protobuf/timestamp.proto";
+import "pb/step.proto";
 
 option go_package = "github.com/logsquaredn/rototiller/pb";
 
@@ -11,10 +12,9 @@ message Job {
   string namespace = 2;
   string input_id = 3;
   string output_id = 4;
-  string task_type = 5;
-  string status = 6;
-  string error = 7;
-  google.protobuf.Timestamp start_time = 8;
-  google.protobuf.Timestamp end_time = 9;
-  repeated string args = 10;
+  string status = 5;
+  string error = 6;
+  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp end_time = 8;
+  repeated Step steps = 9;
 }

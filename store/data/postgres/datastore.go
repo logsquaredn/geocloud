@@ -25,7 +25,7 @@ type Datastore struct {
 		getJobByID              *sql.Stmt
 		getJobsBefore           *sql.Stmt
 		deleteJob               *sql.Stmt
-		getTaskByJobID          *sql.Stmt
+		getTasksByJobID         *sql.Stmt
 		getTaskByType           *sql.Stmt
 		getTasksByTypes         *sql.Stmt
 		getStorage              *sql.Stmt
@@ -37,6 +37,8 @@ type Datastore struct {
 		getJobsByNamespace      *sql.Stmt
 		getOutputStorageByJobID *sql.Stmt
 		getInputStorageByJobID  *sql.Stmt
+		createStep              *sql.Stmt
+		getStepsByJobID         *sql.Stmt
 	}
 }
 
@@ -48,7 +50,7 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getJobByID              *sql.Stmt
 			getJobsBefore           *sql.Stmt
 			deleteJob               *sql.Stmt
-			getTaskByJobID          *sql.Stmt
+			getTasksByJobID         *sql.Stmt
 			getTaskByType           *sql.Stmt
 			getTasksByTypes         *sql.Stmt
 			getStorage              *sql.Stmt
@@ -60,6 +62,8 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 			getJobsByNamespace      *sql.Stmt
 			getOutputStorageByJobID *sql.Stmt
 			getInputStorageByJobID  *sql.Stmt
+			createStep              *sql.Stmt
+			getStepsByJobID         *sql.Stmt
 		}{},
 	}
 
@@ -118,7 +122,7 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
-	if d.stmt.getTaskByJobID, err = d.DB.Prepare(getTaskByJobIDSQL); err != nil {
+	if d.stmt.getTasksByJobID, err = d.DB.Prepare(getTasksByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 
@@ -163,6 +167,14 @@ func New(ctx context.Context, addr string) (*Datastore, error) {
 	}
 
 	if d.stmt.getInputStorageByJobID, err = d.DB.Prepare(getInputStorageByJobIDSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if d.stmt.createStep, err = d.DB.Prepare(createStepSQL); err != nil {
+		return nil, fmt.Errorf("failed to prepare statement; %w", err)
+	}
+
+	if d.stmt.getStepsByJobID, err = d.DB.Prepare(getStepsByJobIDSQL); err != nil {
 		return nil, fmt.Errorf("failed to prepare statement; %w", err)
 	}
 

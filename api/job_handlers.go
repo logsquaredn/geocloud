@@ -72,8 +72,8 @@ func (a *Handler) getJobHandler(ctx *gin.Context) {
 }
 
 // @Security     ApiKeyAuth
-// @Summary      Get a job's task
-// @Description  Get the metadata of a job's task
+// @Summary      Get a job's tasks
+// @Description  Get the metadata of a job's tasks
 // @Tags         Task
 // @Produce      application/json
 // @Param        id   path      string  true  "Job ID"
@@ -82,21 +82,21 @@ func (a *Handler) getJobHandler(ctx *gin.Context) {
 // @Failure      403  {object}  rototiller.Error
 // @Failure      404  {object}  rototiller.Error
 // @Failure      500  {object}  rototiller.Error
-// @Router       /api/v1/jobs/{id}/task [get].
-func (a *Handler) getJobTaskHandler(ctx *gin.Context) {
+// @Router       /api/v1/jobs/{id}/tasks [get].
+func (a *Handler) getJobTasksHandler(ctx *gin.Context) {
 	job, err := a.getJob(ctx, ctx.Param("job"))
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
 
-	task, err := a.getTaskType(pb.TaskType(job.TaskType))
+	tasks, err := a.getTasksFromJobSteps(job)
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, task)
+	ctx.JSON(http.StatusOK, tasks)
 }
 
 // @Security     ApiKeyAuth
@@ -512,3 +512,15 @@ func (a *Handler) createPolygonVectorLookupJobHandler(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, job)
 }
+
+// type taskChainQuery struct {
+// 	InputID string `form:"attributes" binding:"required"`
+// }
+
+// func (a *Handler) createTaskChainJobHandler(ctx *gin.Context) {
+// 	if err := ctx.ShouldBindQuery(&taskChainQuery{}); err != nil {
+// 		a.err(ctx, api.NewErr(err, http.StatusBadRequest))
+// 		return
+// 	}
+
+// }

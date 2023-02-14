@@ -97,7 +97,7 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return err
 	}
 
-	t, err := w.Datastore.GetTaskByJobID(id)
+	tasks, err := w.Datastore.GetTasksByJobID(id)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,8 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return fmt.Errorf("no input found")
 	}
 
-	task := exec.Command(t.Type) //nolint:gosec // t.Type is guaranteed to refer to a Task binary
+	// TDDO refactor to expect more than one task per job
+	task := exec.Command(tasks[0].Type) //nolint:gosec // t.Type is guaranteed to refer to a Task binary
 	// start with current env minus configuration that might contain secrets
 	// e.g. ROTOTILLER_POSTGRES_PASSWORD
 	task.Env = js.Filter(os.Environ(), func(e string, _ int, _ []string) bool {
@@ -153,8 +154,9 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	// e.g. task.type = 'reproject'
 	//		=> task.params = ['target-projection'],
 	//      => ROTOTILLER_TARGET_PROJECTION=${?target-projection}
-	task.Env = append(task.Env, js.Map(j.Args, func(a string, i int, _ []string) string {
-		return "ROTOTILLER_" + strings.ToUpper(HyphenToUnderscoreReplacer.Replace(t.Params[i])) + "=" + a
+	// TDDO refactor to expect more than one task per job
+	task.Env = append(task.Env, js.Map(j.Steps[0].Args, func(a string, i int, _ []string) string {
+		return "ROTOTILLER_" + strings.ToUpper(HyphenToUnderscoreReplacer.Replace(tasks[0].Params[i])) + "=" + a
 	})...)
 	task.Stdin = os.Stdin
 	task.Stdout = os.Stdout
@@ -182,9 +184,10 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 		return err
 	}
 
+	// TDDO refactor to expect more than one task per job
 	ost, err := w.Datastore.CreateStorage(&pb.Storage{
 		Namespace: j.GetNamespace(),
-		Status:    js.Ternary(t.GetKind() == rototiller.TaskKindLookup.String(), rototiller.StorageStatusFinal.String(), rototiller.StorageStatusTransformable.String()),
+		Status:    js.Ternary(tasks[0].GetKind() == rototiller.TaskKindLookup.String(), rototiller.StorageStatusFinal.String(), rototiller.StorageStatusTransformable.String()),
 	})
 	if err != nil {
 		return err

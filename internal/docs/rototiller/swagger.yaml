@@ -1,4 +1,17 @@
 definitions:
+  pb.Step:
+    properties:
+      args:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      job_id:
+        type: string
+      task_type:
+        type: string
+    type: object
   rototiller.Error:
     properties:
       error:
@@ -6,10 +19,6 @@ definitions:
     type: object
   rototiller.Job:
     properties:
-      args:
-        items:
-          type: string
-        type: array
       end_time:
         type: string
       error:
@@ -24,8 +33,10 @@ definitions:
         type: string
       status:
         type: string
-      task_type:
-        type: string
+      steps:
+        items:
+          $ref: '#/definitions/pb.Step'
+        type: array
     type: object
   rototiller.Storage:
     properties:
@@ -287,9 +298,9 @@ paths:
       summary: Get a job's output content
       tags:
       - Content
-  /api/v1/jobs/{id}/task:
+  /api/v1/jobs/{id}/tasks:
     get:
-      description: Get the metadata of a job's task
+      description: Get the metadata of a job's tasks
       parameters:
       - description: Job ID
         in: path
@@ -321,7 +332,7 @@ paths:
             $ref: '#/definitions/rototiller.Error'
       security:
       - ApiKeyAuth: []
-      summary: Get a job's task
+      summary: Get a job's tasks
       tags:
       - Task
   /api/v1/jobs/buffer:

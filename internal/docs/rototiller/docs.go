@@ -1023,21 +1023,21 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/jobs/{id}/task": {
+        "/api/v1/jobs/{id}/tasks": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get the metadata of a job's task",
+                "description": "Get the metadata of a job's tasks",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Task"
                 ],
-                "summary": "Get a job's task",
+                "summary": "Get a job's tasks",
                 "parameters": [
                     {
                         "type": "string",
@@ -1412,6 +1412,26 @@ var doc = `{
         }
     },
     "definitions": {
+        "pb.Step": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "task_type": {
+                    "type": "string"
+                }
+            }
+        },
         "rototiller.Error": {
             "type": "object",
             "properties": {
@@ -1423,12 +1443,6 @@ var doc = `{
         "rototiller.Job": {
             "type": "object",
             "properties": {
-                "args": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "end_time": {
                     "type": "string"
                 },
@@ -1450,8 +1464,11 @@ var doc = `{
                 "status": {
                     "type": "string"
                 },
-                "task_type": {
-                    "type": "string"
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb.Step"
+                    }
                 }
             }
         },

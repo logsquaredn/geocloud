@@ -8,21 +8,35 @@ import (
 )
 
 var (
-	//go:embed sql/queries/get_task_by_job_id.sql
-	getTaskByJobIDSQL string
+	//go:embed sql/queries/get_tasks_by_job_id.sql
+	getTasksByJobIDSQL string
 
 	//go:embed sql/queries/get_tasks_by_types.sql
 	getTasksByTypesSQL string
 )
 
-func (d *Datastore) GetTaskByJobID(id string) (*rototiller.Task, error) {
-	t := &rototiller.Task{}
-
-	if err := d.stmt.getTaskByJobID.QueryRow(id).Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
+func (d *Datastore) GetTasksByJobID(id string) ([]*rototiller.Task, error) {
+	rows, err := d.stmt.getTasksByJobID.Query(id)
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return t, nil
+	var tasks []*rototiller.Task
+
+	for rows.Next() {
+		var (
+			t = &rototiller.Task{}
+		)
+
+		if err = rows.Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, t)
+	}
+
+	return tasks, nil
 }
 
 //go:embed sql/queries/get_task_by_type.sql

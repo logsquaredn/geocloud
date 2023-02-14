@@ -70,8 +70,12 @@ func (a *Handler) createJobForNamespace(ctx *gin.Context, taskType pb.TaskType, 
 	}
 
 	job, err := a.Datastore.CreateJob(&pb.Job{
-		TaskType:  task.Type,
-		Args:      buildJobArgs(ctx, task.Params),
+		Steps: []*pb.Step{
+			{
+				TaskType: task.Type,
+				Args:      buildJobArgs(ctx, task.Params),
+			},
+		},
 		Namespace: namespace,
 		InputId:   storage.Id,
 	})

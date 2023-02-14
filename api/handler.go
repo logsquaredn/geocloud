@@ -86,7 +86,7 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 				job := jobs.Group("/:job")
 				{
 					job.GET("", a.getJobHandler)
-					job.GET("/task", a.getJobTaskHandler)
+					job.GET("/tasks", a.getJobTasksHandler)
 					jobStorages := job.Group("storages")
 					{
 						jobStorageInput := jobStorages.Group("input")

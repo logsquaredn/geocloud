@@ -12,6 +12,8 @@ type Error = pb.Error
 
 type Job = pb.RestJob
 
+type Step = pb.RestStep
+
 type Storage = pb.RestStorage
 
 type StorageStatus = pb.StorageStatus
