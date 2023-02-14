@@ -1,5 +1,5 @@
 ARG base_image=osgeo/gdal:alpine-normal-3.4.3
-ARG build_image=golang:1.19-alpine3.15
+ARG build_image=golang:1.20-alpine3.15
 ARG build_tasks_image=osgeo/gdal:alpine-normal-3.4.3
 
 FROM ${base_image} AS base_image
