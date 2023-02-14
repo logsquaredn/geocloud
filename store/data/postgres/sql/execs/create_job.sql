@@ -1,7 +1,7 @@
 INSERT INTO job (
     job_id,
     namespace,
-    input_id,
+    input_id
 ) VALUES (
     $1,
     $2,
