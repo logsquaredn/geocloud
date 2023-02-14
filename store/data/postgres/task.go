@@ -22,7 +22,7 @@ func (d *Datastore) GetTasksByJobID(id string) ([]*rototiller.Task, error) {
 	}
 	defer rows.Close()
 
-	var tasks []*rototiller.Task
+	tasks := []*rototiller.Task{}
 
 	for rows.Next() {
 		t := &rototiller.Task{}
