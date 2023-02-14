@@ -25,9 +25,7 @@ func (d *Datastore) GetTasksByJobID(id string) ([]*rototiller.Task, error) {
 	var tasks []*rototiller.Task
 
 	for rows.Next() {
-		var (
-			t = &rototiller.Task{}
-		)
+		t := &rototiller.Task{}
 
 		if err = rows.Scan(&t.Type, &t.Kind, pq.Array(&t.Params)); err != nil {
 			return nil, err

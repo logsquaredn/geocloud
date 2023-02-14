@@ -73,7 +73,7 @@ func (a *Handler) createJobForNamespace(ctx *gin.Context, taskType pb.TaskType, 
 		Steps: []*pb.Step{
 			{
 				TaskType: task.Type,
-				Args:      buildJobArgs(ctx, task.Params),
+				Args:     buildJobArgs(ctx, task.Params),
 			},
 		},
 		Namespace: namespace,
