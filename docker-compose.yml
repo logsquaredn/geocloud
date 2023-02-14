@@ -24,25 +24,31 @@ services:
   api:
     <<: *rototiller_service
     command: api --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
-    ports: [8080:8080]
+    ports: ["8080:8080"]
   worker: &worker_service
     <<: *rototiller_service
     command: worker --amqp-addr=rabbitmq:5672 --postgres-addr=postgres:5432 --bucket-addr=rototiller
-    volumes: [./hack/rototiller:/var/lib/rototiller:z]
+    volumes: ["./hack/rototiller:/var/lib/rototiller:z"]
   proxy:
     <<: *rototiller_service
     entrypoint: rotoproxy
-    command: --proxy-addr=http://api:8080/ --smtp-addr=smtp://smtp.gmail.com:587 --smtp-from=evan@logsquaredn.io --key=rototiller
+    command: --proxy-addr=http://api:8080/ --smtp-from=${ROTOTILLER_SMTP_USERNAME:-rototiller@logsquaredn.io} --key=rototiller
+    depends_on: [ui]
+    ports: ["8081:8080"]
+  ui:
+    <<: *rototiller_service
+    entrypoint: rotoui
+    command: --proxy-addr=http://proxy:8080/
     depends_on: [api]
-    ports: [8081:8080]
+    ports: ["8082:8080"]
   worker-alt: *worker_service
   secretary:
     <<: *rototiller_service
     command: secretary --postgres-addr=postgres:5432 --bucket-addr=rototiller --archive-bucket-addr=rototiller-archive
   postgres:
     image: postgres:${POSTGRES_TAG:-alpine}
-    ports: [5432:5432]
-    volumes: [./hack/postgresql:/var/lib/postgresql]
+    ports: ["5432:5432"]
+    volumes: ["./hack/postgresql:/var/lib/postgresql"]
     environment:
       POSTGRES_DB: rototiller
       POSTGRES_USER: rototiller
@@ -50,13 +56,13 @@ services:
   rabbitmq:
     image: rabbitmq:${RABBITMQ_TAG:-alpine}
     privileged: true
-    ports: [5672:5672, 15672:15672]
-    volumes: [./hack/rabbitmq/lib:/var/lib/rabbitmq:z, ./hack/rabbitmq/etc:/etc/rabbitmq:ro]
+    ports: ["5672:5672", "15672:15672"]
+    volumes: ["./hack/rabbitmq/lib:/var/lib/rabbitmq:z", "./hack/rabbitmq/etc:/etc/rabbitmq:ro"]
   minio:
     image: minio/minio:${MINIO_TAG:-latest}
     command: server /var/lib/minio --console-address ":9001"
-    volumes: [./hack/minio:/var/lib/minio:z]
-    ports: [9000:9000, 9001:9001]
+    volumes: ["./hack/minio:/var/lib/minio:z"]
+    ports: ["9000:9000", "9001:9001"]
     environment:
       MINIO_ROOT_USER: rototiller
       MINIO_ROOT_PASSWORD: rototiller

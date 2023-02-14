@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package rototiller.pb;
+
+option go_package = "github.com/logsquaredn/rototiller/pb";
+
+message Claims {
+  string email = 1;
+}

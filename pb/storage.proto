@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package rototiller.pb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/logsquaredn/rototiller/pb";
+
+message Storage {
+  string id = 1;
+  string namespace = 2;
+  string name = 3;
+  string status = 4;
+  google.protobuf.Timestamp last_used = 8;
+  google.protobuf.Timestamp create_time = 9;
+}

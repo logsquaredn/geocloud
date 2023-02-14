@@ -1,0 +1,1508 @@
+{
+    "schemes": [
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Geospatial data transformation service.",
+        "title": "Rototiller",
+        "contact": {
+            "name": "logsquaredn",
+            "url": "https://rototiller.logsquaredn.io/",
+            "email": "rototiller@logsquaredn.io"
+        },
+        "version": "1.0"
+    },
+    "host": "rototiller.logsquaredn.io",
+    "paths": {
+        "/api/v1/jobs": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of jobs based on namespace",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get a list of jobs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Offset of jobs to return",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of jobs to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/rototiller.Job"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/buffer": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a buffer job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Buffers every geometry by the given distance\n\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_pb.html#_CPPv412OGR_G_Buffer12OGRGeometryHdi\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a buffer job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Buffer distance",
+                        "name": "buffer-distance",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Quadrant Segment count",
+                        "name": "quadrant-segment-count",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/filter": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a filter job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Drops features and their geometries that don't match the given filter\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a filter job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Column to filter on",
+                        "name": "filter-column",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Value to filter on",
+                        "name": "filter-value",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/polygonvectorlookup": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a polygon vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns a list of attribute values of which the given polygon intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will generate JSON output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a polygon vector lookup job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma separated list of attributes",
+                        "name": "attributes",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Polygon in WKT format",
+                        "name": "polygon",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/rasterlookup": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a raster lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns the value of each requested band of which the given point intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a single TIF file. Valid extensions are: tif, tiff, geotif, geotiff\n\u0026emsp; - This task will generate JSON output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a raster lookup job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma separated list of bands",
+                        "name": "bands",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude",
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Latitude",
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/removebadgeometry": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a remove bad geometry job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Drops geometries that are invalid\n\n\u0026emsp; - For extra info: https://gdal.org/api/vector_c_pb.html#_CPPv413OGR_G_IsValid12OGRGeometryH\n\u0026emsp; - API Key is required either as a query parameter or a header\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a remove bad geometry job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/reproject": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a reproject job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Reprojects all geometries to the given projection\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will automatically generate both GeoJSON and ZIP (shapfile) output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a reproject job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Target projection EPSG",
+                        "name": "target-projection",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/vectorlookup": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "\u003cb\u003e\u003cu\u003eCreate a vector lookup job\u003c/u\u003e\u003c/b\u003e\n\u0026emsp; - Returns a list of attribute values of which the given point intersects\n\u0026emsp; - Pass the geospatial data to be processed in the request body OR\n\u0026emsp; - Pass the ID of an existing dataset with an empty request body\n\u0026emsp; - This task accepts a ZIP containing a shapefile or GeoJSON input\n\u0026emsp; - This task will generate JSON output",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Create a vector lookup job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required if passing geospatial data in request body",
+                        "name": "Content-Type",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing dataset to use",
+                        "name": "input",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose input dataset to use",
+                        "name": "input-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of existing job whose output dataset to use",
+                        "name": "output-of",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma separated list of attributes",
+                        "name": "attributes",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude",
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Latitude",
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job. This can be used as a way to track job status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get a job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Job"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}/storages/input": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's input",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get a job's input",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Storage"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}/storages/input/content": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a job's input",
+                "produces": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Get a job's input content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request results as a Zip or JSON. Default Zip",
+                        "name": "Accept",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}/storages/output": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's output",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get a job's output",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Storage"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}/storages/output/content": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a job's output",
+                "produces": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Get a job's output content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request results as a Zip or JSON. Default Zip",
+                        "name": "Accept",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}/tasks": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a job's tasks",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get a job's tasks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Task"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/storages": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get a list of stored datasets based on API Key",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get a list of storage",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Offset of storages to return",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of storages to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/rototiller.Storage"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Stores a dataset. The ID of this stored dataset can be used as input to jobs\n\u0026emsp; - Pass the geospatial data to be stored in the request body",
+                "consumes": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Create a storage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Storage name",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Storage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/storages/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get the metadata of a stored dataset",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get a storage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Storage ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Storage"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/storages/{id}/content": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Gets the content of a stored dataset",
+                "produces": [
+                    "application/json",
+                    " application/zip"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Get a storage's content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request results as a Zip or JSON. Default Zip",
+                        "name": "Accept",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Storage ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tasks": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get a list of task types",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/rototiller.Task"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tasks/{type}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Get a task type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Task type",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Task"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rototiller.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "pb.Step": {
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "task_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "rototiller.Error": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "rototiller.Job": {
+            "type": "object",
+            "properties": {
+                "end_time": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "input_id": {
+                    "type": "string"
+                },
+                "output_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pb.Step"
+                    }
+                }
+            }
+        },
+        "rototiller.Storage": {
+            "type": "object",
+            "properties": {
+                "create_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_used": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "rototiller.Task": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "X-Owner-ID",
+            "in": "header"
+        }
+    }
+}

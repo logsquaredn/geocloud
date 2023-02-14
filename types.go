@@ -1,25 +1,25 @@
 package rototiller
 
-import "github.com/logsquaredn/rototiller/pkg/api"
+import "github.com/logsquaredn/rototiller/pb"
 
-type Auth = api.Auth
+type Auth = pb.Auth
 
-type Claims = api.Claims
+type Claims = pb.Claims
 
-type Event = api.Event
+type Event = pb.Event
 
-type Error = api.Error
+type Error = pb.Error
 
-type Job = api.RestJob
+type Job = pb.RestJob
 
-type Step = api.RestStep
+type Step = pb.RestStep
 
-type Storage = api.RestStorage
+type Storage = pb.RestStorage
 
-type StorageStatus = api.StorageStatus
+type StorageStatus = pb.StorageStatus
 
-type Task = api.Task
+type Task = pb.Task
 
-type TaskKind = api.TaskKind
+type TaskKind = pb.TaskKind
 
-type TaskType = api.TaskType
+type TaskType = pb.TaskType
