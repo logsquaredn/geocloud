@@ -10,15 +10,15 @@ import (
 	"github.com/logsquaredn/rototiller/pb"
 )
 
-func (a *Handler) checkStorageOwnership(storage *pb.Storage, ownerID string) (*pb.Storage, error) {
-	if storage.OwnerId != ownerID {
+func (a *Handler) checkStorageOwnership(storage *pb.Storage, namespace string) (*pb.Storage, error) {
+	if storage.Namespace != namespace {
 		return nil, pb.NewErr(fmt.Errorf("requester does not own storage '%s'", storage.Id), http.StatusForbidden)
 	}
 
 	return storage, nil
 }
 
-func (a *Handler) getStorageForOwner(id string, ownerID string) (*pb.Storage, error) {
+func (a *Handler) getStorageForNamespace(id string, namespace string) (*pb.Storage, error) {
 	storage, err := a.Datastore.GetStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -27,13 +27,13 @@ func (a *Handler) getStorageForOwner(id string, ownerID string) (*pb.Storage, er
 		return nil, err
 	}
 
-	return a.checkStorageOwnership(storage, ownerID)
+	return a.checkStorageOwnership(storage, namespace)
 }
 
-func (a *Handler) createStorageForOwner(name string, ownerID string) (*pb.Storage, error) {
+func (a *Handler) createStorageForNamespace(name string, namespace string) (*pb.Storage, error) {
 	storage, err := a.Datastore.CreateStorage(&pb.Storage{
-		OwnerId: ownerID,
-		Name:    name,
+		Namespace: namespace,
+		Name:      name,
 	})
 	if err != nil {
 		return nil, err
@@ -43,14 +43,14 @@ func (a *Handler) createStorageForOwner(name string, ownerID string) (*pb.Storag
 }
 
 func (a *Handler) getJobOutputStorage(ctx *gin.Context, id string) (*pb.Storage, error) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return a.getJobOutputStorageForOwner(ctx, id, ownerID)
+	return a.getJobOutputStorageForNamespace(ctx, id, namespace)
 }
 
-func (a *Handler) getJobOutputStorageForOwner(ctx *gin.Context, id string, ownerID string) (*pb.Storage, error) {
+func (a *Handler) getJobOutputStorageForNamespace(ctx *gin.Context, id string, namespace string) (*pb.Storage, error) {
 	storage, err := a.Datastore.GetJobOutputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -59,18 +59,18 @@ func (a *Handler) getJobOutputStorageForOwner(ctx *gin.Context, id string, owner
 		return nil, err
 	}
 
-	return a.checkStorageOwnership(storage, ownerID)
+	return a.checkStorageOwnership(storage, namespace)
 }
 
 func (a *Handler) getJobInputStorage(ctx *gin.Context, id string) (*pb.Storage, error) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return a.getJobInputStorageForOwner(ctx, id, ownerID)
+	return a.getJobInputStorageForNamespace(ctx, id, namespace)
 }
 
-func (a *Handler) getJobInputStorageForOwner(ctx *gin.Context, id string, ownerID string) (*pb.Storage, error) {
+func (a *Handler) getJobInputStorageForNamespace(ctx *gin.Context, id string, namespace string) (*pb.Storage, error) {
 	storage, err := a.Datastore.GetJobInputStorage(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -79,5 +79,5 @@ func (a *Handler) getJobInputStorageForOwner(ctx *gin.Context, id string, ownerI
 		return nil, err
 	}
 
-	return a.checkStorageOwnership(storage, ownerID)
+	return a.checkStorageOwnership(storage, namespace)
 }

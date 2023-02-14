@@ -50,7 +50,7 @@ func NewSecretary() *cobra.Command {
 				i := customer.List(&stripe.CustomerListParams{})
 				for i.Next() {
 					c := i.Customer()
-					customers[c.Metadata["owner_id"]] = c
+					customers[c.Metadata["namespace"]] = c
 				}
 
 				logr.Info("getting jobs")
@@ -62,21 +62,21 @@ func NewSecretary() *cobra.Command {
 
 				logr.Info("processing jobs")
 				for _, j := range jobs {
-					c := customers[j.OwnerId]
+					c := customers[j.Namespace]
 					chargeRate, err := strconv.ParseInt(c.Metadata["charge_rate"], 10, 64)
 					if err != nil {
-						logr.Error(err, "parsing customer charge rate", "id", j.GetOwnerId())
+						logr.Error(err, "parsing customer charge rate", "id", j.GetNamespace())
 						return err
 					}
 					c.Balance += chargeRate
-					customers[j.OwnerId] = c
+					customers[j.Namespace] = c
 
 					if err = datastore.DeleteJob(j.GetId()); err != nil {
-						logr.Error(err, "deleting data for customer", "id", j.GetOwnerId())
+						logr.Error(err, "deleting data for customer", "id", j.GetNamespace())
 						return err
 					}
 
-					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetOwnerId(), c.Name}, ",") + "\n")
+					archive.WriteString(strings.Join([]string{j.GetId(), j.GetInputId(), j.GetOutputId(), j.GetTaskType(), j.GetStatus(), j.GetError(), j.GetStartTime().String(), j.GetEndTime().String(), strings.Join(j.GetArgs(), "|"), j.GetNamespace(), c.Name}, ",") + "\n")
 				}
 
 				logr.Info("updating customer's balances")

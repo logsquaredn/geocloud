@@ -8,7 +8,7 @@ option go_package = "github.com/logsquaredn/rototiller/pb";
 
 message Job {
   string id = 1;
-  string owner_id = 2;
+  string namespace = 2;
   string input_id = 3;
   string output_id = 4;
   string task_type = 5;

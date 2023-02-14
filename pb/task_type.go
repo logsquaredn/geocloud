@@ -14,7 +14,7 @@ const (
 	TaskTypeReproject           TaskType = "reproject"
 	TaskTypeVectorLookup        TaskType = "vectorlookup"
 	TaskTypeRasterLookup        TaskType = "rasterlookup"
-	TaskTypePolygonVectorLookup TaskType = "polygonVectorLookup"
+	TaskTypePolygonVectorLookup TaskType = "polygonvectorlookup"
 )
 
 var AllTaskTypes = []TaskType{

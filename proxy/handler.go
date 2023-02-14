@@ -8,14 +8,12 @@ import (
 	"net/smtp"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/api"
 	"github.com/logsquaredn/rototiller/pb"
-	ui "github.com/logsquaredn/rototiller/static"
 	files "github.com/swaggo/files"
 	swagger "github.com/swaggo/gin-swagger"
 )
@@ -30,21 +28,20 @@ type Handler struct {
 func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, key string) (http.Handler, error) {
 	var (
 		_              = rototiller.LoggerFrom(ctx)
-		router         = gin.Default()
+		router         = gin.New()
 		swaggerHandler = swagger.WrapHandler(files.Handler)
 		tokenParser    = jwt.NewParser()
 		h              = &Handler{key, nil, nil, smtpFrom}
 	)
+
+	router.Use(gin.Recovery())
 
 	u, err := url.Parse(proxyAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		apiReverseProxy = httputil.NewSingleHostReverseProxy(u)
-		uiHandler       = http.FileServer(http.FS(ui.FS))
-	)
+	apiReverseProxy := httputil.NewSingleHostReverseProxy(u)
 
 	if smtpAddr != "" {
 		h.SMTPURL, err = url.Parse(smtpAddr)
@@ -86,46 +83,42 @@ func NewHandler(ctx context.Context, proxyAddr, smtpAddr, smtpFrom, key string) 
 	}
 
 	router.NoRoute(func(ctx *gin.Context) {
-		if strings.HasPrefix(ctx.Request.URL.Path, "/api") {
-			rawToken := ctx.GetHeader("Authorization")
-			if rawToken == "" {
-				ctx.JSON(http.StatusUnauthorized, &pb.Error{
-					Message: "API key required",
-				})
-				return
-			}
-			ctx.Request.Header.Del("Authorization")
-
-			token, err := tokenParser.ParseWithClaims(rawToken, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-				}
-
-				return []byte(key), nil
+		rawToken := ctx.GetHeader("Authorization")
+		if rawToken == "" {
+			ctx.JSON(http.StatusUnauthorized, &pb.Error{
+				Message: "API key required",
 			})
-			if err != nil {
-				ctx.JSON(http.StatusUnauthorized, pb.NewErr(err))
-				return
-			}
-
-			if err = token.Claims.Valid(); err != nil {
-				ctx.JSON(http.StatusForbidden, pb.NewErr(err))
-				return
-			}
-
-			if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
-				ctx.Request.Header.Set(api.OwnerIDHeader, claims.Subject)
-			} else {
-				ctx.JSON(http.StatusForbidden, &pb.Error{
-					Message: "API key invalid",
-				})
-				return
-			}
-
-			apiReverseProxy.ServeHTTP(ctx.Writer, ctx.Request)
-		} else {
-			uiHandler.ServeHTTP(ctx.Writer, ctx.Request)
+			return
 		}
+		ctx.Request.Header.Del("Authorization")
+
+		token, err := tokenParser.ParseWithClaims(rawToken, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+
+			return []byte(key), nil
+		})
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, pb.NewErr(err))
+			return
+		}
+
+		if err = token.Claims.Valid(); err != nil {
+			ctx.JSON(http.StatusForbidden, pb.NewErr(err))
+			return
+		}
+
+		if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+			ctx.Request.Header.Set(api.NamespaceHeader, claims.Subject)
+		} else {
+			ctx.JSON(http.StatusForbidden, &pb.Error{
+				Message: "API key invalid",
+			})
+			return
+		}
+
+		apiReverseProxy.ServeHTTP(ctx.Writer, ctx.Request)
 	})
 
 	return router, nil

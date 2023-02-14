@@ -27,8 +27,8 @@ var (
 	//go:embed sql/queries/get_job_by_id.sql
 	getJobByIDSQL string
 
-	//go:embed sql/queries/get_job_by_owner_id.sql
-	getJobsByOwnerIDSQL string
+	//go:embed sql/queries/get_jobs_by_namespace.sql
+	getJobsByNamespaceSQL string
 )
 
 func (d *Datastore) CreateJob(j *pb.Job) (*pb.Job, error) {
@@ -40,12 +40,12 @@ func (d *Datastore) CreateJob(j *pb.Job) (*pb.Job, error) {
 	)
 
 	if err := d.stmt.createJob.QueryRow(
-		id, j.OwnerId,
+		id, j.Namespace,
 		j.InputId,
 		j.TaskType,
 		pq.Array(j.Args),
 	).Scan(
-		&j.Id, &j.OwnerId,
+		&j.Id, &j.Namespace,
 		&j.InputId, &outputID,
 		&j.TaskType,
 		&j.Status, &jobErr,
@@ -76,7 +76,7 @@ func (d *Datastore) UpdateJob(j *pb.Job) (*pb.Job, error) {
 			j.Status, j.Error,
 			j.StartTime.AsTime(), j.EndTime.AsTime(),
 		).Scan(
-			&j.Id, &j.OwnerId,
+			&j.Id, &j.Namespace,
 			&j.InputId, &outputID,
 			&j.TaskType,
 			&j.Status, &jobErr,
@@ -91,7 +91,7 @@ func (d *Datastore) UpdateJob(j *pb.Job) (*pb.Job, error) {
 			j.Status, j.Error,
 			j.StartTime.AsTime(), j.EndTime.AsTime(),
 		).Scan(
-			&j.Id, &j.OwnerId,
+			&j.Id, &j.Namespace,
 			&j.InputId, &outputID,
 			&j.TaskType,
 			&j.Status, &jobErr,
@@ -119,7 +119,7 @@ func (d *Datastore) GetJob(id string) (*pb.Job, error) {
 	)
 
 	if err = d.stmt.getJobByID.QueryRow(id).Scan(
-		&j.Id, &j.OwnerId,
+		&j.Id, &j.Namespace,
 		&j.InputId, &outputID,
 		&j.TaskType,
 		&j.Status, &jobErr,
@@ -156,7 +156,7 @@ func (d *Datastore) GetJobsBefore(duration time.Duration) ([]*pb.Job, error) {
 		)
 
 		err = rows.Scan(
-			&j.Id, &j.OwnerId,
+			&j.Id, &j.Namespace,
 			&j.InputId, &outputID,
 			&j.TaskType,
 			&j.Status, &jobErr,
@@ -183,8 +183,8 @@ func (d *Datastore) DeleteJob(id string) error {
 	return err
 }
 
-func (d *Datastore) GetOwnerJobs(id string, offset, limit int) ([]*pb.Job, error) {
-	rows, err := d.stmt.getJobsByOwnerID.Query(id, offset, limit)
+func (d *Datastore) GetJobs(id string, offset, limit int) ([]*pb.Job, error) {
+	rows, err := d.stmt.getJobsByNamespace.Query(id, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (d *Datastore) GetOwnerJobs(id string, offset, limit int) ([]*pb.Job, error
 		)
 
 		err = rows.Scan(
-			&j.Id, &j.OwnerId,
+			&j.Id, &j.Namespace,
 			&j.InputId, &outputID,
 			&j.TaskType,
 			&j.Status, &jobErr,

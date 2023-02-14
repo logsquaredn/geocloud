@@ -29,6 +29,7 @@ ARG semver=0.0.0
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rotoui ./cmd/rotoui
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rotoctl ./cmd/rotoctl
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rotoproxy ./cmd/rotoproxy
 RUN go build -ldflags "-s -w -X github.com/logsquaredn/rototiller.Semver=${semver}" -o /assets/rototiller ./cmd/rototiller

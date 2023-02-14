@@ -3,6 +3,7 @@
 .vscode/
 hack/
 mk/
+ui/
 *.md
 docker-compose.yml
 Dockerfile

@@ -20,6 +20,8 @@ make up
 make restart
 ```
 
+> If changing the UI, run `make static` to regenerate the static files being served.
+
 ### Release
 
 ```sh

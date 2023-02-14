@@ -8,7 +8,7 @@ option go_package = "github.com/logsquaredn/rototiller/pb";
 
 message Storage {
   string id = 1;
-  string owner_id = 2;
+  string namespace = 2;
   string name = 3;
   string status = 4;
   google.protobuf.Timestamp last_used = 8;

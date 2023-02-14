@@ -17,7 +17,7 @@ const (
 	qOutputOf = "output-of"
 )
 
-func (a *Handler) createJobForOwner(ctx *gin.Context, taskType pb.TaskType, ownerID string) (*pb.Job, error) {
+func (a *Handler) createJobForNamespace(ctx *gin.Context, taskType pb.TaskType, namespace string) (*pb.Job, error) {
 	task, err := a.getTaskType(taskType)
 	if err != nil {
 		return nil, err
@@ -39,22 +39,22 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType pb.TaskType, owne
 	case len(inputIDs) > 1:
 		return nil, pb.NewErr(fmt.Errorf("cannot specify more than one of queries '%s', '%s' and '%s'", qInput, qInputOf, qOutputOf), http.StatusBadRequest)
 	case input != "":
-		storage, err = a.getStorageForOwner(input, ownerID)
+		storage, err = a.getStorageForNamespace(input, namespace)
 		if err != nil {
 			return nil, err
 		}
 	case inputOf != "":
-		storage, err = a.getJobInputStorageForOwner(ctx, inputOf, ownerID)
+		storage, err = a.getJobInputStorageForNamespace(ctx, inputOf, namespace)
 		if err != nil {
 			return nil, err
 		}
 	case outputOf != "":
-		storage, err = a.getJobOutputStorageForOwner(ctx, outputOf, ownerID)
+		storage, err = a.getJobOutputStorageForNamespace(ctx, outputOf, namespace)
 		if err != nil {
 			return nil, err
 		}
 	default:
-		storage, err = a.putRequestVolumeForOwner(ctx, ctx.GetHeader("Content-Type"), ctx.Query("name"), ctx.Request.Body, ownerID)
+		storage, err = a.putRequestVolumeForNamespace(ctx, ctx.GetHeader("Content-Type"), ctx.Query("name"), ctx.Request.Body, namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -70,10 +70,10 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType pb.TaskType, owne
 	}
 
 	job, err := a.Datastore.CreateJob(&pb.Job{
-		TaskType: task.Type,
-		Args:     buildJobArgs(ctx, task.Params),
-		OwnerId:  ownerID,
-		InputId:  storage.Id,
+		TaskType:  task.Type,
+		Args:      buildJobArgs(ctx, task.Params),
+		Namespace: namespace,
+		InputId:   storage.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -92,22 +92,24 @@ func (a *Handler) createJobForOwner(ctx *gin.Context, taskType pb.TaskType, owne
 }
 
 func (a *Handler) createJob(ctx *gin.Context, taskType pb.TaskType) (*pb.Job, error) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return a.createJobForOwner(ctx, taskType, ownerID)
+
+	return a.createJobForNamespace(ctx, taskType, namespace)
 }
 
 func (a *Handler) getJob(ctx *gin.Context, id string) (*pb.Job, error) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return a.getJobForOwner(ctx, id, ownerID)
+
+	return a.getJobForNamespace(ctx, id, namespace)
 }
 
-func (a *Handler) getJobForOwner(ctx *gin.Context, id string, ownerID string) (*pb.Job, error) {
+func (a *Handler) getJobForNamespace(ctx *gin.Context, id string, namespace string) (*pb.Job, error) {
 	job, err := a.Datastore.GetJob(id)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -116,11 +118,11 @@ func (a *Handler) getJobForOwner(ctx *gin.Context, id string, ownerID string) (*
 		return nil, err
 	}
 
-	return a.checkJobOwnership(job, ownerID)
+	return a.checkJobOwnership(job, namespace)
 }
 
-func (a *Handler) checkJobOwnership(job *pb.Job, ownerID string) (*pb.Job, error) {
-	if job.OwnerId != ownerID {
+func (a *Handler) checkJobOwnership(job *pb.Job, namespace string) (*pb.Job, error) {
+	if job.Namespace != namespace {
 		return nil, pb.NewErr(fmt.Errorf("user does not own job '%s'", job.Id), http.StatusForbidden)
 	}
 
@@ -132,5 +134,6 @@ func buildJobArgs(ctx *gin.Context, taskParams []string) []string {
 	for i, param := range taskParams {
 		jobArgs[i] = ctx.Query(param)
 	}
+
 	return jobArgs
 }

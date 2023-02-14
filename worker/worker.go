@@ -183,8 +183,8 @@ func (w *Worker) DoJob(ctx context.Context, id string) error {
 	}
 
 	ost, err := w.Datastore.CreateStorage(&pb.Storage{
-		OwnerId: j.GetOwnerId(),
-		Status:  js.Ternary(t.GetKind() == rototiller.TaskKindLookup.String(), rototiller.StorageStatusFinal.String(), rototiller.StorageStatusTransformable.String()),
+		Namespace: j.GetNamespace(),
+		Status:    js.Ternary(t.GetKind() == rototiller.TaskKindLookup.String(), rototiller.StorageStatusFinal.String(), rototiller.StorageStatusTransformable.String()),
 	})
 	if err != nil {
 		return err

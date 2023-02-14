@@ -1,1 +1,0 @@
-SELECT job_id, owner_id, input_id, output_id, task_type, job_status, job_error, start_time, end_time, job_args FROM job WHERE owner_id = $1 ORDER BY start_time OFFSET $2 LIMIT $3;

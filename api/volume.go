@@ -18,13 +18,13 @@ const (
 	jsonExt = ".json"
 )
 
-func (a *Handler) putRequestVolumeForOwner(ctx *gin.Context, contentType, name string, r io.Reader, ownerID string) (*pb.Storage, error) {
+func (a *Handler) putRequestVolumeForNamespace(ctx *gin.Context, contentType, name string, r io.Reader, namespace string) (*pb.Storage, error) {
 	volume, err := a.getRequestVolume(contentType, r)
 	if err != nil {
 		return nil, err
 	}
 
-	storage, err := a.createStorageForOwner(name, ownerID)
+	storage, err := a.createStorageForNamespace(name, namespace)
 	if err != nil {
 		return nil, err
 	}

@@ -20,9 +20,10 @@ import (
 // @Accept       application/json
 // @Produce      application/json
 // @Param        request  body      rototiller.Claims  true  "user info"
-// @Success      201      {object}  rototiller.Auth
-// @Failure      400      {object}  rototiller.Error
-// @Failure      500      {object}  rototiller.Error
+// @Success      200      {object}  rototiller.Auth
+// @Success      201
+// @Failure      400  {object}  rototiller.Error
+// @Failure      500  {object}  rototiller.Error
 // @Router       /api/v1/api-key [post].
 func (h *Handler) createApiKey(ctx *gin.Context) {
 	var (
@@ -70,7 +71,7 @@ func (h *Handler) createApiKey(ctx *gin.Context) {
 
 		ctx.Status(http.StatusCreated)
 	} else {
-		ctx.JSON(http.StatusCreated, &pb.Auth{
+		ctx.JSON(http.StatusOK, &pb.Auth{
 			ApiKey: apiKey,
 		})
 	}

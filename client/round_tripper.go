@@ -8,10 +8,10 @@ import (
 
 type RoundTripper struct {
 	http.RoundTripper
-	ownerID string
+	namespace string
 }
 
 func (r *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add(api.OwnerIDHeader, r.ownerID)
+	req.Header.Add(api.NamespaceHeader, r.namespace)
 	return r.RoundTripper.RoundTrip(req)
 }

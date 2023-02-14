@@ -29,12 +29,12 @@ func (a *Handler) listStorageHandler(ctx *gin.Context) {
 		return
 	}
 
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
-	storage, err := a.Datastore.GetOwnerStorage(ownerID, q.Offset, q.Limit)
+	storage, err := a.Datastore.GetOwnerStorage(namespace, q.Offset, q.Limit)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		storage = []*pb.Storage{}
@@ -61,12 +61,12 @@ func (a *Handler) listStorageHandler(ctx *gin.Context) {
 // @Failure      500  {object}  rototiller.Error
 // @Router       /api/v1/storages/{id} [get].
 func (a *Handler) getStorageHandler(ctx *gin.Context) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
-	storage, err := a.getStorageForOwner(ctx.Param("storage"), ownerID)
+	storage, err := a.getStorageForNamespace(ctx.Param("storage"), namespace)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -90,12 +90,12 @@ func (a *Handler) getStorageHandler(ctx *gin.Context) {
 // @Failure      500  {object}  rototiller.Error
 // @Router       /api/v1/storages/{id}/content [get].
 func (a *Handler) getStorageContentHandler(ctx *gin.Context) {
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
-	storage, err := a.getStorageForOwner(ctx.Param("storage"), ownerID)
+	storage, err := a.getStorageForNamespace(ctx.Param("storage"), namespace)
 	if err != nil {
 		a.err(ctx, err)
 		return
@@ -139,12 +139,12 @@ func (a *Handler) createStorageHandler(ctx *gin.Context) {
 		return
 	}
 
-	ownerID, err := a.getOwnerIDFromContext(ctx)
+	namespace, err := a.getNamespaceFromContext(ctx)
 	if err != nil {
 		a.err(ctx, err)
 		return
 	}
-	storage, err := a.createStorageForOwner(ctx.Query("name"), ownerID)
+	storage, err := a.createStorageForNamespace(ctx.Query("name"), namespace)
 	if err != nil {
 		a.err(ctx, err)
 		return

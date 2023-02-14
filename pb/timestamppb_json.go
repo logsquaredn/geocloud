@@ -9,7 +9,7 @@ import (
 
 type RestJob struct {
 	Id        string    `json:"id,omitempty"`
-	OwnerId   string    `json:"-"`
+	Namespace string    `json:"-"`
 	InputId   string    `json:"input_id,omitempty"`
 	OutputId  string    `json:"output_id,omitempty"`
 	TaskType  string    `json:"task_type,omitempty"`
@@ -41,7 +41,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 	}
 
 	j.Id = rj.Id
-	j.OwnerId = rj.OwnerId
+	j.Namespace = rj.Namespace
 	j.InputId = rj.InputId
 	j.OutputId = rj.OutputId
 	j.TaskType = rj.TaskType
@@ -55,7 +55,7 @@ func (j *Job) UnmarshalJSON(data []byte) error {
 
 type RestStorage struct {
 	Id         string    `json:"id,omitempty"`
-	OwnerId    string    `json:"-"`
+	Namespace  string    `json:"-"`
 	Name       string    `json:"name,omitempty"`
 	Status     string    `json:"status,omitempty"`
 	LastUsed   time.Time `json:"last_used,omitempty"`
@@ -79,7 +79,7 @@ func (s *Storage) UnmarshalJSON(data []byte) error {
 	}
 
 	s.Id = rs.Id
-	s.OwnerId = rs.OwnerId
+	s.Namespace = rs.Namespace
 	s.Name = rs.Name
 	s.Status = rs.Status
 	s.LastUsed = timestamppb.New(rs.LastUsed)

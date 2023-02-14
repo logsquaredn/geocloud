@@ -25,7 +25,7 @@ import (
 	command "github.com/logsquaredn/rototiller/command/proxy"
 
 	_ "github.com/logsquaredn/rototiller/api"
-	_ "github.com/logsquaredn/rototiller/docs/proxy"
+	_ "github.com/logsquaredn/rototiller/internal/docs/proxy"
 )
 
 func main() {

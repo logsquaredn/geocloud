@@ -1,35 +1,24 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/logsquaredn/rototiller/pb"
 )
 
-var (
-	OwnerIDHeader   = "X-Owner-ID"
-	errUnauthorized = pb.NewErr(
-		errors.New(OwnerIDHeader+" header must exist"),
-		http.StatusBadRequest,
-	)
-)
+var NamespaceHeader = "X-Namespace"
 
-// getOwnerIDFromHeader gets the owner ID from the given http.Header.
-func (a *Handler) getOwnerIDFromHeader(header http.Header) (string, error) {
-	ownerID := header.Get(OwnerIDHeader)
-	if ownerID == "" {
-		return "", errUnauthorized
-	}
-	return ownerID, nil
+// getNamespaceFromHeader gets the namespace from the given http.Header.
+func (a *Handler) getNamespaceFromHeader(header http.Header) (string, error) {
+	return header.Get(NamespaceHeader), nil
 }
 
-// getOwnerIDFromContext returns the owner ID.
-func (a *Handler) getOwnerIDFromContext(ctx *gin.Context) (string, error) {
-	ownerID, err := a.getOwnerIDFromHeader(ctx.Request.Header)
+// getNamespaceFromContext returns the namespace.
+func (a *Handler) getNamespaceFromContext(ctx *gin.Context) (string, error) {
+	namespace, err := a.getNamespaceFromHeader(ctx.Request.Header)
 	if err != nil {
 		return "", err
 	}
-	return ownerID, nil
+
+	return namespace, nil
 }

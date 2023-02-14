@@ -61,7 +61,7 @@ lint:
 
 static:
 	@cd ui/ && $(NPM) run build
-	@cp -R ui/build/* static/
+	@cp -R ui/build/* internal/$@/
 
 rototiller rotoctl:
 	@$(GO) build -ldflags "-s -w -X $(MODULE).Semver=$(SEMVER)" -o $(CURDIR)/bin $(CURDIR)/cmd/$@
@@ -83,14 +83,14 @@ secretary migrate:
 infra infrastructure: services sleep migrate secretary
 
 up:
-	@$(DOCKER-COMPOSE) up --build worker api proxy
+	@$(DOCKER-COMPOSE) up --build worker api proxy ui
 
 detach:
-	@$(DOCKER-COMPOSE) up -d --build worker api proxy
+	@$(DOCKER-COMPOSE) up -d --build worker api proxy ui
 
 restart:
-	@$(DOCKER-COMPOSE) stop worker api proxy
-	@$(DOCKER-COMPOSE) up --build worker api proxy
+	@$(DOCKER-COMPOSE) stop worker api proxy ui
+	@$(DOCKER-COMPOSE) up --build worker api proxy ui
 
 down:
 	@$(DOCKER-COMPOSE) $@ --remove-orphans
@@ -117,6 +117,6 @@ release:
 
 gen: generate
 
-.PHONY: clean retach down download fallthrough fmt gen generate infra infrastructure \
+.PHONY: clean client detach down download fallthrough fmt gen generate infra infrastructure \
 	install-rotoctl install-rototiller linnt migrate migration prune release restart \
 	rotoctl rototiller secretary services sleep static tidy up vet

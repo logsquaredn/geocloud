@@ -24,7 +24,7 @@ import (
 	"github.com/gin-gonic/gin"
 	command "github.com/logsquaredn/rototiller/command/rototiller"
 
-	_ "github.com/logsquaredn/rototiller/docs/rototiller"
+	_ "github.com/logsquaredn/rototiller/internal/docs/rototiller"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/s3blob"
 )

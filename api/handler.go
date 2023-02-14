@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/logsquaredn/rototiller"
 	"github.com/logsquaredn/rototiller/store/blob/bucket"
 	"github.com/logsquaredn/rototiller/store/data/postgres"
@@ -29,8 +30,10 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 			Blobstore:           blobstore,
 			ServeMux:            http.NewServeMux(),
 		}
-		router = gin.Default()
+		router = gin.New()
 	)
+
+	router.Use(gin.Recovery())
 
 	router.GET("/healthz", a.healthzHandler)
 	router.GET("/readyz", a.readyzHandler)
@@ -79,7 +82,7 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 				jobs.POST("/removebadgeometry", a.createRemoveBadGeometryJobHandler)
 				jobs.POST("/vectorlookup", a.createVectorLookupJobHandler)
 				jobs.POST("/rasterlookup", a.createRasterLookupJobHandler)
-				jobs.POST("/polygonVectorLookup", a.createPolygonVectorLookupJobHandler)
+				jobs.POST("/polygonvectorlookup", a.createPolygonVectorLookupJobHandler)
 				job := jobs.Group("/:job")
 				{
 					job.GET("", a.getJobHandler)
@@ -109,7 +112,7 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 	} {
 		path, handler := f(a)
 		a.ServeMux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handler.ServeHTTP(w, r.WithContext(rototiller.WithLogger(r.Context(), logger)))
+			handler.ServeHTTP(w, r.WithContext(rototiller.WithLogger(r.Context(), logger.WithValues("requestId", uuid.NewString()))))
 		}))
 	}
 
