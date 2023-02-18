@@ -14,7 +14,7 @@ func New() *cobra.Command {
 			Use:     "rotoctl",
 			Version: rototiller.GetSemver(),
 			PersistentPreRun: func(cmd *cobra.Command, args []string) {
-				cmd.SetContext(rototiller.WithLogger(cmd.Context(), rototiller.NewLogger().V(verbosity)))
+				cmd.SetContext(rototiller.WithLogger(cmd.Context(), rototiller.NewLogger().V(2-verbosity)))
 			},
 		}
 		createCmd = &cobra.Command{

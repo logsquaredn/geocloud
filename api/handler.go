@@ -112,7 +112,7 @@ func NewHandler(ctx context.Context, datastore *postgres.Datastore, eventStreamP
 	} {
 		path, handler := f(a)
 		a.ServeMux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handler.ServeHTTP(w, r.WithContext(rototiller.WithLogger(r.Context(), logger.WithValues("requestId", uuid.NewString()))))
+			handler.ServeHTTP(w, r.WithContext(rototiller.WithLogger(r.Context(), logger.WithValues("request", uuid.NewString()))))
 		}))
 	}
 
